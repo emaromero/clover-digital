@@ -10,39 +10,39 @@ const clients = [
   {
     id: 1,
     name: "Looki",
-    logo: "https://i.postimg.cc/G3SN5PXr/Looki_Bar_-Menú_Digital-Bar_y_Restaurante_en_Pilar-_[lookibar.vercel.app].png",
+    logo: "https://i.postimg.cc/NjMrVwGM/logo-looki.png",
   },
   {
     id: 2,
     name: "Matilda",
-    logo: "https://i.postimg.cc/BQrzqSWV/Matilda_Calzados_-_[matildacalzados.mitiendanube.com].png",
+    logo: "https://i.postimg.cc/7YX2mLkd/logo-matilda.png",
   },
   {
     id: 3,
     name: "Plim Plim",
-    logo: "https://i.postimg.cc/bJV648HL/Tienda_Online_de_Plim_Plim_Pañalera_y_Art.de_bebé_-_[plimplimpanalerayartdebeb.mitiendanube.com].png",
+    logo: "https://i.postimg.cc/cHqgrgRg/logo-plimplim.png",
   },
-  { id: 4, name: "Estampa", logo: "https://i.postimg.cc/J4DgVyFX/Estampa_-_[estampa15.mitiendanube.com].png" },
+  { id: 4, name: "Estampa", logo: "https://i.postimg.cc/Hn9yGY7J/logo-estampa.png" },
   {
     id: 5,
     name: "Pasión",
-    logo: "https://i.postimg.cc/25mXZ0Sd/Pasión_por_la_Náutica_-_[www.pasionporlanautica.com].png",
+    logo: "https://i.postimg.cc/52RFWkjm/logo-pasion-por-la-nautica.png",
   },
   {
     id: 6,
     name: "Ringo",
-    logo: "https://i.postimg.cc/fLR2HkXJ/Ringo_Intimates_-_[ringointimates2.mitiendanube.com].png",
+    logo: "https://i.postimg.cc/wvhtJq2W/logo-ringo-intimates.png",
   },
-  { id: 7, name: "Adrián", logo: "https://i.postimg.cc/bYZ0bPkp/branding.png" },
-  { id: 8, name: "Pablo", logo: "https://i.postimg.cc/gc1VH7HR/merch.png" },
+  { id: 7, name: "Adrián", logo: "https://i.postimg.cc/9Fc9d7vy/logo-fenando-remax.png" },
+  { id: 8, name: "Pablo", logo: "https://i.postimg.cc/mr11LNHW/logo-pablito-motos.png" },
   {
     id: 9,
     name: "Sda",
-    logo: "https://i.postimg.cc/pdZcYKmw/SERVICIOS_DE_AIRE_ACONDICIONADO_S.A.-[www.sda-sa.com.ar].png",
+    logo: "https://i.postimg.cc/d3whjbSJ/logo-SDA.png",
   },
-  { id: 10, name: "Marine Park", logo: "https://i.postimg.cc/QdcyC2hx/MARINE_PARK_-_[www.mpark.com.ar].png" },
-  { id: 11, name: "El zurdo", logo: "https://i.postimg.cc/0rgyKDmM/branding-matilda.png" },
-  { id: 12, name: "Transporte Escolar N&L", logo: "https://i.postimg.cc/25Hvb951/TARJETAS-PERSONALES.png" },
+  { id: 10, name: "Marine Park", logo: "https://i.postimg.cc/CMGDnN6F/logo-Marine-Park.png" },
+  { id: 11, name: "El zurdo", logo: "https://i.postimg.cc/vB9nzLYt/logo-el-zurdo.png" },
+  { id: 12, name: "Transporte Escolar N&L", logo: "https://i.postimg.cc/sxrh0Q1d/logo-transporte-escolar.png" },
 ]
 
 export default function ClientsCarousel() {
