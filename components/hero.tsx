@@ -5,10 +5,13 @@ import Image from "next/image"
 import { useLanguage } from "./language-provider"
 
 export default function Hero() {
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
 
   return (
-    <section id="home" className="w-full bg-[#B8D8D8] dark:bg-[#004E64] pt-20">
+    <section
+      id="home"
+      className="w-full bg-[#B8D8D8] dark:bg-[#004E64] pt-20"
+    >
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <motion.div
@@ -17,11 +20,18 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
             className="flex flex-col space-y-6 max-w-xl"
           >
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Clover Digital</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              Clover Digital
+            </p>
+
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-800 dark:text-white">
               {t("slogan")}
             </h1>
-            <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">{t("hero-description")}</p>
+
+            <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+              {t("hero-description")}
+            </p>
+
             <div className="pt-4">
               <motion.a
                 href="#cotizador"
@@ -42,7 +52,7 @@ export default function Hero() {
           >
             <div className="relative w-full h-[400px] md:h-[500px]">
               <Image
-                src="https://i.postimg.cc/63r4jMTY/Fotografia-y-video-para-vender-propiedades-imagen-1.png"
+                src="https://i.postimg.cc/T1ztnRNc/Default.jpg"
                 alt="Fotografía y video para vender propiedades - Clover Digital"
                 fill
                 priority
