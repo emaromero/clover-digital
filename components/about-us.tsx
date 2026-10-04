@@ -23,10 +23,9 @@ export default function AboutUs() {
           <div className="order-2 md:order-1">
             <div className="relative h-[400px] w-full rounded-lg overflow-hidden">
               <Image
-                src="https://i.postimg.cc/NFTcmsBD/segunda-foto-inicio-conocenos.png"
-                alt="Diseño de sitio web"
-                width={400}
-                height={400}
+                src="https://i.postimg.cc/mgPzfLtd/Conocenos-imagen-1.png"
+                alt="Equipo de Clover Digital, producción audiovisual inmobiliaria"
+                fill
                 className="object-contain"
               />
             </div>

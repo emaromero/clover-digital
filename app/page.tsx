@@ -3,10 +3,11 @@ import Hero from "@/components/hero"
 import AboutUs from "@/components/about-us"
 import Services from "@/components/services"
 import Portfolio from "@/components/portfolio"
-import ClientsCarousel from "@/components/clients-carousel"
+
+import Clientes from "@/components/clientes"
 import Footer from "@/components/footer"
 import WhatsAppFloat from "@/components/whatsapp-float"
-import Contact from "@/components/contact"
+import Cotizador from "@/components/cotizador"
 
 export default function Home() {
   return (
@@ -15,9 +16,9 @@ export default function Home() {
       <Hero />
       <AboutUs />
       <Services />
-      <ClientsCarousel />
+      <Clientes />
       <Portfolio />
-      <Contact />
+      <Cotizador />
       <Footer />
       <WhatsAppFloat />
     </main>

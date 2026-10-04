@@ -1,259 +1,82 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
 import Image from "next/image"
 import { useLanguage } from "./language-provider"
 
-// Interfaces para los proyectos
-interface WebProject {
-  id: number;
-  title: string;
-  category: string;
-  url: string;
-  image: string;
-}
-
-interface DesignProject {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-}
-
-// Web projects data
-const webProjects: WebProject[] = [
-  {
-    id: 1,
-    title: "Pasión por la Náutica",
-    category: "React JS",
-    url: "https://pasionporlanautica.com",
-    image: "https://i.postimg.cc/25mXZ0Sd/Pasión_por_la_Náutica_-_[www.pasionporlanautica.com].png",
-  },
-  {
-    id: 2,
-    title: "Plim Plim",
-    category: "Tienda Nube",
-    url: "https://plimplimpanalerayartdebeb.mitiendanube.com",
-    image:
-      "https://i.postimg.cc/bJV648HL/Tienda_Online_de_Plim_Plim_Pañalera_y_Art.de_bebé_-_[plimplimpanalerayartdebeb.mitiendanube.com].png",
-  },
-  {
-    id: 3,
-    title: "Looki Bar",
-    category: "React JS",
-    url: "https://lookibar.vercel.app",
-    image:
-      "https://i.postimg.cc/G3SN5PXr/Looki_Bar_-Menú_Digital-Bar_y_Restaurante_en_Pilar-_[lookibar.vercel.app].png",
-  },
-  {
-    id: 4,
-    title: "Matilda Calzados",
-    category: "Tienda Nube",
-    url: "https://matildacalzados.mitiendanube.com",
-    image: "https://i.postimg.cc/BQrzqSWV/Matilda_Calzados_-_[matildacalzados.mitiendanube.com].png",
-  },
-  {
-    id: 5,
-    title: "Estampa",
-    category: "Tienda Nube",
-    url: "https://estampa15.mitiendanube.com",
-    image: "https://i.postimg.cc/J4DgVyFX/Estampa_-_[estampa15.mitiendanube.com].png",
-  },
-  {
-    id: 6,
-    title: "Ringo Intimates",
-    category: "Tienda Nube",
-    url: "https://ringointimates2.mitiendanube.com",
-    image: "https://i.postimg.cc/fLR2HkXJ/Ringo_Intimates_-_[ringointimates2.mitiendanube.com].png",
-  },
-  {
-    id: 7,
-    title: "SDA",
-    category: "HTML/CSS/JS",
-    url: "https://www.sda-sa.com.ar",
-    image: "https://i.postimg.cc/pdZcYKmw/SERVICIOS_DE_AIRE_ACONDICIONADO_S.A.-[www.sda-sa.com.ar].png",
-  },
-  {
-    id: 8,
-    title: "Marine Park",
-    category: "HTML/CSS/JS",
-    url: "https://www.mpark.com.ar",
-    image: "https://i.postimg.cc/QdcyC2hx/MARINE_PARK_-_[www.mpark.com.ar].png",
-  },
-]
-
-// Graphic design projects data
-const designProjects: DesignProject[] = [
-  {
-    id: 1,
-    title: "@remax.teamfernando",
-    description: "Fotografía Inmobiliaria",
-    image: "https://i.postimg.cc/Njq7CN7F/13-1.png",
-  },
-  {
-    id: 2,
-    title: "@pabloromeromotos",
-    description: "Branding",
-    image: "https://i.postimg.cc/bYZ0bPkp/branding.png",
-  },
-  {
-    id: 3,
-    title: "15 años Valentina",
-    description: "QR para Eventos",
-    image: "https://i.postimg.cc/mgy7RgfN/qr-15-a-os.png",
-  },
-  {
-    id: 4,
-    title: "@pabloromeromotos",
-    description: "Merch",
-    image: "https://i.postimg.cc/gc1VH7HR/merch.png",
-  },
-  {
-    id: 5,
-    title: "@guarderia_marinepark",
-    description: "Papelería de marca",
-    image: "https://i.postimg.cc/hjfm98Jp/TARJETERIA-QR.png",
-  },
-  {
-    id: 6,
-    title: "@ringo.lenceria",
-    description: "Papelería de marca",
-    image: "https://i.postimg.cc/SN8WTGgP/LOYALTY-CARDS.png",
-  },
-  {
-    id: 7,
-    title: "@remax.teamfernando",
-    description: "Gestión de RRSS y creación de contenido",
-    image: "https://i.postimg.cc/65Gf0sZF/merch.png",
-  },
-  {
-    id: 8,
-    title: "@florremax",
-    description: "Fotografía y material gráfico para RRSS",
-    image: "https://i.postimg.cc/pVSBzVmD/PLACA-INMOBILIARIA.png",
-  },
+// Portadas de proyectos del Behance de Clover Digital (behance.net/cloverdigital1).
+// Para mejor calidad, descargá las fotos originales a /public/portfolio y reemplazá estas URLs.
+const proyectos = [
+  { title: "Alley Recoleta", id: "255438219", slug: "Alley-Recoleta-Juan-M", img: "adf407255438219.Y3JvcCwyNTU2LDIwMDAsMjIxLDA.jpg" },
+  { title: "Av. Independencia", id: "255061503", slug: "Av-Independencia-Ana-B-x-Coldwell-Banker", img: "34107d255061503.Y3JvcCwyNTU2LDIwMDAsMjIxLDA.jpg" },
+  { title: "Av. Maipú", id: "255060785", slug: "Av-Maipu-Blanca", img: "e6a327255060785.Y3JvcCwyNTU2LDIwMDAsMjIxLDA.jpg" },
+  { title: "Av. Directorio", id: "255060407", slug: "Av-Directorio-Fernando", img: "03195d255060407.Y3JvcCwxMzYyLDEwNjYsMTE4LDA.jpg" },
+  { title: "Bazurco", id: "255060191", slug: "Bazurco-Juan-Manuel", img: "96b1c8255060191.Y3JvcCwyNTU2LDIwMDAsMjIxLDA.jpg" },
+  { title: "Libertador", id: "250841899", slug: "Libertador-Juan-M", img: "6e35e1250841899.Y3JvcCwyNTU2LDIwMDAsMjIxLDA.jpg" },
+  { title: "La Taruca", id: "250620537", slug: "La-Taruca-Mariela", img: "1d94cc250620537.Y3JvcCwxMzA5LDEwMjQsMTEzLDA.png" },
+  { title: "Vicente López", id: "250567901", slug: "Vicente-Lopez-Valeria", img: "0639ec250567901.Y3JvcCwyNTU2LDIwMDAsMjIxLDA.jpg" },
 ]
 
 export default function Portfolio() {
-  const [activeTab, setActiveTab] = useState<"web" | "design">("web");
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.1 });
-  const { t, language } = useLanguage();
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
-  };
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, amount: 0.1 })
+  const { t } = useLanguage()
 
   return (
     <section id="portfolio" className="py-16 md:py-24 bg-[#B8D8D8]/30 dark:bg-[#004E64]/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mt-2 text-gray-800 dark:text-white">
-            {language === "en" ? "Portfolio" : "Portfolio"}
-          </h2>
-
-          <div className="inline-flex rounded-md shadow-sm mt-8">
-            <button
-              onClick={() => setActiveTab("web")}
-              className={`px-6 py-3 text-sm font-medium rounded-l-lg ${
-                activeTab === "web"
-                  ? "bg-gray-900 text-white"
-                  : "bg-white dark:bg-[#001219] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-              }`}
-            >
-              {language === "en" ? "Websites" : "Sitios Web"}
-            </button>
-            <button
-              onClick={() => setActiveTab("design")}
-              className={`px-6 py-3 text-sm font-medium rounded-r-lg ${
-                activeTab === "design"
-                  ? "bg-gray-900 text-white"
-                  : "bg-white dark:bg-[#001219] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-              }`}
-            >
-              {language === "en" ? "RRSS & Graphic Design" : "RRSS & Diseño gráfico"}
-            </button>
-          </div>
-        </div>
-
-        <motion.div
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800 dark:text-white">
+          {t("portfolio-title")}
+        </h2>
+        <motion.ul
           ref={ref}
-          variants={containerVariants}
-          initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
-          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${activeTab === "web" ? "3" : "4"} gap-8`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-6xl mx-auto"
         >
-          {activeTab === "web"
-            ? webProjects.map((project) => (
-                <motion.div
-                  key={project.id}
-                  variants={itemVariants}
-                  className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <div className="relative h-64 overflow-hidden">
-                    <a href={project.url} target="_blank" rel="noopener noreferrer">
-                      <Image
-                        src={project.image || "/placeholder.svg"}
-                        alt={project.title}
-                        width={500}
-                        height={500}
-                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </a>
-                  </div>
-                  <div className="p-4 bg-white dark:bg-gray-800">
-                    <h3 className="text-base font-medium text-gray-800 dark:text-white">{project.title}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{project.category}</p>
-                    <a
-                      href={project.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#0A9396] hover:text-[#005F73] text-sm mt-2 inline-block"
-                    >
-                      {language === "en" ? "Visit website" : "Visitar sitio"}
-                    </a>
-                  </div>
-                </motion.div>
-              ))
-            : designProjects.map((project) => (
-                <motion.div
-                  key={project.id}
-                  variants={itemVariants}
-                  className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
-                >
-                  <div className="relative h-80 overflow-hidden">
-                    <Image
-                      src={project.image || "/placeholder.svg"}
-                      alt={project.title}
-                      width={500}
-                      height={500}
-                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 rounded-t-2xl"
-                    />
-                  </div>
-                  <div className="p-4 bg-white dark:bg-gray-800">
-                    <p className="text-sm font-medium text-gray-800 dark:text-white mb-1">{project.title}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{project.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-        </motion.div>
+          {proyectos.map((p) => (
+            <li key={p.id}>
+              <a
+                href={`https://www.behance.net/gallery/${p.id}/${p.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative block aspect-[4/3] overflow-hidden rounded-lg"
+              >
+                <Image
+                  src={`https://mir-s3-cdn-cf.behance.net/projects/404/${p.img}`}
+                  alt={`Proyecto ${p.title}`}
+                  fill
+                  sizes="(min-width: 768px) 25vw, 50vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#001219]/90 to-transparent px-3 pb-2 pt-8 text-sm font-medium text-white">
+                  {p.title}
+                </span>
+              </a>
+            </li>
+          ))}
+        </motion.ul>
+        <div className="flex flex-wrap justify-center gap-3 mt-10">
+          <a
+            href="https://www.behance.net/cloverdigital1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-[#0e5c6e] hover:bg-[#001219] text-white font-medium py-3 px-8 rounded-md transition-colors"
+          >
+            {t("portfolio-behance")}
+          </a>
+          <a
+            href="https://www.instagram.com/cloverdigital.arg/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block border-2 border-[#0e5c6e] text-[#0e5c6e] dark:text-white dark:border-white hover:bg-[#0e5c6e] hover:text-white font-medium py-3 px-8 rounded-md transition-colors"
+          >
+            {t("portfolio-more")}
+          </a>
+        </div>
       </div>
     </section>
-  );
+  )
 }
