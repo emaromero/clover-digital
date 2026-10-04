@@ -72,7 +72,7 @@ export default function Cotizador() {
   const sub = "text-sm text-gray-600 dark:text-gray-300 mb-4"
 
   return (
-    <section id="cotizador" className="py-16 md:py-24 pb-32 bg-white dark:bg-[#001219]">
+    <section id="cotizador" className="pt-16 md:pt-24 bg-white dark:bg-[#001219]">
       <div className="container mx-auto px-4 max-w-4xl">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-3 text-gray-800 dark:text-white">Cotizá tu producción</h2>
         <p className="text-center text-gray-600 dark:text-gray-300 mb-12">
@@ -194,8 +194,9 @@ export default function Cotizador() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-[#06222c] border-t-2 border-[#001219] dark:border-white/30 px-4 py-3 pr-24">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+      {/* Barra del total: queda pegada abajo solo mientras se ve esta sección (no sobre el resto de la página ni el footer) */}
+      <div className="sticky bottom-0 z-30 mt-12 bg-white dark:bg-[#06222c] border-t-2 border-[#001219] dark:border-white/30 px-4 py-3 pr-24 md:pr-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-start gap-6">
           <div>
             <span className="block text-xs text-gray-600 dark:text-gray-300">Total estimado</span>
             <strong className="text-2xl text-[#0e5c6e] dark:text-[#5fb8cc]">{money(total)}</strong>
@@ -206,7 +207,7 @@ export default function Cotizador() {
             onClick={enviar}
             className="rounded-full bg-[#0e5c6e] hover:bg-[#001219] text-white font-bold px-6 py-3 disabled:opacity-45 disabled:cursor-not-allowed"
           >
-            Solicitar reserva por WhatsApp
+            Solicitar reserva<span className="hidden sm:inline"> por WhatsApp</span>
           </button>
         </div>
       </div>

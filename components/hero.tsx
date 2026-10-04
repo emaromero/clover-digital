@@ -42,11 +42,11 @@ export default function Hero() {
           >
             <div className="relative w-full h-[400px] md:h-[500px]">
               <Image
-                src="/portfolio/interior-ampliada.jpg"
-                alt="Interior de departamento fotografiado por Clover Digital"
+                src="https://i.postimg.cc/63r4jMTY/Fotografia-y-video-para-vender-propiedades-imagen-1.png"
+                alt="Fotografía y video para vender propiedades - Clover Digital"
                 fill
                 priority
-                className="object-cover rounded-lg"
+                className="object-contain"
               />
             </div>
           </motion.div>

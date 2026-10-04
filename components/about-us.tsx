@@ -23,10 +23,10 @@ export default function AboutUs() {
           <div className="order-2 md:order-1">
             <div className="relative h-[400px] w-full rounded-lg overflow-hidden">
               <Image
-                src="/portfolio/aerea-barrio.jpg"
-                alt="Vista aérea de casas con pileta"
+                src="https://i.postimg.cc/mgPzfLtd/Conocenos-imagen-1.png"
+                alt="Equipo de Clover Digital, producción audiovisual inmobiliaria"
                 fill
-                className="object-cover"
+                className="object-contain"
               />
             </div>
           </div>
