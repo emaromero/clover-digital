@@ -23,11 +23,10 @@ export default function AboutUs() {
           <div className="order-2 md:order-1">
             <div className="relative h-[400px] w-full rounded-lg overflow-hidden">
               <Image
-                src="https://i.postimg.cc/NFTcmsBD/segunda-foto-inicio-conocenos.png"
-                alt="Diseño de sitio web"
-                width={400}
-                height={400}
-                className="object-contain"
+                src="/portfolio/aerea-barrio.jpg"
+                alt="Vista aérea de casas con pileta"
+                fill
+                className="object-cover"
               />
             </div>
           </div>

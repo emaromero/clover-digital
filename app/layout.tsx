@@ -1,11 +1,12 @@
 import type React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/components/language-provider";
 import LoadingScreen from "@/components/loading-screen";
 import Script from "next/script";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -13,16 +14,44 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#001219",
+};
+
 export const metadata: Metadata = {
-  title: "Clover Digital - Servicios Digitales en Buenos Aires",
-  description: "Descubre nuestros servicios de diseño web y manejo de redes sociales en Clover Digital. Conectamos lo digital con tu esencia en Buenos Aires.",
-  keywords: "diseño web, redes sociales, Clover Digital, marketing digital, Buenos Aires, servicios digitales",
-  authors: [{ name: "Clover Digital" }],
-  robots: "index, follow",
-  icons: {
-    icon: "https://i.postimg.cc/pLSPM0KB/logo-CloverDigital.png",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Fotografía inmobiliaria y video para propiedades en Buenos Aires | Clover Digital",
+    template: "%s | Clover Digital",
   },
-  generator: "v0.dev",
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "fotografía inmobiliaria",
+    "fotógrafo inmobiliario Buenos Aires",
+    "video inmobiliario",
+    "fotos HDR propiedades",
+    "drone inmobiliario",
+    "reels inmobiliarios",
+    "fotografía de arquitectura",
+    "Zona Norte",
+    "CABA",
+    "Clover Digital",
+  ],
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  category: "Fotografía inmobiliaria",
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-video-preview": -1, "max-snippet": -1 },
+  },
+  icons: { icon: "/favicon.ico" },
+  // Para verificar el sitio en Google Search Console con etiqueta HTML, pegá acá tu código:
+  // verification: { google: "TU_CODIGO" },
   other: {
     "geo.region": "AR-B",
     "geo.placename": "Buenos Aires",
@@ -30,20 +59,67 @@ export const metadata: Metadata = {
     ICBM: "-34.603722, -58.381592",
   },
   openGraph: {
-    title: "Clover Digital - Diseño y Marketing Digital",
-    description: "Eleva tu marca con nuestros servicios de diseño web y manejo de redes sociales. ¡Conectemos hoy!",
-    images: [
-      {
-        url: "https://i.postimg.cc/pLSPM0KB/logo-CloverDigital.png",
-        width: 559,
-        height: 559,
-        alt: "Logo oficial de Clover Digital",
-      },
-    ],
-    url: "https://cloverdigital.vercel.app/",
+    title: "Clover Digital | Fotografía y video para vender propiedades",
+    description: SITE_DESCRIPTION,
+    url: "/",
+    siteName: SITE_NAME,
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Clover Digital - fotografía y video para propiedades" }],
     type: "website",
     locale: "es_AR",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clover Digital | Fotografía y video para vender propiedades",
+    description: SITE_DESCRIPTION,
+    images: ["/og-image.jpg"],
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      inLanguage: "es-AR",
+    },
+    {
+      "@type": "ProfessionalService",
+      "@id": `${SITE_URL}/#negocio`,
+      name: SITE_NAME,
+      description: SITE_DESCRIPTION,
+      url: SITE_URL,
+      logo: "https://i.postimg.cc/pLSPM0KB/logo-CloverDigital.png",
+      image: `${SITE_URL}/og-image.jpg`,
+      telephone: "+5491164473603",
+      email: "cloverdigitalarg@gmail.com",
+      address: { "@type": "PostalAddress", addressRegion: "Buenos Aires", addressCountry: "AR" },
+      areaServed: [
+        { "@type": "AdministrativeArea", name: "Zona Norte, Gran Buenos Aires" },
+        { "@type": "City", name: "Ciudad Autónoma de Buenos Aires" },
+      ],
+      knowsAbout: ["Fotografía inmobiliaria", "Video inmobiliario", "Fotografía con drone", "Fotografía de arquitectura"],
+      sameAs: [
+        "https://www.instagram.com/cloverdigital.arg/",
+        "https://www.behance.net/cloverdigital1",
+        "https://www.facebook.com/people/Clover-Digital/61570512932271/",
+      ],
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Servicios de fotografía y video inmobiliario",
+        itemListElement: [
+          "Fotografía HDR de propiedades",
+          "Video recorrido para portales inmobiliarios",
+          "Video vertical para redes sociales",
+          "Reel hablado",
+          "Fotografía y video con drone",
+          "Producción para desarrollos inmobiliarios",
+        ].map((name) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name } })),
+      },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -52,7 +128,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning className="scroll-smooth">
+    <html lang="es-AR" suppressHydrationWarning className="scroll-smooth">
       <head>
         {/* Google Analytics */}
         <Script
@@ -90,26 +166,9 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* JSON-LD Structured Data */}
-        <Script
-          id="json-ld"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Clover Digital",
-              url: "https://cloverdigital.vercel.app",
-              logo: "https://lh3.googleusercontent.com/pw/AP1GczM3mAP1vxr8LjeK_aPM8k0HgFUdvoka_gx_W090Xz4vOAUpfybrZ6Z_VIRbq09R4tSIYkpqba2RAcCvhArVr9DbyyrIY8oq6ueEX3L2J30WFfMA_W7Tc_-Bp7veQFvEk3Ln62mSf2ILzcZaIwTC0Ncf=w953-h953-s-no-gm?authuser=0",
-              sameAs: [
-                "https://www.facebook.com/people/Clover-Digital/61570512932271/",
-                "https://www.instagram.com/cloverdigital.arg/",
-              ],
-            }),
-          }}
-        />
       </head>
       <body className={`${poppins.variable} font-sans`}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <LanguageProvider>
             <LoadingScreen />

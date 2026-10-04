@@ -17,14 +17,14 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
             className="flex flex-col space-y-6 max-w-xl"
           >
-            <h1 className="text-sm font-medium text-gray-700 dark:text-gray-200">Clover Digital</h1>
-            <h2 className="text-4xl md:text-5xl font-bold leading-tight text-gray-800 dark:text-white">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Clover Digital</p>
+            <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-800 dark:text-white">
               {t("slogan")}
-            </h2>
+            </h1>
             <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">{t("hero-description")}</p>
             <div className="pt-4">
               <motion.a
-                href="#contact-us"
+                href="#cotizador"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="inline-block bg-gray-900 hover:bg-black text-white font-medium py-3 px-8 rounded-md transition-colors"
@@ -42,11 +42,11 @@ export default function Hero() {
           >
             <div className="relative w-full h-[400px] md:h-[500px]">
               <Image
-                src="https://i.postimg.cc/gJbbmFwv/foto-celular-inicio.png"
-                alt="Smartphone con diseño digital"
-                width={500}
-                height={500}
-                className="object-contain"
+                src="/portfolio/interior-ampliada.jpg"
+                alt="Interior de departamento fotografiado por Clover Digital"
+                fill
+                priority
+                className="object-cover rounded-lg"
               />
             </div>
           </motion.div>

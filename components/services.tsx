@@ -2,58 +2,16 @@
 
 import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
-import { Globe, FileImage, Instagram, Camera, BarChart, Palette, QrCode, Home, Wallpaper} from "lucide-react"
+import { Camera, Clapperboard, Smartphone, Mic, Plane, Building2 } from "lucide-react"
 import { useLanguage } from "./language-provider"
 
 const services = [
-  {
-    id: 1,
-    icon: <Globe className="h-8 w-8" />,
-    titleKey: "service-1-title",
-    descKey: "service-1-desc",
-  },
-  {
-    id: 2,
-    icon: <Wallpaper className="h-8 w-8" />,
-    titleKey: "service-2-title",
-    descKey: "service-2-desc",
-  },
-  {
-    id: 3,
-    icon: <Instagram className="h-8 w-8" />,
-    titleKey: "service-3-title",
-    descKey: "service-3-desc",
-  },
-  {
-    id: 4,
-    icon: <Camera className="h-8 w-8" />,
-    titleKey: "service-4-title",
-    descKey: "service-4-desc",
-  },
-  {
-    id: 5,
-    icon: <BarChart className="h-8 w-8" />,
-    titleKey: "service-5-title",
-    descKey: "service-5-desc",
-  },
-  {
-    id: 6,
-    icon: <FileImage className="h-8 w-8" />,
-    titleKey: "service-6-title",
-    descKey: "service-6-desc",
-  },
-  {
-    id: 7,
-    icon: <Palette className="h-8 w-8" />,
-    titleKey: "service-7-title",
-    descKey: "service-7-desc",
-  },
-  {
-    id: 8,
-    icon: <QrCode className="h-8 w-8" />,
-    titleKey: "service-8-title",
-    descKey: "service-8-desc",
-  },
+  { id: 1, icon: <Camera className="h-8 w-8" />, titleKey: "service-1-title", descKey: "service-1-desc" },
+  { id: 2, icon: <Clapperboard className="h-8 w-8" />, titleKey: "service-2-title", descKey: "service-2-desc" },
+  { id: 3, icon: <Smartphone className="h-8 w-8" />, titleKey: "service-3-title", descKey: "service-3-desc" },
+  { id: 4, icon: <Mic className="h-8 w-8" />, titleKey: "service-4-title", descKey: "service-4-desc" },
+  { id: 5, icon: <Plane className="h-8 w-8" />, titleKey: "service-5-title", descKey: "service-5-desc" },
+  { id: 6, icon: <Building2 className="h-8 w-8" />, titleKey: "service-6-title", descKey: "service-6-desc" },
 ]
 
 export default function Services() {
@@ -92,7 +50,7 @@ export default function Services() {
           variants={containerVariants}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
         >
           {services.map((service) => (
             <motion.div

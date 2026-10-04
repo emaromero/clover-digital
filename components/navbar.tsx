@@ -47,7 +47,7 @@ export default function Navbar() {
     { href: "#home", label: t("home") },
     { href: "#services", label: t("services") },
     { href: "#portfolio", label: t("portfolio") },
-    { href: "#contact-us", label: t("contactUs") },
+    { href: "#cotizador", label: t("contactUs") },
   ]
 
   const logoUrl = "https://i.postimg.cc/pLSPM0KB/logo-Clover-Digital.png"

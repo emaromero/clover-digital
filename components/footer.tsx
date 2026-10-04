@@ -43,9 +43,7 @@ export default function Footer() {
                 )}
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm mt-4 text-center md:text-left">
-                {language === "en"
-                  ? "Digital solutions that connect with your essence. We create websites, manage social media, and design your brand identity."
-                  : "Soluciones digitales que conectan con tu esencia. Creamos sitios web, gestionamos redes sociales y diseñamos tu identidad de marca."}
+                {t("footer-about")}
               </p>
             </div>
           </div>
@@ -79,7 +77,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#contact-us"
+                  href="#cotizador"
                   className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 >
                   {t("contactUs")}
