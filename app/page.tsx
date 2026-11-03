@@ -9,20 +9,41 @@ import AcademyPreview from "@/components/academy-preview"
 import Cotizador from "@/components/cotizador"
 import Footer from "@/components/footer"
 import WhatsAppFloat from "@/components/whatsapp-float"
+import Reveal from "@/components/reveal"
 
 export default function Home() {
   return (
     <main className="min-h-screen">
       <Navbar />
+
       <Hero />
-      <AboutUs />
-      <Services />
-      <Clientes />
-      <Portfolio />
+
+      <Reveal>
+        <AboutUs />
+      </Reveal>
+
+      <Reveal delay={0.04}>
+        <Services />
+      </Reveal>
+
+      <Reveal delay={0.04}>
+        <Clientes />
+      </Reveal>
+
+      <Reveal delay={0.04}>
+        <Portfolio />
+      </Reveal>
+
       <GoogleReviews />
+
       <AcademyPreview />
+
       <Cotizador />
-      <Footer />
+
+      <Reveal>
+        <Footer />
+      </Reveal>
+
       <WhatsAppFloat />
     </main>
   )

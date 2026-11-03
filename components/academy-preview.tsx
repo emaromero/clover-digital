@@ -1,15 +1,21 @@
 "use client"
 
 import { FormEvent, useState } from "react"
+import { motion, useReducedMotion } from "framer-motion"
 import { useLanguage } from "./language-provider"
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL
+
+const SUPABASE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 export default function AcademyPreview() {
   const { language } = useLanguage()
+  const reduceMotion = useReducedMotion()
 
   const [email, setEmail] = useState("")
+
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "duplicate" | "error"
   >("idle")
@@ -38,7 +44,6 @@ export default function AcademyPreview() {
             "Este email ya está anotado. Te avisaremos cuando abramos las inscripciones.",
           error:
             "No pudimos registrar tu email. Probá nuevamente en unos minutos.",
-          invalid: "Ingresá un email válido.",
         }
       : {
           eyebrow: "Clover Academy",
@@ -62,10 +67,11 @@ export default function AcademyPreview() {
             "This email is already on the list. We'll let you know when enrollment opens.",
           error:
             "We couldn't register your email. Please try again in a few minutes.",
-          invalid: "Enter a valid email address.",
         }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault()
 
     const cleanEmail = email.trim().toLowerCase()
@@ -117,17 +123,90 @@ export default function AcademyPreview() {
     }
   }
 
+  const items = [
+    copy.item1,
+    copy.item2,
+    copy.item3,
+    copy.item4,
+  ]
+
   return (
     <section
       id="academy"
       className="py-20 md:py-28 bg-white dark:bg-[#001219]"
     >
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-white/10 bg-[#001219] text-white p-8 md:p-12">
-          <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#0e5c6e]/20 blur-3xl" />
+        <motion.div
+          initial={
+            reduceMotion
+              ? false
+              : {
+                  opacity: 0,
+                  y: 34,
+                  scale: 0.985,
+                }
+          }
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.15,
+          }}
+          transition={{
+            duration: 0.7,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-white/10 bg-[#001219] text-white p-8 md:p-12"
+        >
+          <motion.div
+            initial={
+              reduceMotion
+                ? false
+                : {
+                    opacity: 0,
+                    scale: 0.7,
+                  }
+            }
+            whileInView={{
+              opacity: 1,
+              scale: 1,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              duration: 1,
+              delay: 0.15,
+            }}
+            className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#0e5c6e]/20 blur-3xl"
+          />
 
           <div className="relative grid gap-10 md:grid-cols-[1.2fr_0.8fr] md:items-center">
-            <div>
+            <motion.div
+              initial={
+                reduceMotion
+                  ? false
+                  : {
+                      opacity: 0,
+                      x: -22,
+                    }
+              }
+              whileInView={{
+                opacity: 1,
+                x: 0,
+              }}
+              viewport={{
+                once: true,
+              }}
+              transition={{
+                duration: 0.65,
+                delay: 0.1,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#5fb8cc]">
                   {copy.eyebrow}
@@ -168,23 +247,39 @@ export default function AcademyPreview() {
                     placeholder={copy.placeholder}
                     required
                     disabled={status === "loading"}
-                    className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white placeholder:text-white/45 outline-none transition focus:border-[#5fb8cc] focus:ring-2 focus:ring-[#5fb8cc]/20 disabled:opacity-60"
+                    className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white placeholder:text-white/45 outline-none transition-all duration-200 focus:border-[#5fb8cc] focus:ring-2 focus:ring-[#5fb8cc]/20 focus:bg-white/15 disabled:opacity-60"
                   />
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={status === "loading"}
-                    className="shrink-0 rounded-xl bg-white text-[#001219] hover:bg-gray-100 font-semibold px-6 py-3 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                    whileHover={
+                      reduceMotion
+                        ? undefined
+                        : {
+                            y: -2,
+                            scale: 1.015,
+                          }
+                    }
+                    whileTap={
+                      reduceMotion
+                        ? undefined
+                        : {
+                            scale: 0.98,
+                          }
+                    }
+                    className="shrink-0 rounded-xl bg-white text-[#001219] hover:bg-gray-100 font-semibold px-6 py-3 transition-colors shadow-sm hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {status === "loading"
                       ? copy.loading
                       : copy.button}
+
                     {status !== "loading" && (
                       <span className="ml-2" aria-hidden="true">
                         →
                       </span>
                     )}
-                  </button>
+                  </motion.button>
                 </div>
 
                 <div
@@ -216,28 +311,53 @@ export default function AcademyPreview() {
                   )}
                 </div>
               </form>
-            </div>
+            </motion.div>
 
             <div className="grid gap-3">
-              {[copy.item1, copy.item2, copy.item3, copy.item4].map(
-                (item, index) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0e5c6e] text-sm font-bold">
-                      {index + 1}
-                    </span>
+              {items.map((item, index) => (
+                <motion.div
+                  key={item}
+                  initial={
+                    reduceMotion
+                      ? false
+                      : {
+                          opacity: 0,
+                          x: 24,
+                        }
+                  }
+                  whileInView={{
+                    opacity: 1,
+                    x: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    delay: 0.18 + index * 0.09,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  whileHover={
+                    reduceMotion
+                      ? undefined
+                      : {
+                          x: 4,
+                        }
+                  }
+                  className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 transition-colors hover:bg-white/10"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0e5c6e] text-sm font-bold">
+                    {index + 1}
+                  </span>
 
-                    <span className="font-medium">
-                      {item}
-                    </span>
-                  </div>
-                )
-              )}
+                  <span className="font-medium">
+                    {item}
+                  </span>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

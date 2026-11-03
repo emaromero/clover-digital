@@ -1,35 +1,65 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Moon, Sun } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
+import {
+  Home,
+  Camera,
+  Images,
+  Calculator,
+  Moon,
+  Sun,
+} from "lucide-react"
 import { useLanguage } from "./language-provider"
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [activeSection, setActiveSection] = useState("home")
+
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
 
+  const reduceMotion = useReducedMotion()
+
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      if (currentScrollY > 50) {
-        setScrolled(true)
-      } else {
-        setScrolled(false)
+      setScrolled(window.scrollY > 50)
+
+      const sectionIds = [
+        "home",
+        "services",
+        "portfolio",
+        "cotizador",
+      ]
+
+      const position = window.scrollY + 220
+
+      let current = "home"
+
+      for (const id of sectionIds) {
+        const element = document.getElementById(id)
+
+        if (element && element.offsetTop <= position) {
+          current = id
+        }
       }
+
+      setActiveSection(current)
     }
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    handleScroll()
 
-  const toggleMenu = () => setIsOpen(!isOpen)
-  const closeMenu = () => setIsOpen(false)
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+    })
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark")
@@ -39,119 +69,301 @@ export default function Navbar() {
     setLanguage(language === "es" ? "en" : "es")
   }
 
-  const navbarClasses = `fixed w-full z-40 transition-all duration-300 ${
-    scrolled ? "bg-[#B8D8D8]/90 dark:bg-[#004E64]/90 backdrop-blur-sm shadow-sm" : "bg-transparent"
-  }`
+  const scrollToSection = (id: string) => {
+    setActiveSection(id)
 
-  const navLinks = [
-    { href: "#home", label: t("home") },
-    { href: "#services", label: t("services") },
-    { href: "#portfolio", label: t("portfolio") },
-    { href: "#cotizador", label: t("contactUs") },
+    const element = document.getElementById(id)
+
+    if (!element) return
+
+    element.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    })
+  }
+
+  const logoUrl =
+    "https://i.postimg.cc/pLSPM0KB/logo-Clover-Digital.png"
+
+  const desktopLinks = [
+    {
+      id: "home",
+      href: "#home",
+      label: t("home"),
+    },
+    {
+      id: "services",
+      href: "#services",
+      label: t("services"),
+    },
+    {
+      id: "portfolio",
+      href: "#portfolio",
+      label: t("portfolio"),
+    },
+    {
+      id: "cotizador",
+      href: "#cotizador",
+      label: t("contactUs"),
+    },
   ]
 
-  const logoUrl = "https://i.postimg.cc/pLSPM0KB/logo-Clover-Digital.png"
+  const mobileLinks = [
+    {
+      id: "home",
+      href: "#home",
+      label: language === "es" ? "Inicio" : "Home",
+      icon: Home,
+    },
+    {
+      id: "services",
+      href: "#services",
+      label: language === "es" ? "Servicios" : "Services",
+      icon: Camera,
+    },
+    {
+      id: "portfolio",
+      href: "#portfolio",
+      label: "Portfolio",
+      icon: Images,
+    },
+    {
+      id: "cotizador",
+      href: "#cotizador",
+      label: language === "es" ? "Cotizar" : "Quote",
+      icon: Calculator,
+    },
+  ]
+
+  const navbarClasses = `
+    fixed top-0 left-0 right-0 z-[90]
+    transition-all duration-300
+    ${
+      scrolled
+        ? "bg-[#B8D8D8]/85 dark:bg-[#004E64]/85 backdrop-blur-xl shadow-sm"
+        : "bg-transparent"
+    }
+  `
 
   return (
-    <nav className={navbarClasses}>
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="#home" className="relative h-12 w-12 z-50">
-          <Image
-            src={logoUrl || "/placeholder.svg"}
-            alt="Clover Digital"
-            width={48}
-            height={48}
-            className="object-contain"
-          />
-        </Link>
+    <>
+      <nav className={navbarClasses}>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Link
+            href="#home"
+            onClick={(event) => {
+              event.preventDefault()
+              scrollToSection("home")
+            }}
+            className="relative h-12 w-12"
+            aria-label="Clover Digital"
+          >
+            <Image
+              src={logoUrl}
+              alt="Clover Digital"
+              width={48}
+              height={48}
+              priority
+              className="object-contain"
+            />
+          </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-8">
-          <div className="flex items-center space-x-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-700 dark:text-gray-200 hover:text-[#0A9396] dark:hover:text-[#0A9396] transition-colors"
-                onClick={closeMenu}
+          <div className="hidden md:flex items-center space-x-8">
+            <div className="flex items-center space-x-6">
+              {desktopLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    scrollToSection(link.id)
+                  }}
+                  className="text-gray-700 dark:text-gray-200 hover:text-[#0A9396] dark:hover:text-[#0A9396] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="px-2 py-1 rounded-md hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                aria-label={
+                  language === "es"
+                    ? "Switch to English"
+                    : "Cambiar a Español"
+                }
               >
-                {link.label}
-              </Link>
-            ))}
+                {language === "es" ? "EN" : "ES"}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                aria-label={
+                  theme === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex md:hidden items-center gap-2">
             <button
+              type="button"
               onClick={toggleLanguage}
-              className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label={language === "es" ? "Switch to English" : "Cambiar a Español"}
+              className="px-3 py-2 rounded-full bg-white/25 dark:bg-black/10 backdrop-blur-md transition-colors"
+              aria-label={
+                language === "es"
+                  ? "Switch to English"
+                  : "Cambiar a Español"
+              }
             >
               {language === "es" ? "EN" : "ES"}
             </button>
 
             <button
+              type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="p-2.5 rounded-full bg-white/25 dark:bg-black/10 backdrop-blur-md transition-colors"
+              aria-label={
+                theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
             >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile Menu Button */}
-        <div className="flex items-center space-x-4 md:hidden">
-          <button
-            onClick={toggleLanguage}
-            className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label={language === "es" ? "Switch to English" : "Cambiar a Español"}
-          >
-            {language === "es" ? "EN" : "ES"}
-          </button>
+      <div
+        className="
+          fixed
+          left-1/2
+          -translate-x-1/2
+          z-[100]
+          md:hidden
+          w-[calc(100%_-_24px)]
+          max-w-[430px]
+          px-1
+        "
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom) + 10px)",
+        }}
+      >
+        <div
+          className="
+            relative
+            grid
+            grid-cols-4
+            items-center
+            rounded-[30px]
+            border
+            border-white/60
+            dark:border-white/10
+            bg-white/65
+            dark:bg-[#06222c]/72
+            backdrop-blur-2xl
+            shadow-[0_12px_40px_rgba(0,0,0,0.18)]
+            p-1.5
+          "
+        >
+          {mobileLinks.map((item) => {
+            const Icon = item.icon
+            const active = activeSection === item.id
 
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                onClick={(event) => {
+                  event.preventDefault()
+                  scrollToSection(item.id)
+                }}
+                className="
+                  relative
+                  flex
+                  min-h-[58px]
+                  flex-col
+                  items-center
+                  justify-center
+                  gap-1
+                  rounded-[24px]
+                  text-[10px]
+                  font-semibold
+                  transition-colors
+                "
+              >
+                {active && (
+                  <motion.span
+                    layoutId="mobile-nav-active"
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : {
+                            type: "spring",
+                            stiffness: 420,
+                            damping: 34,
+                          }
+                    }
+                    className="
+                      absolute
+                      inset-0
+                      rounded-[24px]
+                      bg-white/90
+                      dark:bg-white/12
+                      shadow-sm
+                      border
+                      border-white/70
+                      dark:border-white/10
+                    "
+                  />
+                )}
 
-          <button
-            onClick={toggleMenu}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-50"
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-          >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+                <Icon
+                  className={`
+                    relative z-10 h-5 w-5 transition-colors
+                    ${
+                      active
+                        ? "text-[#0e5c6e] dark:text-[#5fb8cc]"
+                        : "text-gray-500 dark:text-gray-300"
+                    }
+                  `}
+                />
+
+                <span
+                  className={`
+                    relative z-10 transition-colors
+                    ${
+                      active
+                        ? "text-[#001219] dark:text-white"
+                        : "text-gray-500 dark:text-gray-300"
+                    }
+                  `}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
         </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-[#B8D8D8] dark:bg-[#004E64] z-40 flex flex-col items-center justify-center"
-            >
-              <div className="flex flex-col items-center space-y-6">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-xl font-medium text-gray-700 dark:text-gray-200 hover:text-[#0A9396] dark:hover:text-[#0A9396] transition-colors"
-                    onClick={closeMenu}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-    </nav>
+    </>
   )
 }

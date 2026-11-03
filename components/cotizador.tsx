@@ -555,10 +555,9 @@ export default function Cotizador() {
   return (
     <section
       id="cotizador"
-      className="pt-16 md:pt-24 bg-white dark:bg-[#001219]"
+      className="pt-16 md:pt-24 pb-52 md:pb-8 bg-white dark:bg-[#001219]"
     >
       <div className="container mx-auto px-4 max-w-4xl">
-
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-3 text-gray-800 dark:text-white">
           {c.title}
         </h2>
@@ -568,8 +567,6 @@ export default function Cotizador() {
         </p>
 
         <div className="space-y-12">
-
-          {/* 1. TIPO DE PROPIEDAD */}
           <div>
             <h3 className={h3}>
               {c.typeTitle}
@@ -604,7 +601,6 @@ export default function Cotizador() {
             </div>
           </div>
 
-          {/* 2. PAQUETE */}
           <div>
             <h3 className={h3}>
               {c.packageTitle}
@@ -658,7 +654,6 @@ export default function Cotizador() {
             </div>
           </div>
 
-          {/* 3. CONTENIDO ADICIONAL */}
           <div>
             <h3 className={h3}>
               {c.extrasTitle}
@@ -744,7 +739,6 @@ export default function Cotizador() {
             </p>
           </div>
 
-          {/* 4. UBICACIÓN */}
           <div>
             <h3 className={h3}>
               {c.zoneTitle}
@@ -755,7 +749,6 @@ export default function Cotizador() {
             </p>
 
             <div className="grid gap-3 md:grid-cols-2">
-
               <button
                 type="button"
                 aria-pressed={
@@ -801,7 +794,6 @@ export default function Cotizador() {
                   {c.zoneOutsideDesc}
                 </span>
               </button>
-
             </div>
 
             {zona === "fuera" && (
@@ -811,7 +803,6 @@ export default function Cotizador() {
             )}
           </div>
 
-          {/* 5. ENTREGA */}
           <div>
             <h3 className={h3}>
               {c.deliveryTitle}
@@ -822,7 +813,6 @@ export default function Cotizador() {
             </p>
 
             <div className="grid gap-3 md:grid-cols-3">
-
               <button
                 type="button"
                 aria-pressed={
@@ -903,18 +893,15 @@ export default function Cotizador() {
                   + {money(ENTREGA_24)}
                 </span>
               </button>
-
             </div>
           </div>
 
-          {/* 6. DATOS */}
           <div>
             <h3 className={`${h3} mb-4`}>
               {c.dataTitle}
             </h3>
 
             <div className="grid gap-3 md:grid-cols-2">
-
               <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
                 {c.name}
 
@@ -982,7 +969,6 @@ export default function Cotizador() {
                   }
                 />
               </label>
-
             </div>
 
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100 mt-6 mb-2">
@@ -1022,14 +1008,12 @@ export default function Cotizador() {
             </div>
           </div>
 
-          {/* RESUMEN */}
           <div>
             <h3 className={`${h3} mb-3`}>
               {c.summary}
             </h3>
 
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#06222c] p-4 text-sm text-gray-800 dark:text-gray-100">
-
               {resumen.length ? (
                 resumen.map(
                   (linea, i) => (
@@ -1060,19 +1044,14 @@ export default function Cotizador() {
                   * {c.zoneWarning}
                 </p>
               )}
-
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* TOTAL FLOTANTE */}
-      <div className="sticky bottom-4 z-30 mt-10 px-4 pointer-events-none">
+      <div className="sticky bottom-[166px] md:bottom-4 z-[80] mt-10 px-4 pointer-events-none">
         <div className="max-w-md mx-auto pointer-events-auto">
-
           <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-[#06222c]/95 backdrop-blur-md shadow-lg px-5 py-3">
-
             <div className="min-w-0">
               <span className="block text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {c.estimatedTotal}
@@ -1098,11 +1077,9 @@ export default function Cotizador() {
                 →
               </span>
             </button>
-
           </div>
         </div>
       </div>
-
     </section>
   )
 }
