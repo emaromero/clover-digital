@@ -76,9 +76,22 @@ export default function Navbar() {
 
     if (!element) return
 
-    element.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "start",
+    const headerOffset =
+      window.innerWidth < 768 ? 110 : 90
+
+    const elementPosition =
+      element.getBoundingClientRect().top
+
+    const offsetPosition =
+      elementPosition +
+      window.scrollY -
+      headerOffset
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: reduceMotion
+        ? "auto"
+        : "smooth",
     })
   }
 
@@ -147,6 +160,7 @@ export default function Navbar() {
 
   return (
     <>
+      {/* NAVBAR SUPERIOR */}
       <nav className={navbarClasses}>
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link
@@ -168,6 +182,7 @@ export default function Navbar() {
             />
           </Link>
 
+          {/* DESKTOP */}
           <div className="hidden md:flex items-center space-x-8">
             <div className="flex items-center space-x-6">
               {desktopLinks.map((link) => (
@@ -218,6 +233,7 @@ export default function Navbar() {
             </div>
           </div>
 
+          {/* MOBILE SUPERIOR */}
           <div className="flex md:hidden items-center gap-2">
             <button
               type="button"
@@ -252,6 +268,7 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* BARRA INFERIOR MOBILE */}
       <div
         className="
           fixed
@@ -264,15 +281,18 @@ export default function Navbar() {
           px-1
         "
         style={{
-          bottom: "calc(env(safe-area-inset-bottom) + 10px)",
+          bottom: "calc(env(safe-area-inset-bottom) + 2px)",
         }}
       >
         <div
           className="
             relative
-            grid
-            grid-cols-4
+            flex
             items-center
+            gap-1
+            overflow-x-auto
+            overscroll-x-contain
+            scroll-smooth
             rounded-[30px]
             border
             border-white/60
@@ -282,6 +302,8 @@ export default function Navbar() {
             backdrop-blur-2xl
             shadow-[0_12px_40px_rgba(0,0,0,0.18)]
             p-1.5
+            [scrollbar-width:none]
+            [&::-webkit-scrollbar]:hidden
           "
         >
           {mobileLinks.map((item) => {
@@ -299,6 +321,7 @@ export default function Navbar() {
                 className="
                   relative
                   flex
+                  min-w-[92px]
                   min-h-[58px]
                   flex-col
                   items-center
@@ -308,6 +331,7 @@ export default function Navbar() {
                   text-[10px]
                   font-semibold
                   transition-colors
+                  shrink-0
                 "
               >
                 {active && (
@@ -318,8 +342,9 @@ export default function Navbar() {
                         ? { duration: 0 }
                         : {
                             type: "spring",
-                            stiffness: 420,
-                            damping: 34,
+                            stiffness: 320,
+                            damping: 28,
+                            mass: 0.7,
                           }
                     }
                     className="

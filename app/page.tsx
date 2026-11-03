@@ -40,9 +40,7 @@ export default function Home() {
 
       <Cotizador />
 
-      <Reveal>
-        <Footer />
-      </Reveal>
+      <Footer />
 
       <WhatsAppFloat />
     </main>
