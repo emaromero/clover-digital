@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/components/language-provider";
 import LoadingScreen from "@/components/loading-screen";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
 const poppins = Poppins({
@@ -261,6 +262,7 @@ export default function RootLayout({
           <LanguageProvider>
             <LoadingScreen />
             {children}
+            <Analytics />
           </LanguageProvider>
         </ThemeProvider>
       </body>

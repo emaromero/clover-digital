@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion"
 import { useLanguage } from "./language-provider"
+import { trackEvent } from "@/lib/analytics"
 
 const REVIEW_URL =
   "https://g.page/r/Cf6WHSOEt25gEBM/review"
@@ -179,6 +180,9 @@ export default function GoogleReviews() {
                   href={REVIEW_URL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() =>
+                    trackEvent("google_review_click")
+                  }
                   whileHover={
                     reduceMotion
                       ? undefined

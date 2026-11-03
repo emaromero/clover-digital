@@ -4,6 +4,7 @@ import { useState } from "react"
 import { MessageCircle, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLanguage } from "./language-provider"
+import { trackEvent } from "@/lib/analytics"
 
 export default function WhatsAppFloat() {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -19,6 +20,11 @@ export default function WhatsAppFloat() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="WhatsApp"
+        onClick={() =>
+          trackEvent("whatsapp_click", {
+            location: "mobile_float",
+          })
+        }
         className="
           fixed
           right-4
@@ -90,6 +96,11 @@ export default function WhatsAppFloat() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent("whatsapp_click", {
+                    location: "desktop_float",
+                  })
+                }
                 className="block w-full bg-[#25D366] hover:bg-[#128C7E] text-white text-center py-2 px-4 rounded-md transition-colors"
               >
                 {t("whatsapp-button")}

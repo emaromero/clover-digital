@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { useLanguage } from "./language-provider"
+import { trackEvent } from "@/lib/analytics"
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -107,6 +108,10 @@ export default function AcademyPreview() {
       )
 
       if (response.ok) {
+        trackEvent("academy_waitlist_signup", {
+          source: "homepage",
+        })
+
         setStatus("success")
         setEmail("")
         return

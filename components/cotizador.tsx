@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useLanguage } from "./language-provider"
+import { trackEvent } from "@/lib/analytics"
 
 const WHATSAPP = "5491164473603"
 
@@ -535,6 +536,14 @@ export default function Cotizador() {
       `\n${c.whatsappTime}: ${horaTexto}` +
       `\n${c.whatsappDelivery}: ${entregaTexto}` +
       notaViatico
+
+    trackEvent("quote_request", {
+      value: total,
+      currency: "ARS",
+      services: lineasServicio.length,
+      zone: zona || "sin_seleccionar",
+      delivery: entrega,
+    })
 
     window.open(
       `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`,
