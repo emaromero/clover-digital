@@ -18,11 +18,9 @@ import { useLanguage } from "./language-provider"
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
-  const [previousIndex, setPreviousIndex] = useState(0)
 
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
-
   const reduceMotion = useReducedMotion()
 
   const sectionIds = [
@@ -61,18 +59,7 @@ export default function Navbar() {
         }
       }
 
-      setActiveSection((oldSection) => {
-        if (oldSection !== current) {
-          const oldIndex =
-            sectionIds.indexOf(oldSection)
-
-          setPreviousIndex(
-            oldIndex >= 0 ? oldIndex : 0
-          )
-        }
-
-        return current
-      })
+      setActiveSection(current)
     }
 
     handleScroll()
@@ -112,10 +99,6 @@ export default function Navbar() {
   const scrollToSection = (
     id: string
   ) => {
-    const newIndex =
-      sectionIds.indexOf(id)
-
-    setPreviousIndex(activeIndex)
     setActiveSection(id)
 
     const element =
@@ -230,14 +213,12 @@ export default function Navbar() {
     }
   `
 
-  const movingRight =
-    activeIndex > previousIndex
-
   return (
     <>
       {/* HEADER SUPERIOR */}
       <nav className={navbarClasses}>
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+
           <Link
             href="#home"
             onClick={(event) => {
@@ -259,33 +240,31 @@ export default function Navbar() {
 
           {/* DESKTOP */}
           <div className="hidden md:flex items-center space-x-8">
+
             <div className="flex items-center space-x-6">
-              {desktopLinks.map(
-                (link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={(event) => {
-                      event.preventDefault()
-                      scrollToSection(
-                        link.id
-                      )
-                    }}
-                    className="
-                      text-gray-700
-                      dark:text-gray-200
-                      hover:text-[#0A9396]
-                      dark:hover:text-[#0A9396]
-                      transition-colors
-                    "
-                  >
-                    {link.label}
-                  </Link>
-                )
-              )}
+              {desktopLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    scrollToSection(link.id)
+                  }}
+                  className="
+                    text-gray-700
+                    dark:text-gray-200
+                    hover:text-[#0A9396]
+                    dark:hover:text-[#0A9396]
+                    transition-colors
+                  "
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
 
             <div className="flex items-center space-x-4">
+
               <button
                 type="button"
                 onClick={toggleLanguage}
@@ -297,6 +276,11 @@ export default function Navbar() {
                   dark:hover:bg-gray-800/50
                   transition-colors
                 "
+                aria-label={
+                  language === "es"
+                    ? "Switch to English"
+                    : "Cambiar a Español"
+                }
               >
                 {language === "es"
                   ? "EN"
@@ -313,6 +297,11 @@ export default function Navbar() {
                   dark:hover:bg-gray-800/50
                   transition-colors
                 "
+                aria-label={
+                  theme === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
               >
                 {theme === "dark" ? (
                   <Sun className="h-5 w-5" />
@@ -320,11 +309,13 @@ export default function Navbar() {
                   <Moon className="h-5 w-5" />
                 )}
               </button>
+
             </div>
           </div>
 
           {/* MOBILE SUPERIOR */}
           <div className="flex md:hidden items-center gap-2">
+
             <button
               type="button"
               onClick={toggleLanguage}
@@ -335,7 +326,13 @@ export default function Navbar() {
                 bg-white/25
                 dark:bg-black/10
                 backdrop-blur-md
+                transition-colors
               "
+              aria-label={
+                language === "es"
+                  ? "Switch to English"
+                  : "Cambiar a Español"
+              }
             >
               {language === "es"
                 ? "EN"
@@ -351,7 +348,13 @@ export default function Navbar() {
                 bg-white/25
                 dark:bg-black/10
                 backdrop-blur-md
+                transition-colors
               "
+              aria-label={
+                theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
@@ -359,6 +362,7 @@ export default function Navbar() {
                 <Moon className="h-5 w-5" />
               )}
             </button>
+
           </div>
         </div>
       </nav>
@@ -393,12 +397,13 @@ export default function Navbar() {
             bg-white/60
             dark:bg-[#06222c]/72
             backdrop-blur-2xl
-            shadow-[0_14px_40px_rgba(0,0,0,0.20)]
+            shadow-[0_14px_40px_rgba(0,0,0,0.18)]
             p-1.5
             overflow-hidden
           "
         >
-          {/* BURBUJA / LENTE */}
+
+          {/* CÁPSULA LIQUID */}
           <motion.div
             className="
               absolute
@@ -407,104 +412,50 @@ export default function Navbar() {
               left-1.5
               rounded-[27px]
               border
-              border-white/80
+              border-white/75
               dark:border-white/15
-              bg-white/75
-              dark:bg-white/10
+              bg-white/72
+              dark:bg-white/12
               backdrop-blur-2xl
-              shadow-[
-                0_5px_20px_rgba(0,0,0,0.13),
-                inset_0_1px_1px_rgba(255,255,255,0.9)
-              ]
+              shadow-[0_7px_22px_rgba(0,0,0,0.13),inset_0_1px_1px_rgba(255,255,255,0.9)]
               pointer-events-none
               overflow-hidden
             "
             style={{
               width:
                 "calc((100% - 12px) / 4)",
-              transformOrigin: movingRight
-                ? "left center"
-                : "right center",
             }}
-            animate={
-              reduceMotion
-                ? {
-                    x: `${activeIndex * 100}%`,
-                  }
-                : {
-                    x: `${activeIndex * 100}%`,
-                    scaleX: [
-                      1,
-                      1.2,
-                      1.08,
-                      0.96,
-                      1,
-                    ],
-                    scaleY: [
-                      1,
-                      0.96,
-                      1.02,
-                      1.03,
-                      1,
-                    ],
-                  }
-            }
+            animate={{
+              x: `${activeIndex * 100}%`,
+            }}
             transition={
               reduceMotion
                 ? {
                     duration: 0,
                   }
                 : {
-                    x: {
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 24,
-                      mass: 0.75,
-                    },
-                    scaleX: {
-                      duration: 0.52,
-                      times: [
-                        0,
-                        0.22,
-                        0.5,
-                        0.76,
-                        1,
-                      ],
-                      ease: [
-                        0.22,
-                        1,
-                        0.36,
-                        1,
-                      ],
-                    },
-                    scaleY: {
-                      duration: 0.52,
-                      times: [
-                        0,
-                        0.22,
-                        0.5,
-                        0.76,
-                        1,
-                      ],
-                    },
+                    type: "spring",
+                    stiffness: 230,
+                    damping: 27,
+                    mass: 0.78,
                   }
             }
           >
-            {/* BRILLO SUPERIOR */}
+
+            {/* REFLEJO SUPERIOR */}
             <div
               className="
                 absolute
-                top-0
-                left-[15%]
-                right-[15%]
-                h-[2px]
+                top-[1px]
+                left-[16%]
+                right-[16%]
+                h-[1px]
                 rounded-full
-                bg-white/90
-                blur-[0.3px]
+                bg-white/95
               "
             />
 
-            {/* REFLEJO INTERNO */}
+            {/* DEGRADADO DE VIDRIO */}
             <div
               className="
                 absolute
@@ -512,29 +463,31 @@ export default function Navbar() {
                 rounded-[27px]
                 bg-gradient-to-b
                 from-white/30
-                via-white/5
+                via-white/8
                 to-transparent
               "
             />
 
-            {/* BORDE CROMÁTICO SUTIL */}
+            {/* REFLEJO LATERAL */}
             <div
               className="
                 absolute
-                inset-[1px]
-                rounded-[26px]
-                shadow-[
-                  inset_1px_0_2px_rgba(0,180,255,0.18),
-                  inset_-1px_0_2px_rgba(255,0,150,0.12)
-                ]
+                left-[2px]
+                top-[18%]
+                bottom-[18%]
+                w-[1px]
+                rounded-full
+                bg-white/60
               "
             />
+
           </motion.div>
 
           {/* BOTONES */}
           {mobileLinks.map(
             (item, index) => {
               const Icon = item.icon
+
               const active =
                 activeIndex === index
 
@@ -544,10 +497,6 @@ export default function Navbar() {
                   href={item.href}
                   onClick={(event) => {
                     event.preventDefault()
-
-                    setPreviousIndex(
-                      activeIndex
-                    )
 
                     scrollToSection(
                       item.id
@@ -569,20 +518,22 @@ export default function Navbar() {
                     touch-manipulation
                   "
                 >
+
                   <motion.div
                     animate={{
                       y: active
                         ? -1
                         : 0,
                       scale: active
-                        ? 1.08
+                        ? 1.04
                         : 1,
                     }}
                     transition={{
                       type: "spring",
-                      stiffness: 380,
-                      damping: 22,
+                      stiffness: 360,
+                      damping: 26,
                     }}
+                    className="relative"
                   >
                     <Icon
                       className={`
@@ -612,10 +563,12 @@ export default function Navbar() {
                   >
                     {item.label}
                   </span>
+
                 </Link>
               )
             }
           )}
+
         </div>
       </div>
     </>
