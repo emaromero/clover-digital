@@ -35,14 +35,20 @@ export default function Navbar() {
         "cotizador",
       ]
 
-      const position = window.scrollY + 220
+      const detectionPoint = window.scrollY + 180
 
       let current = "home"
 
       for (const id of sectionIds) {
         const element = document.getElementById(id)
 
-        if (element && element.offsetTop <= position) {
+        if (!element) continue
+
+        const elementTop =
+          element.getBoundingClientRect().top +
+          window.scrollY
+
+        if (elementTop <= detectionPoint) {
           current = id
         }
       }
@@ -76,22 +82,28 @@ export default function Navbar() {
 
     if (!element) return
 
+    if (id === "home") {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? "auto" : "smooth",
+      })
+
+      return
+    }
+
     const headerOffset =
-      window.innerWidth < 768 ? 110 : 90
+      window.innerWidth < 768 ? 112 : 92
 
-    const elementPosition =
-      element.getBoundingClientRect().top
+    const elementTop =
+      element.getBoundingClientRect().top +
+      window.scrollY
 
-    const offsetPosition =
-      elementPosition +
-      window.scrollY -
-      headerOffset
+    const finalPosition =
+      elementTop - headerOffset
 
     window.scrollTo({
-      top: offsetPosition,
-      behavior: reduceMotion
-        ? "auto"
-        : "smooth",
+      top: finalPosition,
+      behavior: reduceMotion ? "auto" : "smooth",
     })
   }
 
@@ -125,13 +137,19 @@ export default function Navbar() {
     {
       id: "home",
       href: "#home",
-      label: language === "es" ? "Inicio" : "Home",
+      label:
+        language === "es"
+          ? "Inicio"
+          : "Home",
       icon: Home,
     },
     {
       id: "services",
       href: "#services",
-      label: language === "es" ? "Servicios" : "Services",
+      label:
+        language === "es"
+          ? "Servicios"
+          : "Services",
       icon: Camera,
     },
     {
@@ -143,14 +161,22 @@ export default function Navbar() {
     {
       id: "cotizador",
       href: "#cotizador",
-      label: language === "es" ? "Cotizar" : "Quote",
+      label:
+        language === "es"
+          ? "Cotizar"
+          : "Quote",
       icon: Calculator,
     },
   ]
 
   const navbarClasses = `
-    fixed top-0 left-0 right-0 z-[90]
-    transition-all duration-300
+    fixed
+    top-0
+    left-0
+    right-0
+    z-[90]
+    transition-all
+    duration-300
     ${
       scrolled
         ? "bg-[#B8D8D8]/85 dark:bg-[#004E64]/85 backdrop-blur-xl shadow-sm"
@@ -193,7 +219,13 @@ export default function Navbar() {
                     event.preventDefault()
                     scrollToSection(link.id)
                   }}
-                  className="text-gray-700 dark:text-gray-200 hover:text-[#0A9396] dark:hover:text-[#0A9396] transition-colors"
+                  className="
+                    text-gray-700
+                    dark:text-gray-200
+                    hover:text-[#0A9396]
+                    dark:hover:text-[#0A9396]
+                    transition-colors
+                  "
                 >
                   {link.label}
                 </Link>
@@ -204,7 +236,14 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={toggleLanguage}
-                className="px-2 py-1 rounded-md hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                className="
+                  px-2
+                  py-1
+                  rounded-md
+                  hover:bg-gray-100/50
+                  dark:hover:bg-gray-800/50
+                  transition-colors
+                "
                 aria-label={
                   language === "es"
                     ? "Switch to English"
@@ -217,7 +256,13 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+                className="
+                  p-2
+                  rounded-full
+                  hover:bg-gray-100/50
+                  dark:hover:bg-gray-800/50
+                  transition-colors
+                "
                 aria-label={
                   theme === "dark"
                     ? "Switch to light mode"
@@ -238,7 +283,15 @@ export default function Navbar() {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="px-3 py-2 rounded-full bg-white/25 dark:bg-black/10 backdrop-blur-md transition-colors"
+              className="
+                px-3
+                py-2
+                rounded-full
+                bg-white/25
+                dark:bg-black/10
+                backdrop-blur-md
+                transition-colors
+              "
               aria-label={
                 language === "es"
                   ? "Switch to English"
@@ -251,7 +304,14 @@ export default function Navbar() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2.5 rounded-full bg-white/25 dark:bg-black/10 backdrop-blur-md transition-colors"
+              className="
+                p-2.5
+                rounded-full
+                bg-white/25
+                dark:bg-black/10
+                backdrop-blur-md
+                transition-colors
+              "
               aria-label={
                 theme === "dark"
                   ? "Switch to light mode"
@@ -281,18 +341,16 @@ export default function Navbar() {
           px-1
         "
         style={{
-          bottom: "calc(env(safe-area-inset-bottom) + 2px)",
+          bottom:
+            "calc(env(safe-area-inset-bottom) + 2px)",
         }}
       >
         <div
           className="
             relative
-            flex
+            grid
+            grid-cols-4
             items-center
-            gap-1
-            overflow-x-auto
-            overscroll-x-contain
-            scroll-smooth
             rounded-[30px]
             border
             border-white/60
@@ -302,13 +360,13 @@ export default function Navbar() {
             backdrop-blur-2xl
             shadow-[0_12px_40px_rgba(0,0,0,0.18)]
             p-1.5
-            [scrollbar-width:none]
-            [&::-webkit-scrollbar]:hidden
+            overflow-hidden
           "
         >
           {mobileLinks.map((item) => {
             const Icon = item.icon
-            const active = activeSection === item.id
+            const active =
+              activeSection === item.id
 
             return (
               <Link
@@ -321,7 +379,6 @@ export default function Navbar() {
                 className="
                   relative
                   flex
-                  min-w-[92px]
                   min-h-[58px]
                   flex-col
                   items-center
@@ -330,51 +387,107 @@ export default function Navbar() {
                   rounded-[24px]
                   text-[10px]
                   font-semibold
-                  transition-colors
-                  shrink-0
+                  select-none
+                  touch-manipulation
                 "
               >
+                {/* CÁPSULA LIQUID ACTIVA */}
                 {active && (
                   <motion.span
                     layoutId="mobile-nav-active"
                     transition={
                       reduceMotion
-                        ? { duration: 0 }
+                        ? {
+                            duration: 0,
+                          }
                         : {
                             type: "spring",
-                            stiffness: 320,
-                            damping: 28,
-                            mass: 0.7,
+                            stiffness: 300,
+                            damping: 25,
+                            mass: 0.75,
                           }
                     }
                     className="
                       absolute
                       inset-0
                       rounded-[24px]
-                      bg-white/90
-                      dark:bg-white/12
-                      shadow-sm
+                      bg-white/92
+                      dark:bg-white/14
                       border
-                      border-white/70
+                      border-white/80
                       dark:border-white/10
+                      shadow-[0_6px_18px_rgba(0,0,0,0.10)]
+                      backdrop-blur-xl
                     "
-                  />
+                  >
+                    <span
+                      className="
+                        absolute
+                        inset-x-3
+                        top-1
+                        h-[1px]
+                        rounded-full
+                        bg-white/90
+                        dark:bg-white/20
+                      "
+                    />
+
+                    <span
+                      className="
+                        absolute
+                        inset-0
+                        rounded-[24px]
+                        bg-gradient-to-b
+                        from-white/20
+                        to-transparent
+                        pointer-events-none
+                      "
+                    />
+                  </motion.span>
                 )}
 
-                <Icon
-                  className={`
-                    relative z-10 h-5 w-5 transition-colors
-                    ${
-                      active
-                        ? "text-[#0e5c6e] dark:text-[#5fb8cc]"
-                        : "text-gray-500 dark:text-gray-300"
-                    }
-                  `}
-                />
+                {/* ICONO */}
+                <motion.div
+                  animate={
+                    active && !reduceMotion
+                      ? {
+                          y: -1,
+                          scale: 1.04,
+                        }
+                      : {
+                          y: 0,
+                          scale: 1,
+                        }
+                  }
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 25,
+                  }}
+                  className="relative z-10"
+                >
+                  <Icon
+                    className={`
+                      h-5
+                      w-5
+                      transition-colors
+                      duration-200
+                      ${
+                        active
+                          ? "text-[#0e5c6e] dark:text-[#5fb8cc]"
+                          : "text-gray-500 dark:text-gray-300"
+                      }
+                    `}
+                  />
+                </motion.div>
 
+                {/* TEXTO */}
                 <span
                   className={`
-                    relative z-10 transition-colors
+                    relative
+                    z-10
+                    transition-colors
+                    duration-200
                     ${
                       active
                         ? "text-[#001219] dark:text-white"
