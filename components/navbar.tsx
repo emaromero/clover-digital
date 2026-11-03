@@ -1,10 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { motion, useReducedMotion } from "framer-motion"
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+} from "framer-motion"
 import {
   Home,
   Camera,
@@ -18,10 +23,17 @@ import { useLanguage } from "./language-provider"
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
+  const [itemWidth, setItemWidth] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const trackRef = useRef<HTMLDivElement>(null)
 
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
+
   const reduceMotion = useReducedMotion()
+
+  const capsuleX = useMotionValue(0)
 
   const sectionIds = [
     "home",
@@ -35,9 +47,60 @@ export default function Navbar() {
     sectionIds.indexOf(activeSection)
   )
 
+  const clamp = (
+    value: number,
+    min: number,
+    max: number
+  ) => {
+    return Math.min(
+      Math.max(value, min),
+      max
+    )
+  }
+
+  /*
+   * Medimos automáticamente el ancho de cada
+   * posición de la barra.
+   */
+  useEffect(() => {
+    const track = trackRef.current
+
+    if (!track) return
+
+    const updateSize = () => {
+      /*
+       * La barra tiene p-1.5:
+       * 6px a la izquierda + 6px a la derecha.
+       */
+      const usableWidth =
+        track.clientWidth - 12
+
+      setItemWidth(
+        usableWidth / 4
+      )
+    }
+
+    updateSize()
+
+    const observer =
+      new ResizeObserver(updateSize)
+
+    observer.observe(track)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
+  /*
+   * Detecta qué sección está visible mientras
+   * el usuario hace scroll normalmente.
+   */
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
+      setScrolled(
+        window.scrollY > 50
+      )
 
       const detectionPoint =
         window.scrollY + 180
@@ -54,12 +117,17 @@ export default function Navbar() {
           element.getBoundingClientRect().top +
           window.scrollY
 
-        if (elementTop <= detectionPoint) {
+        if (
+          elementTop <=
+          detectionPoint
+        ) {
           current = id
         }
       }
 
-      setActiveSection(current)
+      if (!isDragging) {
+        setActiveSection(current)
+      }
     }
 
     handleScroll()
@@ -78,7 +146,48 @@ export default function Navbar() {
         handleScroll
       )
     }
-  }, [])
+  }, [isDragging])
+
+  /*
+   * Cuando cambia la sección activa,
+   * movemos suavemente la cápsula.
+   */
+  useEffect(() => {
+    if (
+      !itemWidth ||
+      isDragging
+    ) {
+      return
+    }
+
+    const destination =
+      activeIndex * itemWidth
+
+    const controls = animate(
+      capsuleX,
+      destination,
+      reduceMotion
+        ? {
+            duration: 0,
+          }
+        : {
+            type: "spring",
+            stiffness: 260,
+            damping: 28,
+            mass: 0.75,
+          }
+    )
+
+    return () => {
+      controls.stop()
+    }
+  }, [
+    activeIndex,
+    itemWidth,
+    isDragging,
+    reduceMotion,
+    capsuleX,
+  ])
 
   const toggleTheme = () => {
     setTheme(
@@ -96,6 +205,10 @@ export default function Navbar() {
     )
   }
 
+  /*
+   * Scroll hacia una sección dejando
+   * visible el título debajo del header.
+   */
   const scrollToSection = (
     id: string
   ) => {
@@ -130,10 +243,65 @@ export default function Navbar() {
       top:
         elementTop -
         headerOffset,
+
       behavior: reduceMotion
         ? "auto"
         : "smooth",
     })
+  }
+
+  /*
+   * Al soltar la cápsula,
+   * calculamos cuál de los 4 botones
+   * está más cerca y la ajustamos ahí.
+   */
+  const snapCapsule = () => {
+    if (!itemWidth) return
+
+    const maxX =
+      itemWidth * 3
+
+    const currentX =
+      clamp(
+        capsuleX.get(),
+        0,
+        maxX
+      )
+
+    const nearestIndex =
+      clamp(
+        Math.round(
+          currentX / itemWidth
+        ),
+        0,
+        3
+      )
+
+    const destination =
+      nearestIndex *
+      itemWidth
+
+    setIsDragging(false)
+
+    animate(
+      capsuleX,
+      destination,
+      reduceMotion
+        ? {
+            duration: 0,
+          }
+        : {
+            type: "spring",
+            stiffness: 320,
+            damping: 26,
+            mass: 0.7,
+          }
+    )
+
+    const id =
+      sectionIds[nearestIndex]
+
+    scrollToSection(id)
   }
 
   const logoUrl =
@@ -165,7 +333,6 @@ export default function Navbar() {
   const mobileLinks = [
     {
       id: "home",
-      href: "#home",
       label:
         language === "es"
           ? "Inicio"
@@ -174,7 +341,6 @@ export default function Navbar() {
     },
     {
       id: "services",
-      href: "#services",
       label:
         language === "es"
           ? "Servicios"
@@ -183,13 +349,11 @@ export default function Navbar() {
     },
     {
       id: "portfolio",
-      href: "#portfolio",
       label: "Portfolio",
       icon: Images,
     },
     {
       id: "cotizador",
-      href: "#cotizador",
       label:
         language === "es"
           ? "Cotizar"
@@ -216,7 +380,9 @@ export default function Navbar() {
   return (
     <>
       {/* HEADER SUPERIOR */}
-      <nav className={navbarClasses}>
+      <nav
+        className={navbarClasses}
+      >
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
 
           <Link
@@ -242,32 +408,41 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-8">
 
             <div className="flex items-center space-x-6">
-              {desktopLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    scrollToSection(link.id)
-                  }}
-                  className="
-                    text-gray-700
-                    dark:text-gray-200
-                    hover:text-[#0A9396]
-                    dark:hover:text-[#0A9396]
-                    transition-colors
-                  "
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {desktopLinks.map(
+                (link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={(
+                      event
+                    ) => {
+                      event.preventDefault()
+
+                      scrollToSection(
+                        link.id
+                      )
+                    }}
+                    className="
+                      text-gray-700
+                      dark:text-gray-200
+                      hover:text-[#0A9396]
+                      dark:hover:text-[#0A9396]
+                      transition-colors
+                    "
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
             </div>
 
             <div className="flex items-center space-x-4">
 
               <button
                 type="button"
-                onClick={toggleLanguage}
+                onClick={
+                  toggleLanguage
+                }
                 className="
                   px-2
                   py-1
@@ -276,11 +451,6 @@ export default function Navbar() {
                   dark:hover:bg-gray-800/50
                   transition-colors
                 "
-                aria-label={
-                  language === "es"
-                    ? "Switch to English"
-                    : "Cambiar a Español"
-                }
               >
                 {language === "es"
                   ? "EN"
@@ -297,11 +467,6 @@ export default function Navbar() {
                   dark:hover:bg-gray-800/50
                   transition-colors
                 "
-                aria-label={
-                  theme === "dark"
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                }
               >
                 {theme === "dark" ? (
                   <Sun className="h-5 w-5" />
@@ -318,7 +483,9 @@ export default function Navbar() {
 
             <button
               type="button"
-              onClick={toggleLanguage}
+              onClick={
+                toggleLanguage
+              }
               className="
                 px-3
                 py-2
@@ -326,13 +493,7 @@ export default function Navbar() {
                 bg-white/25
                 dark:bg-black/10
                 backdrop-blur-md
-                transition-colors
               "
-              aria-label={
-                language === "es"
-                  ? "Switch to English"
-                  : "Cambiar a Español"
-              }
             >
               {language === "es"
                 ? "EN"
@@ -341,20 +502,16 @@ export default function Navbar() {
 
             <button
               type="button"
-              onClick={toggleTheme}
+              onClick={
+                toggleTheme
+              }
               className="
                 p-2.5
                 rounded-full
                 bg-white/25
                 dark:bg-black/10
                 backdrop-blur-md
-                transition-colors
               "
-              aria-label={
-                theme === "dark"
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
@@ -367,7 +524,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* NAV MOBILE LIQUID */}
+      {/* NAV MOBILE */}
       <div
         className="
           fixed
@@ -384,7 +541,9 @@ export default function Navbar() {
             "calc(env(safe-area-inset-bottom) + 2px)",
         }}
       >
+
         <div
+          ref={trackRef}
           className="
             relative
             grid
@@ -403,108 +562,139 @@ export default function Navbar() {
           "
         >
 
-          {/* CÁPSULA LIQUID */}
-          <motion.div
-            className="
-              absolute
-              top-1.5
-              bottom-1.5
-              left-1.5
-              rounded-[27px]
-              border
-              border-white/75
-              dark:border-white/15
-              bg-white/72
-              dark:bg-white/12
-              backdrop-blur-2xl
-              shadow-[0_7px_22px_rgba(0,0,0,0.13),inset_0_1px_1px_rgba(255,255,255,0.9)]
-              pointer-events-none
-              overflow-hidden
-            "
-            style={{
-              width:
-                "calc((100% - 12px) / 4)",
-            }}
-            animate={{
-              x: `${activeIndex * 100}%`,
-            }}
-            transition={
-              reduceMotion
-                ? {
-                    duration: 0,
-                  }
-                : {
-                    type: "spring",
-                    stiffness: 230,
-                    damping: 27,
-                    mass: 0.78,
-                  }
-            }
-          >
-
-            {/* REFLEJO SUPERIOR */}
-            <div
+          {/* CÁPSULA ARRASTRABLE */}
+          {itemWidth > 0 && (
+            <motion.div
               className="
                 absolute
-                top-[1px]
-                left-[16%]
-                right-[16%]
-                h-[1px]
-                rounded-full
-                bg-white/95
-              "
-            />
-
-            {/* DEGRADADO DE VIDRIO */}
-            <div
-              className="
-                absolute
-                inset-0
+                top-1.5
+                bottom-1.5
+                left-1.5
                 rounded-[27px]
-                bg-gradient-to-b
-                from-white/30
-                via-white/8
-                to-transparent
+                border
+                border-white/75
+                dark:border-white/15
+                bg-white/72
+                dark:bg-white/12
+                backdrop-blur-2xl
+                shadow-[0_7px_22px_rgba(0,0,0,0.13),inset_0_1px_1px_rgba(255,255,255,0.9)]
+                overflow-hidden
+                z-20
+                cursor-grab
+                active:cursor-grabbing
               "
-            />
+              style={{
+                width: itemWidth,
+                x: capsuleX,
+                touchAction: "none",
+              }}
+              animate={{
+                scale:
+                  isDragging
+                    ? 1.045
+                    : 1,
+              }}
+              transition={{
+                scale: {
+                  type: "spring",
+                  stiffness: 350,
+                  damping: 24,
+                },
+              }}
+              onPanStart={() => {
+                setIsDragging(true)
+              }}
+              onPan={(
+                _event,
+                info
+              ) => {
+                const maxX =
+                  itemWidth * 3
 
-            {/* REFLEJO LATERAL */}
-            <div
-              className="
-                absolute
-                left-[2px]
-                top-[18%]
-                bottom-[18%]
-                w-[1px]
-                rounded-full
-                bg-white/60
-              "
-            />
+                const nextX =
+                  clamp(
+                    capsuleX.get() +
+                      info.delta.x,
+                    0,
+                    maxX
+                  )
 
-          </motion.div>
+                capsuleX.set(
+                  nextX
+                )
+              }}
+              onPanEnd={() => {
+                snapCapsule()
+              }}
+            >
 
-          {/* BOTONES */}
+              {/* VIDRIO */}
+              <div
+                className="
+                  absolute
+                  inset-0
+                  rounded-[27px]
+                  bg-gradient-to-b
+                  from-white/30
+                  via-white/8
+                  to-transparent
+                  pointer-events-none
+                "
+              />
+
+              {/* BRILLO SUPERIOR */}
+              <div
+                className="
+                  absolute
+                  top-[1px]
+                  left-[16%]
+                  right-[16%]
+                  h-[1px]
+                  bg-white/95
+                  rounded-full
+                  pointer-events-none
+                "
+              />
+
+              {/* REFLEJO IZQUIERDO */}
+              <div
+                className="
+                  absolute
+                  left-[2px]
+                  top-[18%]
+                  bottom-[18%]
+                  w-[1px]
+                  bg-white/60
+                  rounded-full
+                  pointer-events-none
+                "
+              />
+
+            </motion.div>
+          )}
+
+          {/* BOTONES MOBILE */}
           {mobileLinks.map(
             (item, index) => {
-              const Icon = item.icon
+              const Icon =
+                item.icon
 
               const active =
-                activeIndex === index
+                activeIndex ===
+                index
 
               return (
-                <Link
+                <button
                   key={item.id}
-                  href={item.href}
-                  onClick={(event) => {
-                    event.preventDefault()
-
+                  type="button"
+                  onClick={() => {
                     scrollToSection(
                       item.id
                     )
                   }}
                   className="
                     relative
-                    z-10
+                    z-30
                     flex
                     min-h-[58px]
                     flex-col
@@ -516,7 +706,11 @@ export default function Navbar() {
                     font-semibold
                     select-none
                     touch-manipulation
+                    [-webkit-touch-callout:none]
                   "
+                  aria-label={
+                    item.label
+                  }
                 >
 
                   <motion.div
@@ -524,6 +718,7 @@ export default function Navbar() {
                       y: active
                         ? -1
                         : 0,
+
                       scale: active
                         ? 1.04
                         : 1,
@@ -533,7 +728,10 @@ export default function Navbar() {
                       stiffness: 360,
                       damping: 26,
                     }}
-                    className="relative"
+                    className="
+                      relative
+                      pointer-events-none
+                    "
                   >
                     <Icon
                       className={`
@@ -552,6 +750,7 @@ export default function Navbar() {
 
                   <span
                     className={`
+                      pointer-events-none
                       transition-colors
                       duration-200
                       ${
@@ -564,7 +763,7 @@ export default function Navbar() {
                     {item.label}
                   </span>
 
-                </Link>
+                </button>
               )
             }
           )}
