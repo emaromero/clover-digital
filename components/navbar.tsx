@@ -18,29 +18,37 @@ import { useLanguage } from "./language-provider"
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
+  const [previousIndex, setPreviousIndex] = useState(0)
 
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t } = useLanguage()
 
   const reduceMotion = useReducedMotion()
 
+  const sectionIds = [
+    "home",
+    "services",
+    "portfolio",
+    "cotizador",
+  ]
+
+  const activeIndex = Math.max(
+    0,
+    sectionIds.indexOf(activeSection)
+  )
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50)
 
-      const sectionIds = [
-        "home",
-        "services",
-        "portfolio",
-        "cotizador",
-      ]
-
-      const detectionPoint = window.scrollY + 180
+      const detectionPoint =
+        window.scrollY + 180
 
       let current = "home"
 
       for (const id of sectionIds) {
-        const element = document.getElementById(id)
+        const element =
+          document.getElementById(id)
 
         if (!element) continue
 
@@ -53,57 +61,95 @@ export default function Navbar() {
         }
       }
 
-      setActiveSection(current)
+      setActiveSection((oldSection) => {
+        if (oldSection !== current) {
+          const oldIndex =
+            sectionIds.indexOf(oldSection)
+
+          setPreviousIndex(
+            oldIndex >= 0 ? oldIndex : 0
+          )
+        }
+
+        return current
+      })
     }
 
     handleScroll()
 
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    })
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true,
+      }
+    )
 
     return () => {
-      window.removeEventListener("scroll", handleScroll)
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      )
     }
   }, [])
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
+    setTheme(
+      theme === "dark"
+        ? "light"
+        : "dark"
+    )
   }
 
   const toggleLanguage = () => {
-    setLanguage(language === "es" ? "en" : "es")
+    setLanguage(
+      language === "es"
+        ? "en"
+        : "es"
+    )
   }
 
-  const scrollToSection = (id: string) => {
+  const scrollToSection = (
+    id: string
+  ) => {
+    const newIndex =
+      sectionIds.indexOf(id)
+
+    setPreviousIndex(activeIndex)
     setActiveSection(id)
 
-    const element = document.getElementById(id)
+    const element =
+      document.getElementById(id)
 
     if (!element) return
 
     if (id === "home") {
       window.scrollTo({
         top: 0,
-        behavior: reduceMotion ? "auto" : "smooth",
+        behavior: reduceMotion
+          ? "auto"
+          : "smooth",
       })
 
       return
     }
 
     const headerOffset =
-      window.innerWidth < 768 ? 112 : 92
+      window.innerWidth < 768
+        ? 112
+        : 92
 
     const elementTop =
       element.getBoundingClientRect().top +
       window.scrollY
 
-    const finalPosition =
-      elementTop - headerOffset
-
     window.scrollTo({
-      top: finalPosition,
-      behavior: reduceMotion ? "auto" : "smooth",
+      top:
+        elementTop -
+        headerOffset,
+      behavior: reduceMotion
+        ? "auto"
+        : "smooth",
     })
   }
 
@@ -184,9 +230,12 @@ export default function Navbar() {
     }
   `
 
+  const movingRight =
+    activeIndex > previousIndex
+
   return (
     <>
-      {/* NAVBAR SUPERIOR */}
+      {/* HEADER SUPERIOR */}
       <nav className={navbarClasses}>
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link
@@ -211,25 +260,29 @@ export default function Navbar() {
           {/* DESKTOP */}
           <div className="hidden md:flex items-center space-x-8">
             <div className="flex items-center space-x-6">
-              {desktopLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    scrollToSection(link.id)
-                  }}
-                  className="
-                    text-gray-700
-                    dark:text-gray-200
-                    hover:text-[#0A9396]
-                    dark:hover:text-[#0A9396]
-                    transition-colors
-                  "
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {desktopLinks.map(
+                (link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      scrollToSection(
+                        link.id
+                      )
+                    }}
+                    className="
+                      text-gray-700
+                      dark:text-gray-200
+                      hover:text-[#0A9396]
+                      dark:hover:text-[#0A9396]
+                      transition-colors
+                    "
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
             </div>
 
             <div className="flex items-center space-x-4">
@@ -244,13 +297,10 @@ export default function Navbar() {
                   dark:hover:bg-gray-800/50
                   transition-colors
                 "
-                aria-label={
-                  language === "es"
-                    ? "Switch to English"
-                    : "Cambiar a Español"
-                }
               >
-                {language === "es" ? "EN" : "ES"}
+                {language === "es"
+                  ? "EN"
+                  : "ES"}
               </button>
 
               <button
@@ -263,11 +313,6 @@ export default function Navbar() {
                   dark:hover:bg-gray-800/50
                   transition-colors
                 "
-                aria-label={
-                  theme === "dark"
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                }
               >
                 {theme === "dark" ? (
                   <Sun className="h-5 w-5" />
@@ -290,15 +335,11 @@ export default function Navbar() {
                 bg-white/25
                 dark:bg-black/10
                 backdrop-blur-md
-                transition-colors
               "
-              aria-label={
-                language === "es"
-                  ? "Switch to English"
-                  : "Cambiar a Español"
-              }
             >
-              {language === "es" ? "EN" : "ES"}
+              {language === "es"
+                ? "EN"
+                : "ES"}
             </button>
 
             <button
@@ -310,13 +351,7 @@ export default function Navbar() {
                 bg-white/25
                 dark:bg-black/10
                 backdrop-blur-md
-                transition-colors
               "
-              aria-label={
-                theme === "dark"
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
@@ -328,7 +363,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* BARRA INFERIOR MOBILE */}
+      {/* NAV MOBILE LIQUID */}
       <div
         className="
           fixed
@@ -351,155 +386,236 @@ export default function Navbar() {
             grid
             grid-cols-4
             items-center
-            rounded-[30px]
+            rounded-[32px]
             border
             border-white/60
             dark:border-white/10
-            bg-white/65
+            bg-white/60
             dark:bg-[#06222c]/72
             backdrop-blur-2xl
-            shadow-[0_12px_40px_rgba(0,0,0,0.18)]
+            shadow-[0_14px_40px_rgba(0,0,0,0.20)]
             p-1.5
             overflow-hidden
           "
         >
-          {mobileLinks.map((item) => {
-            const Icon = item.icon
-            const active =
-              activeSection === item.id
-
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                onClick={(event) => {
-                  event.preventDefault()
-                  scrollToSection(item.id)
-                }}
-                className="
-                  relative
-                  flex
-                  min-h-[58px]
-                  flex-col
-                  items-center
-                  justify-center
-                  gap-1
-                  rounded-[24px]
-                  text-[10px]
-                  font-semibold
-                  select-none
-                  touch-manipulation
-                "
-              >
-                {/* CÁPSULA LIQUID ACTIVA */}
-                {active && (
-                  <motion.span
-                    layoutId="mobile-nav-active"
-                    transition={
-                      reduceMotion
-                        ? {
-                            duration: 0,
-                          }
-                        : {
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 25,
-                            mass: 0.75,
-                          }
-                    }
-                    className="
-                      absolute
-                      inset-0
-                      rounded-[24px]
-                      bg-white/92
-                      dark:bg-white/14
-                      border
-                      border-white/80
-                      dark:border-white/10
-                      shadow-[0_6px_18px_rgba(0,0,0,0.10)]
-                      backdrop-blur-xl
-                    "
-                  >
-                    <span
-                      className="
-                        absolute
-                        inset-x-3
-                        top-1
-                        h-[1px]
-                        rounded-full
-                        bg-white/90
-                        dark:bg-white/20
-                      "
-                    />
-
-                    <span
-                      className="
-                        absolute
-                        inset-0
-                        rounded-[24px]
-                        bg-gradient-to-b
-                        from-white/20
-                        to-transparent
-                        pointer-events-none
-                      "
-                    />
-                  </motion.span>
-                )}
-
-                {/* ICONO */}
-                <motion.div
-                  animate={
-                    active && !reduceMotion
-                      ? {
-                          y: -1,
-                          scale: 1.04,
-                        }
-                      : {
-                          y: 0,
-                          scale: 1,
-                        }
+          {/* BURBUJA / LENTE */}
+          <motion.div
+            className="
+              absolute
+              top-1.5
+              bottom-1.5
+              left-1.5
+              rounded-[27px]
+              border
+              border-white/80
+              dark:border-white/15
+              bg-white/75
+              dark:bg-white/10
+              backdrop-blur-2xl
+              shadow-[
+                0_5px_20px_rgba(0,0,0,0.13),
+                inset_0_1px_1px_rgba(255,255,255,0.9)
+              ]
+              pointer-events-none
+              overflow-hidden
+            "
+            style={{
+              width:
+                "calc((100% - 12px) / 4)",
+              transformOrigin: movingRight
+                ? "left center"
+                : "right center",
+            }}
+            animate={
+              reduceMotion
+                ? {
+                    x: `${activeIndex * 100}%`,
                   }
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 25,
+                : {
+                    x: `${activeIndex * 100}%`,
+                    scaleX: [
+                      1,
+                      1.2,
+                      1.08,
+                      0.96,
+                      1,
+                    ],
+                    scaleY: [
+                      1,
+                      0.96,
+                      1.02,
+                      1.03,
+                      1,
+                    ],
+                  }
+            }
+            transition={
+              reduceMotion
+                ? {
+                    duration: 0,
+                  }
+                : {
+                    x: {
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 24,
+                      mass: 0.75,
+                    },
+                    scaleX: {
+                      duration: 0.52,
+                      times: [
+                        0,
+                        0.22,
+                        0.5,
+                        0.76,
+                        1,
+                      ],
+                      ease: [
+                        0.22,
+                        1,
+                        0.36,
+                        1,
+                      ],
+                    },
+                    scaleY: {
+                      duration: 0.52,
+                      times: [
+                        0,
+                        0.22,
+                        0.5,
+                        0.76,
+                        1,
+                      ],
+                    },
+                  }
+            }
+          >
+            {/* BRILLO SUPERIOR */}
+            <div
+              className="
+                absolute
+                top-0
+                left-[15%]
+                right-[15%]
+                h-[2px]
+                rounded-full
+                bg-white/90
+                blur-[0.3px]
+              "
+            />
+
+            {/* REFLEJO INTERNO */}
+            <div
+              className="
+                absolute
+                inset-0
+                rounded-[27px]
+                bg-gradient-to-b
+                from-white/30
+                via-white/5
+                to-transparent
+              "
+            />
+
+            {/* BORDE CROMÁTICO SUTIL */}
+            <div
+              className="
+                absolute
+                inset-[1px]
+                rounded-[26px]
+                shadow-[
+                  inset_1px_0_2px_rgba(0,180,255,0.18),
+                  inset_-1px_0_2px_rgba(255,0,150,0.12)
+                ]
+              "
+            />
+          </motion.div>
+
+          {/* BOTONES */}
+          {mobileLinks.map(
+            (item, index) => {
+              const Icon = item.icon
+              const active =
+                activeIndex === index
+
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  onClick={(event) => {
+                    event.preventDefault()
+
+                    setPreviousIndex(
+                      activeIndex
+                    )
+
+                    scrollToSection(
+                      item.id
+                    )
                   }}
-                  className="relative z-10"
+                  className="
+                    relative
+                    z-10
+                    flex
+                    min-h-[58px]
+                    flex-col
+                    items-center
+                    justify-center
+                    gap-1
+                    rounded-[24px]
+                    text-[10px]
+                    font-semibold
+                    select-none
+                    touch-manipulation
+                  "
                 >
-                  <Icon
+                  <motion.div
+                    animate={{
+                      y: active
+                        ? -1
+                        : 0,
+                      scale: active
+                        ? 1.08
+                        : 1,
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 380,
+                      damping: 22,
+                    }}
+                  >
+                    <Icon
+                      className={`
+                        h-5
+                        w-5
+                        transition-colors
+                        duration-200
+                        ${
+                          active
+                            ? "text-[#0e5c6e] dark:text-[#62c8df]"
+                            : "text-gray-500 dark:text-gray-300"
+                        }
+                      `}
+                    />
+                  </motion.div>
+
+                  <span
                     className={`
-                      h-5
-                      w-5
                       transition-colors
                       duration-200
                       ${
                         active
-                          ? "text-[#0e5c6e] dark:text-[#5fb8cc]"
+                          ? "text-[#001219] dark:text-white"
                           : "text-gray-500 dark:text-gray-300"
                       }
                     `}
-                  />
-                </motion.div>
-
-                {/* TEXTO */}
-                <span
-                  className={`
-                    relative
-                    z-10
-                    transition-colors
-                    duration-200
-                    ${
-                      active
-                        ? "text-[#001219] dark:text-white"
-                        : "text-gray-500 dark:text-gray-300"
-                    }
-                  `}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            )
-          })}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              )
+            }
+          )}
         </div>
       </div>
     </>
