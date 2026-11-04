@@ -7,7 +7,6 @@ import {
   Facebook,
   Mail,
   Phone,
-  MapPin,
   ShieldCheck,
 } from "lucide-react"
 import { useLanguage } from "./language-provider"
@@ -30,7 +29,6 @@ export default function Footer() {
           {/* LOGO + DESCRIPCIÓN */}
           <div>
             <div className="flex flex-col items-center lg:items-start">
-
               <div className="relative w-24 h-24 rounded-full overflow-hidden bg-white dark:bg-[#001219] p-2 mb-4 shadow-sm">
                 <Image
                   src="https://i.postimg.cc/pLSPM0KB/logo-Clover-Digital.png"
@@ -44,36 +42,6 @@ export default function Footer() {
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed text-center lg:text-left max-w-[280px]">
                 {t("footer-about")}
               </p>
-
-              <a
-                href={GOOGLE_MAPS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="
-                  flex
-                  items-center
-                  justify-center
-                  lg:justify-start
-                  gap-2
-                  mt-5
-                  text-sm
-                  text-gray-700
-                  dark:text-gray-300
-                  hover:text-[#0A9396]
-                  transition-colors
-                  text-center
-                  lg:text-left
-                "
-              >
-                <MapPin className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
-
-                <span>
-                  {language === "en"
-                    ? "CABA & North Zone · Buenos Aires"
-                    : "CABA y Zona Norte · Buenos Aires"}
-                </span>
-              </a>
-
             </div>
           </div>
 
@@ -86,7 +54,6 @@ export default function Footer() {
             </h3>
 
             <ul className="space-y-2.5 text-center lg:text-left">
-
               <li>
                 <Link
                   href="#home"
@@ -147,7 +114,6 @@ export default function Footer() {
                   </span>
                 </Link>
               </li>
-
             </ul>
           </div>
 
@@ -160,7 +126,6 @@ export default function Footer() {
             </h3>
 
             <ul className="space-y-3">
-
               <li className="flex items-center justify-center lg:justify-start gap-3">
                 <Mail className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
 
@@ -217,7 +182,6 @@ export default function Footer() {
                   Clover Digital
                 </a>
               </li>
-
             </ul>
           </div>
 
@@ -231,7 +195,6 @@ export default function Footer() {
 
             <div className="flex justify-center lg:justify-start gap-3">
 
-              {/* INSTAGRAM */}
               <Link
                 href="https://www.instagram.com/cloverdigital.arg"
                 target="_blank"
@@ -260,7 +223,6 @@ export default function Footer() {
                 <Instagram className="w-[22px] h-[22px]" />
               </Link>
 
-              {/* FACEBOOK */}
               <Link
                 href="https://www.facebook.com/people/Clover-Digital/61570512932271/"
                 target="_blank"
@@ -289,7 +251,6 @@ export default function Footer() {
                 <Facebook className="w-[22px] h-[22px]" />
               </Link>
 
-              {/* EMAIL */}
               <Link
                 href="mailto:cloverdigitalarg@gmail.com"
                 aria-label="Email"
@@ -316,7 +277,6 @@ export default function Footer() {
                 <Mail className="w-[22px] h-[22px]" />
               </Link>
 
-              {/* WHATSAPP */}
               <Link
                 href="https://wa.me/5491164473603"
                 target="_blank"
@@ -374,7 +334,6 @@ export default function Footer() {
             </p>
 
             <div className="flex items-center justify-center gap-5">
-
               <Link
                 href="/privacidad"
                 className="hover:text-[#0A9396] transition-colors"
@@ -392,7 +351,6 @@ export default function Footer() {
               >
                 Google Maps
               </a>
-
             </div>
           </div>
         </div>
