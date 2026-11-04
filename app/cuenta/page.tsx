@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import ProfileForm from "@/components/profile-form"
 
 export default async function CuentaPage() {
   const supabase = await createClient()
@@ -23,21 +24,34 @@ export default async function CuentaPage() {
     user.user_metadata?.picture ||
     null
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email, avatar_url, phone")
+    .eq("id", user.id)
+    .maybeSingle()
+
+  const profileName =
+    profile?.full_name ||
+    fullName
+
+  const profilePhone =
+    profile?.phone || ""
+
   return (
     <main className="min-h-screen bg-[#B8D8D8]/30 dark:bg-[#001219] px-4 py-16">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] p-8 shadow-xl">
-          
+
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
-                alt={fullName}
+                alt={profileName}
                 className="w-20 h-20 rounded-full object-cover"
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-[#0A9396]/15 flex items-center justify-center text-2xl font-bold text-[#0A9396]">
-                {fullName.charAt(0).toUpperCase()}
+                {profileName.charAt(0).toUpperCase()}
               </div>
             )}
 
@@ -47,7 +61,7 @@ export default async function CuentaPage() {
               </p>
 
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Hola, {fullName}
+                Hola, {profileName}
               </h1>
 
               <p className="mt-2 text-gray-600 dark:text-gray-300">
@@ -56,16 +70,13 @@ export default async function CuentaPage() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-gray-200 dark:border-white/10 pt-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Tu cuenta está lista
-            </h2>
-
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              Próximamente vas a poder acceder desde acá a tus cursos,
-              progreso, evaluaciones y certificados.
-            </p>
-          </div>
+          <ProfileForm
+            userId={user.id}
+            initialName={profileName}
+            email={user.email || ""}
+            initialAvatar={avatarUrl}
+            initialPhone={profilePhone}
+          />
 
           <div className="mt-8">
             <Link
