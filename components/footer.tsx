@@ -13,7 +13,7 @@ import {
 import { useLanguage } from "./language-provider"
 
 const GOOGLE_MAPS_URL =
-  "https://www.google.com/maps/place/Clover+Digital/@-34.460792,-58.6737695,10.75z/data=!4m6!3m5!1s0xa66fbfc76eb41d9b:0x606eb784231d96fe!8m2!3d-34.5567189!4d-58.467281!16s%2Fg%2F11p22pq436?entry=ttu&g_ep=EgoyMDI2MTEwMS4wIKXMDSoASAFQAw%3D%3D"
+  "https://maps.app.goo.gl/r7ia4x83F2eHbJru9"
 
 export default function Footer() {
   const { t, language } = useLanguage()
@@ -22,13 +22,16 @@ export default function Footer() {
 
   return (
     <footer className="relative overflow-hidden bg-[#B8D8D8]/30 dark:bg-[#004E64]/30 pt-12">
-      <div className="container mx-auto px-4 relative z-10 mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+      <div className="container mx-auto px-5 md:px-6 relative z-10 mb-32">
 
-          {/* Logo y descripción */}
-          <div className="md:col-span-1">
-            <div className="flex flex-col items-center md:items-start">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-white dark:bg-[#001219] p-2 mb-4">
+        {/* CONTENIDO PRINCIPAL */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-12">
+
+          {/* LOGO + DESCRIPCIÓN */}
+          <div>
+            <div className="flex flex-col items-center lg:items-start">
+
+              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-white dark:bg-[#001219] p-2 mb-4 shadow-sm">
                 <Image
                   src="https://i.postimg.cc/pLSPM0KB/logo-Clover-Digital.png"
                   alt="Clover Digital"
@@ -38,7 +41,7 @@ export default function Footer() {
                 />
               </div>
 
-              <p className="text-gray-700 dark:text-gray-300 text-sm mt-4 text-center md:text-left">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed text-center lg:text-left max-w-[280px]">
                 {t("footer-about")}
               </p>
 
@@ -46,25 +49,44 @@ export default function Footer() {
                 href={GOOGLE_MAPS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 mt-4 text-sm text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  lg:justify-start
+                  gap-2
+                  mt-5
+                  text-sm
+                  text-gray-700
+                  dark:text-gray-300
+                  hover:text-[#0A9396]
+                  transition-colors
+                  text-center
+                  lg:text-left
+                "
               >
-                <MapPin className="w-4 h-4 text-[#0A9396] shrink-0" />
+                <MapPin className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
+
                 <span>
                   {language === "en"
-                    ? "CABA & North Zone · Buenos Aires, Argentina"
-                    : "CABA y Zona Norte · Buenos Aires, Argentina"}
+                    ? "CABA & North Zone · Buenos Aires"
+                    : "CABA y Zona Norte · Buenos Aires"}
                 </span>
               </a>
+
             </div>
           </div>
 
-          {/* Enlaces rápidos */}
-          <div className="md:col-span-1">
-            <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-gray-800 dark:text-white">
-              {language === "en" ? "Quick links" : "Enlaces rápidos"}
+          {/* ENLACES */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-center lg:text-left text-gray-800 dark:text-white">
+              {language === "en"
+                ? "Quick links"
+                : "Enlaces rápidos"}
             </h3>
 
-            <ul className="space-y-2 text-center md:text-left">
+            <ul className="space-y-2.5 text-center lg:text-left">
+
               <li>
                 <Link
                   href="#home"
@@ -104,129 +126,246 @@ export default function Footer() {
               <li>
                 <Link
                   href="/privacidad"
-                  className="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
+                  className="
+                    inline-flex
+                    items-center
+                    justify-center
+                    lg:justify-start
+                    gap-2
+                    text-gray-700
+                    dark:text-gray-300
+                    hover:text-[#0A9396]
+                    transition-colors
+                  "
                 >
-                  <ShieldCheck className="w-4 h-4 text-[#0A9396]" />
-                  {language === "en"
-                    ? "Privacy policy"
-                    : "Política de privacidad"}
+                  <ShieldCheck className="w-4 h-4 text-[#0A9396] shrink-0" />
+
+                  <span>
+                    {language === "en"
+                      ? "Privacy policy"
+                      : "Política de privacidad"}
+                  </span>
                 </Link>
               </li>
+
             </ul>
           </div>
 
-          {/* Información de contacto */}
-          <div className="md:col-span-1">
-            <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-gray-800 dark:text-white">
+          {/* CONTACTO */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-center lg:text-left text-gray-800 dark:text-white">
               {language === "en"
                 ? "Contact"
                 : "Información de contacto"}
             </h3>
 
-            <ul className="space-y-2 text-center md:text-left">
-              <li className="flex items-center justify-center md:justify-start">
-                <Mail className="w-4 h-4 mr-2 text-[#0A9396]" />
+            <ul className="space-y-3">
+
+              <li className="flex items-center justify-center lg:justify-start gap-3">
+                <Mail className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
 
                 <a
                   href="mailto:cloverdigitalarg@gmail.com"
-                  className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
+                  className="
+                    text-[13px]
+                    sm:text-sm
+                    text-gray-700
+                    dark:text-gray-300
+                    hover:text-[#0A9396]
+                    transition-colors
+                  "
                 >
                   cloverdigitalarg@gmail.com
                 </a>
               </li>
 
-              <li className="flex items-center justify-center md:justify-start">
-                <Phone className="w-4 h-4 mr-2 text-[#0A9396]" />
+              <li className="flex items-center justify-center lg:justify-start gap-3">
+                <Phone className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
 
                 <a
                   href="https://wa.me/5491164473603"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
+                  className="text-sm text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 >
                   +54 9 11 6447-3603
                 </a>
               </li>
 
-              <li className="flex items-center justify-center md:justify-start">
-                <Instagram className="w-4 h-4 mr-2 text-[#0A9396]" />
+              <li className="flex items-center justify-center lg:justify-start gap-3">
+                <Instagram className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
 
                 <a
                   href="https://www.instagram.com/cloverdigital.arg"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
+                  className="text-sm text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 >
                   @cloverdigital.arg
                 </a>
               </li>
 
-              <li className="flex items-center justify-center md:justify-start">
-                <Facebook className="w-4 h-4 mr-2 text-[#0A9396]" />
+              <li className="flex items-center justify-center lg:justify-start gap-3">
+                <Facebook className="w-[18px] h-[18px] text-[#0A9396] shrink-0" />
 
                 <a
                   href="https://www.facebook.com/people/Clover-Digital/61570512932271/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
+                  className="text-sm text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 >
                   Clover Digital
                 </a>
               </li>
+
             </ul>
           </div>
 
-          {/* Redes */}
-          <div className="md:col-span-1">
-            <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-gray-800 dark:text-white">
-              {language === "en" ? "Follow us" : "Seguinos"}
+          {/* REDES */}
+          <div>
+            <h3 className="text-lg font-semibold mb-5 text-center lg:text-left text-gray-800 dark:text-white">
+              {language === "en"
+                ? "Follow us"
+                : "Seguinos"}
             </h3>
 
-            <div className="flex justify-center md:justify-start space-x-4">
+            <div className="flex justify-center lg:justify-start gap-3">
+
+              {/* INSTAGRAM */}
               <Link
                 href="https://www.instagram.com/cloverdigital.arg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 aria-label="Instagram"
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  w-11
+                  h-11
+                  rounded-full
+                  border
+                  border-[#0A9396]/20
+                  bg-white/40
+                  dark:bg-white/5
+                  text-gray-700
+                  dark:text-gray-200
+                  hover:bg-[#0A9396]
+                  hover:text-white
+                  hover:border-[#0A9396]
+                  transition-all
+                  duration-200
+                "
               >
-                <Instagram size={24} />
+                <Instagram className="w-[22px] h-[22px]" />
               </Link>
 
+              {/* FACEBOOK */}
               <Link
                 href="https://www.facebook.com/people/Clover-Digital/61570512932271/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 aria-label="Facebook"
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  w-11
+                  h-11
+                  rounded-full
+                  border
+                  border-[#0A9396]/20
+                  bg-white/40
+                  dark:bg-white/5
+                  text-gray-700
+                  dark:text-gray-200
+                  hover:bg-[#0A9396]
+                  hover:text-white
+                  hover:border-[#0A9396]
+                  transition-all
+                  duration-200
+                "
               >
-                <Facebook size={24} />
+                <Facebook className="w-[22px] h-[22px]" />
               </Link>
 
+              {/* EMAIL */}
               <Link
                 href="mailto:cloverdigitalarg@gmail.com"
-                className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 aria-label="Email"
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  w-11
+                  h-11
+                  rounded-full
+                  border
+                  border-[#0A9396]/20
+                  bg-white/40
+                  dark:bg-white/5
+                  text-gray-700
+                  dark:text-gray-200
+                  hover:bg-[#0A9396]
+                  hover:text-white
+                  hover:border-[#0A9396]
+                  transition-all
+                  duration-200
+                "
               >
-                <Mail size={24} />
+                <Mail className="w-[22px] h-[22px]" />
               </Link>
 
+              {/* WHATSAPP */}
               <Link
                 href="https://wa.me/5491164473603"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 dark:text-gray-300 hover:text-[#0A9396] transition-colors"
                 aria-label="WhatsApp"
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  w-11
+                  h-11
+                  rounded-full
+                  border
+                  border-[#0A9396]/20
+                  bg-white/40
+                  dark:bg-white/5
+                  text-gray-700
+                  dark:text-gray-200
+                  hover:bg-[#0A9396]
+                  hover:text-white
+                  hover:border-[#0A9396]
+                  transition-all
+                  duration-200
+                "
               >
-                <Phone size={24} />
+                <Phone className="w-[22px] h-[22px]" />
               </Link>
+
             </div>
           </div>
         </div>
 
-        {/* Línea inferior */}
+        {/* LÍNEA INFERIOR */}
         <div className="border-t border-gray-300/60 dark:border-white/10 pt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
+          <div
+            className="
+              flex
+              flex-col
+              lg:flex-row
+              items-center
+              justify-between
+              gap-4
+              text-sm
+              text-gray-600
+              dark:text-gray-400
+              text-center
+              lg:text-left
+            "
+          >
             <p>
               © {currentYear} Clover Digital.{" "}
               {language === "en"
@@ -234,7 +373,8 @@ export default function Footer() {
                 : "Todos los derechos reservados."}
             </p>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center gap-5">
+
               <Link
                 href="/privacidad"
                 className="hover:text-[#0A9396] transition-colors"
@@ -252,12 +392,13 @@ export default function Footer() {
               >
                 Google Maps
               </a>
+
             </div>
           </div>
         </div>
       </div>
 
-      {/* Ondas del footer */}
+      {/* ONDAS */}
       <div className="absolute bottom-0 left-0 right-0 w-full pointer-events-none">
         <svg
           xmlns="http://www.w3.org/2000/svg"
