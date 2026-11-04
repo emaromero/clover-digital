@@ -18,6 +18,7 @@ import {
   Sun,
 } from "lucide-react"
 import { useLanguage } from "./language-provider"
+import AuthNav from "./auth-nav"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -55,15 +56,6 @@ export default function Navbar() {
     )
   }
 
-  /*
-   * Detecta la sección activa cuando
-   * el usuario hace scroll manualmente.
-   *
-   * Mientras estamos haciendo un scroll
-   * automático desde el navbar, no modifica
-   * la selección para evitar que la cápsula
-   * vuelva momentáneamente hacia atrás.
-   */
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50)
@@ -113,9 +105,6 @@ export default function Navbar() {
     }
   }, [])
 
-  /*
-   * Limpieza del timeout.
-   */
   useEffect(() => {
     return () => {
       if (navigationTimeoutRef.current) {
@@ -142,12 +131,6 @@ export default function Navbar() {
     )
   }
 
-  /*
-   * Navega hacia la sección.
-   *
-   * Primero cambia inmediatamente la selección
-   * del navbar y después comienza el scroll.
-   */
   const goToSection = (
     id: string
   ) => {
@@ -197,23 +180,12 @@ export default function Navbar() {
       })
     }
 
-    /*
-     * Después del scroll automático,
-     * volvemos a habilitar la detección
-     * normal por scroll.
-     */
     navigationTimeoutRef.current =
       setTimeout(() => {
         navigatingRef.current = false
       }, reduceMotion ? 50 : 900)
   }
 
-  /*
-   * Swipe horizontal dentro del navbar.
-   *
-   * Swipe a la izquierda -> siguiente.
-   * Swipe a la derecha -> anterior.
-   */
   const handleNavbarSwipe = (
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
@@ -236,10 +208,6 @@ export default function Navbar() {
       return
     }
 
-    /*
-     * Dedo hacia la izquierda:
-     * avanzamos al botón de la derecha.
-     */
     const direction =
       info.offset.x < 0
         ? 1
@@ -347,7 +315,7 @@ export default function Navbar() {
               event.preventDefault()
               goToSection("home")
             }}
-            className="relative h-12 w-12"
+            className="relative h-12 w-12 shrink-0"
             aria-label="Clover Digital"
           >
             <Image
@@ -361,7 +329,7 @@ export default function Navbar() {
           </Link>
 
           {/* DESKTOP */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center gap-6">
 
             <div className="flex items-center space-x-6">
               {desktopLinks.map(
@@ -390,13 +358,15 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="flex items-center space-x-4">
+            {/* CUENTA / LOGIN */}
+            <AuthNav />
+
+            {/* IDIOMA + TEMA */}
+            <div className="flex items-center space-x-2">
 
               <button
                 type="button"
-                onClick={
-                  toggleLanguage
-                }
+                onClick={toggleLanguage}
                 className="
                   px-2
                   py-1
@@ -418,9 +388,7 @@ export default function Navbar() {
 
               <button
                 type="button"
-                onClick={
-                  toggleTheme
-                }
+                onClick={toggleTheme}
                 className="
                   p-2
                   rounded-full
@@ -447,11 +415,13 @@ export default function Navbar() {
           {/* MOBILE SUPERIOR */}
           <div className="flex md:hidden items-center gap-2">
 
+            {/* CUENTA */}
+            <AuthNav mobile />
+
+            {/* IDIOMA */}
             <button
               type="button"
-              onClick={
-                toggleLanguage
-              }
+              onClick={toggleLanguage}
               className="
                 px-3
                 py-2
@@ -472,11 +442,10 @@ export default function Navbar() {
                 : "ES"}
             </button>
 
+            {/* TEMA */}
             <button
               type="button"
-              onClick={
-                toggleTheme
-              }
+              onClick={toggleTheme}
               className="
                 p-2.5
                 rounded-full
@@ -520,9 +489,7 @@ export default function Navbar() {
         }}
       >
         <motion.div
-          onPanEnd={
-            handleNavbarSwipe
-          }
+          onPanEnd={handleNavbarSwipe}
           style={{
             touchAction: "pan-y",
           }}
@@ -583,7 +550,6 @@ export default function Navbar() {
             }
           >
 
-            {/* BRILLO */}
             <div
               className="
                 absolute
@@ -596,7 +562,6 @@ export default function Navbar() {
               "
             />
 
-            {/* VIDRIO */}
             <div
               className="
                 absolute
@@ -645,9 +610,7 @@ export default function Navbar() {
                     touch-manipulation
                     [-webkit-touch-callout:none]
                   "
-                  aria-label={
-                    item.label
-                  }
+                  aria-label={item.label}
                 >
 
                   <motion.div
