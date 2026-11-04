@@ -8,7 +8,10 @@ export default function LoadingScreen() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 3000)
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 700)
+
     return () => clearTimeout(timer)
   }, [])
 
@@ -19,11 +22,15 @@ export default function LoadingScreen() {
           className="fixed inset-0 flex items-center justify-center bg-[#B8D8D8] dark:bg-[#004E64] z-50"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
         >
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+            transition={{
+              duration: 1.4,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "linear",
+            }}
             className="relative w-24 h-24 md:w-32 md:h-32"
           >
             <Image
@@ -31,6 +38,7 @@ export default function LoadingScreen() {
               alt="Clover Digital"
               width={128}
               height={128}
+              priority
               className="object-contain"
             />
           </motion.div>
