@@ -36,8 +36,8 @@ const translations = {
     "about-p1":
       "Somos Clover Digital, un equipo de producción audiovisual especializado en propiedades y arquitectura.",
 
-    "about-p2":
-      "Trabajamos con inmobiliarias, agentes y desarrollistas para que cada propiedad se vea como lo que es.",
+   "about-p2":
+  "Trabajamos con inmobiliarias, agentes y desarrolladores para que cada propiedad se vea como lo que es.",
 
     "about-p3":
       "Cada producción se piensa según el tipo de propiedad y el canal donde se va a publicar: portales, redes o ambos.",
