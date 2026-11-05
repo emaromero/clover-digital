@@ -29,7 +29,6 @@ const SERVICES = [
   "Reel hablado",
   "Drone",
   "Fotos con logo",
-  "Planos",
 ]
 
 export default function NewProductionForm({

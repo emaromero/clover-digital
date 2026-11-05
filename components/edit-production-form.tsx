@@ -6,8 +6,14 @@ import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   CalendarDays,
+  ExternalLink,
+  FileVideo2,
+  FolderOpen,
+  Link2,
   Loader2,
+  Plus,
   Save,
+  Trash2,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -35,9 +41,19 @@ interface Production {
   updated_at: string
 }
 
+interface ProductionFile {
+  id: string
+  production_id: string
+  label: string
+  file_type: string
+  url: string
+  created_at: string
+}
+
 interface Props {
   production: Production
   clients: Client[]
+  initialFiles: ProductionFile[]
 }
 
 const SERVICES = [
@@ -47,7 +63,45 @@ const SERVICES = [
   "Reel hablado",
   "Drone",
   "Fotos con logo",
-  "Planos",
+]
+
+const FILE_TYPES = [
+  {
+    value: "full_delivery",
+    label: "Entrega completa / Google Drive",
+  },
+  {
+    value: "wetransfer",
+    label: "WeTransfer",
+  },
+  {
+    value: "photos",
+    label: "Fotos HDR",
+  },
+  {
+    value: "branded_photos",
+    label: "Fotos con logo",
+  },
+  {
+    value: "horizontal_video",
+    label: "Video horizontal",
+  },
+  {
+    value: "vertical_video",
+    label: "Video vertical",
+  },
+  {
+    value: "talking_reel",
+    label: "Reel hablado",
+  },
+  {
+    value: "drone",
+    label: "Drone",
+  },
+  {
+    value: "other",
+    label: "Otro",
+  },
 ]
 
 const toLocalInput = (
@@ -67,9 +121,25 @@ const toLocalInput = (
     .slice(0, 16)
 }
 
+const formatDate = (
+  value: string | null
+) => {
+  if (!value) return "-"
+
+  return new Intl.DateTimeFormat(
+    "es-AR",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }
+  ).format(new Date(value))
+}
+
 export default function EditProductionForm({
   production,
   clients,
+  initialFiles,
 }: Props) {
   const router = useRouter()
 
@@ -79,21 +149,17 @@ export default function EditProductionForm({
   const [propertyName, setPropertyName] =
     useState(production.property_name)
 
-  const [
-    propertyAddress,
-    setPropertyAddress,
-  ] = useState(
-    production.property_address || ""
-  )
-
-  const [
-    productionDate,
-    setProductionDate,
-  ] = useState(
-    toLocalInput(
-      production.production_date
+  const [propertyAddress, setPropertyAddress] =
+    useState(
+      production.property_address || ""
     )
-  )
+
+  const [productionDate, setProductionDate] =
+    useState(
+      toLocalInput(
+        production.production_date
+      )
+    )
 
   const [status, setStatus] =
     useState(production.status)
@@ -122,10 +188,30 @@ export default function EditProductionForm({
     production.notes || ""
   )
 
+  const [files, setFiles] =
+    useState<ProductionFile[]>(
+      initialFiles
+    )
+
+  const [fileType, setFileType] =
+    useState("full_delivery")
+
+  const [fileLabel, setFileLabel] =
+    useState("")
+
+  const [fileUrl, setFileUrl] =
+    useState("")
+
   const [saving, setSaving] =
     useState(false)
 
+  const [addingFile, setAddingFile] =
+    useState(false)
+
   const [message, setMessage] =
+    useState("")
+
+  const [fileMessage, setFileMessage] =
     useState("")
 
   const toggleService = (
@@ -176,6 +262,33 @@ export default function EditProductionForm({
           ).toISOString()
         : null
 
+    let deliveredAt =
+      production.delivered_at
+
+    let availableUntil =
+      production.available_until
+
+    if (
+      status === "delivered" &&
+      !deliveredAt
+    ) {
+      const deliveredDate =
+        new Date()
+
+      const expiryDate =
+        new Date(deliveredDate)
+
+      expiryDate.setDate(
+        expiryDate.getDate() + 90
+      )
+
+      deliveredAt =
+        deliveredDate.toISOString()
+
+      availableUntil =
+        expiryDate.toISOString()
+    }
+
     const { error } = await supabase
       .from("productions")
       .update({
@@ -201,6 +314,12 @@ export default function EditProductionForm({
 
         estimated_delivery_at:
           estimatedDeliveryISO,
+
+        delivered_at:
+          deliveredAt,
+
+        available_until:
+          availableUntil,
 
         notes:
           notes.trim() || null,
@@ -230,6 +349,151 @@ export default function EditProductionForm({
     router.refresh()
   }
 
+  const handleAddFile = async (
+    event: React.FormEvent
+  ) => {
+    event.preventDefault()
+
+    if (!fileUrl.trim()) {
+      setFileMessage(
+        "Ingresá el enlace."
+      )
+      return
+    }
+
+    let parsedUrl: URL
+
+    try {
+      parsedUrl = new URL(
+        fileUrl.trim()
+      )
+    } catch {
+      setFileMessage(
+        "Ingresá un enlace válido."
+      )
+      return
+    }
+
+    if (
+      parsedUrl.protocol !== "https:" &&
+      parsedUrl.protocol !== "http:"
+    ) {
+      setFileMessage(
+        "El enlace debe comenzar con http:// o https://"
+      )
+      return
+    }
+
+    setAddingFile(true)
+    setFileMessage("")
+
+    const defaultLabel =
+      FILE_TYPES.find(
+        (item) =>
+          item.value === fileType
+      )?.label || "Material"
+
+    const supabase = createClient()
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("production_files")
+      .insert({
+        production_id:
+          production.id,
+
+        file_type:
+          fileType,
+
+        label:
+          fileLabel.trim() ||
+          defaultLabel,
+
+        url:
+          fileUrl.trim(),
+      })
+      .select(`
+        id,
+        production_id,
+        label,
+        file_type,
+        url,
+        created_at
+      `)
+      .single()
+
+    if (error || !data) {
+      console.error(error)
+
+      setFileMessage(
+        "No pudimos agregar el material."
+      )
+
+      setAddingFile(false)
+      return
+    }
+
+    setFiles(
+      (current) => [
+        ...current,
+        data,
+      ]
+    )
+
+    setFileLabel("")
+    setFileUrl("")
+
+    setFileMessage(
+      "Material agregado correctamente."
+    )
+
+    setAddingFile(false)
+  }
+
+  const handleDeleteFile = async (
+    fileId: string
+  ) => {
+    const confirmed =
+      window.confirm(
+        "¿Querés eliminar este enlace de la producción?"
+      )
+
+    if (!confirmed) {
+      return
+    }
+
+    const supabase = createClient()
+
+    const { error } =
+      await supabase
+        .from("production_files")
+        .delete()
+        .eq("id", fileId)
+
+    if (error) {
+      console.error(error)
+
+      setFileMessage(
+        "No pudimos eliminar el enlace."
+      )
+
+      return
+    }
+
+    setFiles((current) =>
+      current.filter(
+        (file) =>
+          file.id !== fileId
+      )
+    )
+
+    setFileMessage(
+      "Enlace eliminado."
+    )
+  }
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
       <div className="mx-auto max-w-5xl px-4 py-10 md:py-16">
@@ -252,16 +516,16 @@ export default function EditProductionForm({
           </h1>
 
           <p className="mt-3 text-gray-500 dark:text-gray-400">
-            Editá los datos y el estado de esta producción.
+            Editá la producción y gestioná su material de entrega.
           </p>
         </div>
 
+        {/* DATOS PRODUCCIÓN */}
         <form
           onSubmit={handleSubmit}
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
 
-          {/* CLIENTE */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Cliente asignado
@@ -291,7 +555,6 @@ export default function EditProductionForm({
             </select>
           </div>
 
-          {/* PROPIEDAD */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
@@ -330,7 +593,6 @@ export default function EditProductionForm({
 
           </div>
 
-          {/* FECHA + ESTADO */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
@@ -396,7 +658,6 @@ export default function EditProductionForm({
 
           </div>
 
-          {/* SERVICIOS */}
           <div>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Servicios
@@ -433,7 +694,6 @@ export default function EditProductionForm({
             </div>
           </div>
 
-          {/* PRECIO + ENTREGA */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
@@ -473,7 +733,34 @@ export default function EditProductionForm({
 
           </div>
 
-          {/* NOTAS */}
+          {production.delivered_at && (
+            <div className="grid gap-4 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-500/10 md:grid-cols-2">
+              <div>
+                <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
+                  Entregada
+                </p>
+
+                <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-300">
+                  {formatDate(
+                    production.delivered_at
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
+                  Material disponible hasta
+                </p>
+
+                <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-300">
+                  {formatDate(
+                    production.available_until
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Notas internas
@@ -534,6 +821,188 @@ export default function EditProductionForm({
 
           </div>
         </form>
+
+        {/* MATERIAL */}
+        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+              <FolderOpen className="h-5 w-5" />
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-[#0A9396]">
+                Entrega
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                Material de la producción
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Agregá los enlaces que después estarán disponibles para el cliente.
+              </p>
+            </div>
+          </div>
+
+          {/* LINKS EXISTENTES */}
+          <div className="mt-6 space-y-3">
+            {files.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/10">
+                Todavía no cargaste material.
+              </div>
+            ) : (
+              files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+                    {file.file_type.includes(
+                      "video"
+                    ) ||
+                    file.file_type ===
+                      "talking_reel" ? (
+                      <FileVideo2 className="h-5 w-5" />
+                    ) : (
+                      <Link2 className="h-5 w-5" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {file.label}
+                    </p>
+
+                    <p className="mt-1 truncate text-xs text-gray-400">
+                      {file.url}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                    >
+                      Abrir
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDeleteFile(
+                          file.id
+                        )
+                      }
+                      className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
+                      aria-label="Eliminar enlace"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* AGREGAR LINK */}
+          <form
+            onSubmit={handleAddFile}
+            className="mt-6 rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03]"
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Tipo
+                </label>
+
+                <select
+                  value={fileType}
+                  onChange={(event) =>
+                    setFileType(
+                      event.target.value
+                    )
+                  }
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
+                >
+                  {FILE_TYPES.map(
+                    (type) => (
+                      <option
+                        key={type.value}
+                        value={type.value}
+                      >
+                        {type.label}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Nombre visible
+                </label>
+
+                <input
+                  type="text"
+                  value={fileLabel}
+                  onChange={(event) =>
+                    setFileLabel(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Opcional"
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
+                />
+              </div>
+
+            </div>
+
+            <div className="mt-4">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                Enlace
+              </label>
+
+              <input
+                type="url"
+                required
+                value={fileUrl}
+                onChange={(event) =>
+                  setFileUrl(
+                    event.target.value
+                  )
+                }
+                placeholder="https://drive.google.com/..."
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
+              />
+            </div>
+
+            {fileMessage && (
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                {fileMessage}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={addingFile}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#001219] disabled:opacity-60"
+            >
+              {addingFile ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+
+              Agregar material
+            </button>
+          </form>
+
+        </section>
       </div>
     </main>
   )

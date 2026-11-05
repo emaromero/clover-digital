@@ -69,10 +69,26 @@ export default async function AdminProductionPage({
       ascending: true,
     })
 
+  const { data: files } = await supabase
+    .from("production_files")
+    .select(`
+      id,
+      production_id,
+      label,
+      file_type,
+      url,
+      created_at
+    `)
+    .eq("production_id", id)
+    .order("created_at", {
+      ascending: true,
+    })
+
   return (
     <EditProductionForm
       production={production}
       clients={profiles || []}
+      initialFiles={files || []}
     />
   )
 }
