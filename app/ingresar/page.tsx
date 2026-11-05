@@ -194,6 +194,15 @@ export default function IngresarPage() {
                 focus:ring-[#0A9396]
               "
             />
+
+            <div className="mt-2 text-right">
+              <Link
+                href="/recuperar"
+                className="text-sm text-[#0A9396] hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </div>
 
           {message && (
