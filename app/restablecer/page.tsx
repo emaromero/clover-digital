@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function RestablecerPage() {
@@ -9,14 +10,27 @@ export default function RestablecerPage() {
 
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+
+  const passwordHasMinLength = password.length >= 8
+  const passwordHasNumber = /\d/.test(password)
+  const passwordHasSpecial = /[^A-Za-z0-9]/.test(password)
+
+  const passwordIsValid =
+    passwordHasMinLength &&
+    passwordHasNumber &&
+    passwordHasSpecial
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (password.length < 6) {
-      setMessage("La contraseña debe tener al menos 6 caracteres.")
+    if (!passwordIsValid) {
+      setMessage(
+        "La contraseña debe tener al menos 8 caracteres, 1 número y 1 carácter especial."
+      )
       return
     }
 
@@ -64,41 +78,125 @@ export default function RestablecerPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
+            >
               Nueva contraseña
             </label>
 
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
-              className="w-full rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-[#001219] px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396]"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                className="w-full rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-[#001219] px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-[#0A9396]"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 hover:text-[#0A9396]"
+                aria-label={
+                  showPassword
+                    ? "Ocultar contraseña"
+                    : "Mostrar contraseña"
+                }
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-1 text-xs">
+              <p
+                className={
+                  passwordHasMinLength
+                    ? "text-[#0A9396]"
+                    : "text-gray-500 dark:text-gray-400"
+                }
+              >
+                • Mínimo 8 caracteres
+              </p>
+
+              <p
+                className={
+                  passwordHasNumber
+                    ? "text-[#0A9396]"
+                    : "text-gray-500 dark:text-gray-400"
+                }
+              >
+                • Al menos 1 número
+              </p>
+
+              <p
+                className={
+                  passwordHasSpecial
+                    ? "text-[#0A9396]"
+                    : "text-gray-500 dark:text-gray-400"
+                }
+              >
+                • Al menos 1 carácter especial
+              </p>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
+            >
               Repetir contraseña
             </label>
 
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={confirmPassword}
-              onChange={(event) =>
-                setConfirmPassword(event.target.value)
-              }
-              className="w-full rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-[#001219] px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396]"
-            />
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                required
+                value={confirmPassword}
+                onChange={(event) =>
+                  setConfirmPassword(event.target.value)
+                }
+                autoComplete="new-password"
+                className="w-full rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-[#001219] px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-[#0A9396]"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowConfirmPassword((prev) => !prev)
+                }
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 hover:text-[#0A9396]"
+                aria-label={
+                  showConfirmPassword
+                    ? "Ocultar contraseña"
+                    : "Mostrar contraseña"
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
           {message && (
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p
+              className={`text-sm ${
+                message.includes("correctamente")
+                  ? "text-[#0A9396]"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
               {message}
             </p>
           )}
