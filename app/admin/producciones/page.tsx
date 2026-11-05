@@ -2,7 +2,6 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import {
   ArrowLeft,
-  CalendarDays,
   FolderOpen,
   Plus,
   UserRound,
@@ -55,7 +54,11 @@ export default async function AdminProduccionesPage() {
     redirect("/cuenta")
   }
 
-  const { data: productions } = await supabase
+  // PRODUCCIONES
+  const {
+    data: productions,
+    error: productionsError,
+  } = await supabase
     .from("productions")
     .select(`
       id,
@@ -66,36 +69,77 @@ export default async function AdminProduccionesPage() {
       status,
       services,
       total_amount,
-      created_at,
-      profiles:user_id (
-        full_name,
-        email,
-        avatar_url
-      )
+      created_at
     `)
     .order("production_date", {
       ascending: false,
       nullsFirst: false,
     })
 
-  const rows = productions || []
-
-  const formatDate = (date?: string | null) => {
-    if (!date) return "A coordinar"
-
-    return new Intl.DateTimeFormat("es-AR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(new Date(date))
+  if (productionsError) {
+    console.error(
+      "Error cargando producciones:",
+      productionsError
+    )
   }
 
-  const money = (value?: number | null) => {
-    if (value === null || value === undefined) {
+  // PERFILES
+  const {
+    data: profiles,
+    error: profilesError,
+  } = await supabase
+    .from("profiles")
+    .select(`
+      id,
+      full_name,
+      email,
+      avatar_url
+    `)
+
+  if (profilesError) {
+    console.error(
+      "Error cargando perfiles:",
+      profilesError
+    )
+  }
+
+  const profileMap = new Map(
+    (profiles || []).map((profile) => [
+      profile.id,
+      profile,
+    ])
+  )
+
+  const rows = productions || []
+
+  const formatDate = (
+    date?: string | null
+  ) => {
+    if (!date) return "A coordinar"
+
+    return new Intl.DateTimeFormat(
+      "es-AR",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }
+    ).format(new Date(date))
+  }
+
+  const money = (
+    value?: number | null
+  ) => {
+    if (
+      value === null ||
+      value === undefined
+    ) {
       return "-"
     }
 
-    return `$ ${Number(value).toLocaleString("es-AR")}`
+    return `$ ${Number(value).toLocaleString(
+      "es-AR"
+    )}`
   }
 
   return (
@@ -164,10 +208,11 @@ export default async function AdminProduccionesPage() {
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
-              {rows.map((production: any) => {
-                const profile = Array.isArray(production.profiles)
-                  ? production.profiles[0]
-                  : production.profiles
+              {rows.map((production) => {
+                const profile =
+                  profileMap.get(
+                    production.user_id
+                  )
 
                 return (
                   <div
@@ -178,7 +223,9 @@ export default async function AdminProduccionesPage() {
 
                       {profile?.avatar_url ? (
                         <img
-                          src={profile.avatar_url}
+                          src={
+                            profile.avatar_url
+                          }
                           alt=""
                           className="h-11 w-11 rounded-full object-cover"
                         />
@@ -191,28 +238,39 @@ export default async function AdminProduccionesPage() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
-                            {production.property_name}
+                            {
+                              production.property_name
+                            }
                           </h3>
 
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              STATUS_CLASSES[production.status] ||
+                              STATUS_CLASSES[
+                                production.status
+                              ] ||
                               STATUS_CLASSES.archived
                             }`}
                           >
-                            {STATUS_LABELS[production.status] ||
+                            {STATUS_LABELS[
+                              production.status
+                            ] ||
                               production.status}
                           </span>
                         </div>
 
                         <p className="mt-1 text-sm text-gray-500">
-                          {profile?.full_name || "Sin nombre"} ·{" "}
-                          {profile?.email || "Sin email"}
+                          {profile?.full_name ||
+                            "Sin nombre"}{" "}
+                          ·{" "}
+                          {profile?.email ||
+                            "Sin email"}
                         </p>
 
                         {production.property_address && (
                           <p className="mt-1 text-xs text-gray-400">
-                            {production.property_address}
+                            {
+                              production.property_address
+                            }
                           </p>
                         )}
                       </div>
@@ -226,7 +284,9 @@ export default async function AdminProduccionesPage() {
                         </p>
 
                         <p className="mt-1 font-medium text-gray-700 dark:text-gray-200">
-                          {formatDate(production.production_date)}
+                          {formatDate(
+                            production.production_date
+                          )}
                         </p>
                       </div>
 
@@ -236,8 +296,11 @@ export default async function AdminProduccionesPage() {
                         </p>
 
                         <p className="mt-1 max-w-[220px] font-medium text-gray-700 dark:text-gray-200">
-                          {production.services?.length
-                            ? production.services.join(" · ")
+                          {production.services
+                            ?.length
+                            ? production.services.join(
+                                " · "
+                              )
                             : "Sin servicios"}
                         </p>
                       </div>
@@ -248,7 +311,9 @@ export default async function AdminProduccionesPage() {
                         </p>
 
                         <p className="mt-1 font-medium text-gray-700 dark:text-gray-200">
-                          {money(production.total_amount)}
+                          {money(
+                            production.total_amount
+                          )}
                         </p>
                       </div>
                     </div>
