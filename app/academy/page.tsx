@@ -6,6 +6,7 @@ import {
   Circle,
   Clock3,
   Lock,
+  PlayCircle,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 
@@ -86,6 +87,7 @@ export default async function AcademyPage() {
         id,
         title,
         description,
+        video_url,
         duration_seconds,
         position
       )
@@ -310,23 +312,20 @@ export default async function AcademyPage() {
                     const completed =
                       lessonProgress?.completed === true
 
-                    return (
-                      <div
-                        key={lesson.id}
-                        className="
-                          flex
-                          items-center
-                          gap-4
-                          px-6
-                          md:px-8
-                          py-4
-                        "
-                      >
+                    const hasVideo = Boolean(lesson.video_url)
+
+                    const canOpen =
+                      !moduleLocked && hasVideo
+
+                    const lessonContent = (
+                      <>
                         <div className="shrink-0">
                           {moduleLocked ? (
                             <Lock className="w-5 h-5 text-gray-400" />
                           ) : completed ? (
                             <CheckCircle2 className="w-5 h-5 text-[#0A9396]" />
+                          ) : hasVideo ? (
+                            <PlayCircle className="w-5 h-5 text-[#0A9396]" />
                           ) : (
                             <Circle className="w-5 h-5 text-gray-300 dark:text-gray-600" />
                           )}
@@ -354,6 +353,10 @@ export default async function AcademyPage() {
                               )}{" "}
                               min
                             </div>
+                          ) : hasVideo ? (
+                            <p className="mt-1 text-xs text-[#0A9396]">
+                              Ver clase
+                            </p>
                           ) : (
                             <p className="mt-1 text-xs text-gray-400">
                               Video próximamente
@@ -365,9 +368,49 @@ export default async function AcademyPage() {
                           <span className="text-xs font-medium text-[#0A9396]">
                             {completed
                               ? "Completada"
+                              : hasVideo
+                              ? "Abrir"
                               : "Pendiente"}
                           </span>
                         )}
+                      </>
+                    )
+
+                    if (canOpen) {
+                      return (
+                        <Link
+                          key={lesson.id}
+                          href={`/academy/clase/${lesson.id}`}
+                          className="
+                            flex
+                            items-center
+                            gap-4
+                            px-6
+                            md:px-8
+                            py-4
+                            transition-colors
+                            hover:bg-[#0A9396]/5
+                            cursor-pointer
+                          "
+                        >
+                          {lessonContent}
+                        </Link>
+                      )
+                    }
+
+                    return (
+                      <div
+                        key={lesson.id}
+                        className="
+                          flex
+                          items-center
+                          gap-4
+                          px-6
+                          md:px-8
+                          py-4
+                        "
+                      >
+                        {lessonContent}
                       </div>
                     )
                   })}
