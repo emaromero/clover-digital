@@ -1,7 +1,49 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  FolderOpen,
+  GraduationCap,
+  Settings,
+  ShieldCheck,
+  Video,
+} from "lucide-react"
+
 import { createClient } from "@/lib/supabase/server"
 import ProfileForm from "@/components/profile-form"
+
+const STATUS_LABELS: Record<string, string> = {
+  confirmed: "Confirmada",
+  completed: "Realizada",
+  editing: "En edición",
+  delivered: "Entregada",
+  archived: "Archivada",
+  cancelled: "Cancelada",
+}
+
+const STATUS_CLASSES: Record<string, string> = {
+  confirmed:
+    "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
+
+  completed:
+    "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300",
+
+  editing:
+    "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+
+  delivered:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+
+  archived:
+    "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300",
+
+  cancelled:
+    "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300",
+}
 
 export default async function CuentaPage() {
   const supabase = await createClient()
@@ -14,59 +56,452 @@ export default async function CuentaPage() {
     redirect("/ingresar")
   }
 
-  const fullName =
+  const metadataName =
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
     "Usuario"
 
-  const avatarUrl =
+  const metadataAvatar =
     user.user_metadata?.avatar_url ||
     user.user_metadata?.picture ||
     null
 
+  // PERFIL
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, avatar_url, phone")
+    .select(`
+      full_name,
+      email,
+      avatar_url,
+      phone
+    `)
     .eq("id", user.id)
     .maybeSingle()
 
   const profileName =
     profile?.full_name ||
-    fullName
+    metadataName
+
+  const profileAvatar =
+    profile?.avatar_url ||
+    metadataAvatar
 
   const profilePhone =
     profile?.phone || ""
 
-  return (
-    <main className="min-h-screen bg-[#B8D8D8]/30 dark:bg-[#001219] px-4 py-16">
-      <div className="mx-auto max-w-3xl">
-        <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] p-8 shadow-xl">
+  // PRODUCCIONES
+  const { data: productions } = await supabase
+    .from("productions")
+    .select(`
+      id,
+      property_name,
+      property_address,
+      production_date,
+      status,
+      services,
+      total_amount,
+      estimated_delivery_at,
+      delivered_at,
+      available_until,
+      created_at
+    `)
+    .eq("user_id", user.id)
+    .order("production_date", {
+      ascending: false,
+      nullsFirst: false,
+    })
 
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={profileName}
-                className="w-20 h-20 rounded-full object-cover"
-              />
+  const allProductions =
+    productions || []
+
+  const totalProductions =
+    allProductions.length
+
+  const upcomingProductions =
+    allProductions.filter(
+      (production) =>
+        production.status === "confirmed"
+    ).length
+
+  const inProgressProductions =
+    allProductions.filter(
+      (production) =>
+        production.status === "completed" ||
+        production.status === "editing"
+    ).length
+
+  const deliveredProductions =
+    allProductions.filter(
+      (production) =>
+        production.status === "delivered" ||
+        production.status === "archived"
+    ).length
+
+  const recentProductions =
+    allProductions.slice(0, 4)
+
+  // ACADEMY
+  const { data: enrollment } = await supabase
+    .from("enrollments")
+    .select(`
+      id,
+      status,
+      course_id,
+      courses (
+        id,
+        title,
+        slug,
+        description
+      )
+    `)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle()
+
+  const course = enrollment
+    ? Array.isArray(enrollment.courses)
+      ? enrollment.courses[0]
+      : enrollment.courses
+    : null
+
+  // ADMIN
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  const isAdmin =
+    roleData?.role === "admin"
+
+  const formatDate = (
+    date?: string | null
+  ) => {
+    if (!date) {
+      return "A coordinar"
+    }
+
+    return new Intl.DateTimeFormat(
+      "es-AR",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }
+    ).format(new Date(date))
+  }
+
+  const firstName =
+    profileName.split(" ")[0]
+
+  return (
+    <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219] px-4 py-10 md:py-16">
+      <div className="mx-auto max-w-6xl">
+
+        {/* CABECERA */}
+        <section className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] p-6 md:p-8 shadow-sm">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+
+            <div className="flex items-center gap-5">
+              {profileAvatar ? (
+                <img
+                  src={profileAvatar}
+                  alt={profileName}
+                  className="h-16 w-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0A9396]/15 text-2xl font-bold text-[#0A9396]">
+                  {profileName
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm font-semibold text-[#0A9396]">
+                  Portal Clover
+                </p>
+
+                <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+                  Hola, {firstName}
+                </h1>
+
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#0A9396]/20 bg-[#0A9396]/10 px-4 py-2.5 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/15"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administrar
+                </Link>
+              )}
+
+              <Link
+                href="/"
+                className="inline-flex items-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+              >
+                Volver a Clover Digital
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* PRODUCCIONES */}
+        <section
+          id="producciones"
+          className="mt-8"
+        >
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#0A9396]">
+                Clover Digital
+              </p>
+
+              <h2 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                Mis producciones
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Consultá el estado y el historial de tus propiedades.
+              </p>
+            </div>
+          </div>
+
+          {/* MÉTRICAS */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+                <FolderOpen className="h-5 w-5" />
+              </div>
+
+              <p className="mt-4 text-sm text-gray-500">
+                Producciones
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                {totalProductions}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+
+              <p className="mt-4 text-sm text-gray-500">
+                Próximas
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                {upcomingProductions}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                <Clock3 className="h-5 w-5" />
+              </div>
+
+              <p className="mt-4 text-sm text-gray-500">
+                En proceso
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                {inProgressProductions}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+
+              <p className="mt-4 text-sm text-gray-500">
+                Entregadas
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                {deliveredProductions}
+              </p>
+            </div>
+
+          </div>
+
+          {/* LISTADO */}
+          <div className="mt-5 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+
+            <div className="border-b border-gray-100 p-6 dark:border-white/10">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Últimas producciones
+              </h3>
+            </div>
+
+            {recentProductions.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <FolderOpen className="h-6 w-6" />
+                </div>
+
+                <h3 className="mt-4 font-semibold text-gray-900 dark:text-white">
+                  Todavía no tenés producciones
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                  Cuando realices una producción con Clover Digital,
+                  vas a poder consultar desde acá su estado,
+                  entrega y material disponible.
+                </p>
+              </div>
             ) : (
-              <div className="w-20 h-20 rounded-full bg-[#0A9396]/15 flex items-center justify-center text-2xl font-bold text-[#0A9396]">
-                {profileName.charAt(0).toUpperCase()}
+              <div className="divide-y divide-gray-100 dark:divide-white/10">
+                {recentProductions.map(
+                  (production) => (
+                    <div
+                      key={production.id}
+                      className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between md:px-6"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            {production.property_name}
+                          </h4>
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              STATUS_CLASSES[
+                                production.status
+                              ] ||
+                              STATUS_CLASSES.archived
+                            }`}
+                          >
+                            {STATUS_LABELS[
+                              production.status
+                            ] ||
+                              production.status}
+                          </span>
+                        </div>
+
+                        {production.property_address && (
+                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {
+                              production.property_address
+                            }
+                          </p>
+                        )}
+
+                        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-400">
+                          <span>
+                            Producción:{" "}
+                            {formatDate(
+                              production.production_date
+                            )}
+                          </span>
+
+                          {production.services
+                            ?.length > 0 && (
+                            <span>
+                              {production.services.join(
+                                " · "
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center">
+                        <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-400">
+                          Detalle próximamente
+                        </span>
+                      </div>
+                    </div>
+                  )
+                )}
               </div>
             )}
+          </div>
+        </section>
 
-            <div className="text-center sm:text-left">
-              <p className="text-sm font-medium text-[#0A9396] mb-1">
-                Clover Academy
+        {/* ACADEMY */}
+        <section className="mt-8">
+          <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <GraduationCap className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-[#0A9396]">
+                    Clover Academy
+                  </p>
+
+                  {course ? (
+                    <>
+                      <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                        {course.title}
+                      </h2>
+
+                      <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                        Continuá aprendiendo desde donde lo dejaste.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                        Tus cursos
+                      </h2>
+
+                      <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                        Cuando te inscribas en un curso de Clover Academy,
+                        vas a poder acceder desde acá.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {course && (
+                <Link
+                  href="/academy"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
+                >
+                  Ir al curso
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+
+          </div>
+        </section>
+
+        {/* PERFIL */}
+        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300">
+              <Settings className="h-5 w-5" />
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-[#0A9396]">
+                Mi perfil
               </p>
 
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Hola, {profileName}
-              </h1>
-
-              <p className="mt-2 text-gray-600 dark:text-gray-300">
-                {user.email}
-              </p>
+              <h2 className="font-bold text-gray-900 dark:text-white">
+                Datos personales
+              </h2>
             </div>
           </div>
 
@@ -74,19 +509,13 @@ export default async function CuentaPage() {
             userId={user.id}
             initialName={profileName}
             email={user.email || ""}
-            initialAvatar={avatarUrl}
+            initialAvatar={profileAvatar}
             initialPhone={profilePhone}
           />
+        </section>
 
-          <div className="mt-8">
-            <Link
-              href="/"
-              className="text-sm text-[#0A9396] hover:underline"
-            >
-              ← Volver a Clover Digital
-            </Link>
-          </div>
-
+        <div className="mt-10 text-center text-xs text-gray-400">
+          Portal privado · Clover Digital
         </div>
       </div>
     </main>
