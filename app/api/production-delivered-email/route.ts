@@ -3,10 +3,6 @@ import { Resend } from "resend"
 
 import { createClient } from "@/lib/supabase/server"
 
-const resend = new Resend(
-  process.env.RESEND_API_KEY
-)
-
 const escapeHtml = (
   value?: string | null
 ) => {
@@ -43,10 +39,6 @@ export async function POST(
       )
     }
 
-    /*
-     * Solo un administrador de Clover
-     * puede disparar este email.
-     */
     const { data: roleData } =
       await supabase
         .from("user_roles")
@@ -85,9 +77,6 @@ export async function POST(
       )
     }
 
-    /*
-     * Buscamos la producción.
-     */
     const {
       data: production,
       error: productionError,
@@ -131,10 +120,6 @@ export async function POST(
       )
     }
 
-    /*
-     * Solamente se manda
-     * cuando está Entregada.
-     */
     if (
       production.status !==
       "delivered"
@@ -146,10 +131,6 @@ export async function POST(
       })
     }
 
-    /*
-     * Si ya se envió alguna vez,
-     * no lo volvemos a enviar.
-     */
     if (
       production.delivered_email_sent_at
     ) {
@@ -160,10 +141,6 @@ export async function POST(
       })
     }
 
-    /*
-     * Verificamos que exista
-     * material cargado.
-     */
     const {
       count: filesCount,
       error: filesError,
@@ -202,9 +179,6 @@ export async function POST(
       )
     }
 
-    /*
-     * Buscamos los datos del cliente.
-     */
     const {
       data: profile,
       error: profileError,
@@ -240,9 +214,14 @@ export async function POST(
       )
     }
 
-    if (
-      !process.env.RESEND_API_KEY
-    ) {
+    const resendApiKey =
+      process.env.RESEND_API_KEY
+
+    if (!resendApiKey) {
+      console.error(
+        "Falta RESEND_API_KEY"
+      )
+
       return NextResponse.json(
         {
           error:
@@ -253,6 +232,17 @@ export async function POST(
         }
       )
     }
+
+    /*
+     * IMPORTANTE:
+     * Resend se inicializa acá,
+     * dentro de la petición.
+     * No durante el build de Next.js.
+     */
+    const resend =
+      new Resend(
+        resendApiKey
+      )
 
     const fromEmail =
       process.env
@@ -267,11 +257,6 @@ export async function POST(
     const productionUrl =
       `${siteUrl}/producciones/${production.id}`
 
-    /*
-     * Si el perfil dice
-     * "Mariana Kuhn",
-     * saludamos "Mariana".
-     */
     const fullName =
       profile.full_name
         ?.trim() || ""
@@ -298,9 +283,6 @@ export async function POST(
           )
         : null
 
-    /*
-     * EMAIL
-     */
     const {
       data: emailData,
       error: emailError,
@@ -341,6 +323,7 @@ export async function POST(
                   padding:32px 32px 26px;
                 "
               >
+
                 <div
                   style="
                     margin-bottom:10px;
@@ -408,6 +391,7 @@ export async function POST(
                     border-radius:14px;
                   "
                 >
+
                   <p
                     style="
                       margin:0 0 10px;
@@ -455,6 +439,7 @@ export async function POST(
                       `
                       : ""
                   }
+
                 </div>
 
                 <div
@@ -525,6 +510,7 @@ export async function POST(
                 >
                   Equipo de Clover Digital
                 </p>
+
               </div>
 
               <div
@@ -571,11 +557,6 @@ export async function POST(
       )
     }
 
-    /*
-     * Recién después de que
-     * Resend confirme el envío
-     * marcamos el email como enviado.
-     */
     const sentAt =
       new Date().toISOString()
 
