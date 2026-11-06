@@ -419,11 +419,14 @@ export default async function CuentaPage() {
                       </div>
 
                       <div className="flex items-center">
-                        <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-400">
-                          Detalle próximamente
-                        </span>
-                      </div>
-                    </div>
+  <Link
+    href={`/producciones/${production.id}`}
+    className="inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline"
+  >
+    Ver producción
+    <ArrowRight className="h-4 w-4" />
+  </Link>
+</div>                    </div>
                   )
                 )}
               </div>
