@@ -140,9 +140,7 @@ const formatDate = (
       month: "2-digit",
       year: "numeric",
     }
-  ).format(
-    new Date(value)
-  )
+  ).format(new Date(value))
 }
 
 const formatDateTime = (
@@ -159,9 +157,7 @@ const formatDateTime = (
       hour: "2-digit",
       minute: "2-digit",
     }
-  ).format(
-    new Date(value)
-  )
+  ).format(new Date(value))
 }
 
 const getDefaultWeTransferExpiry =
@@ -353,8 +349,7 @@ export default function EditProductionForm({
         )
           ? current.filter(
               (item) =>
-                item !==
-                service
+                item !== service
             )
           : [
               ...current,
@@ -421,8 +416,7 @@ export default function EditProductionForm({
         clientId
           ? clients.find(
               (client) =>
-                client.id ===
-                clientId
+                client.id === clientId
             )
           : null
 
@@ -432,13 +426,6 @@ export default function EditProductionForm({
       let availableUntil =
         production.available_until
 
-      /*
-       * Primera vez que pasa
-       * a Entregada:
-       *
-       * - fecha de entrega
-       * - disponibilidad por 90 días
-       */
       if (
         status ===
           "delivered" &&
@@ -539,97 +526,8 @@ export default function EditProductionForm({
         return
       }
 
-      let finalMessage =
-        "Cambios guardados correctamente."
-
-      /*
-       * El email de entrega solamente
-       * se intenta enviar cuando la
-       * producción ya está vinculada
-       * a una cuenta.
-       *
-       * Si todavía es un cliente
-       * pendiente, se guarda como
-       * entregada pero no se manda
-       * el email del portal.
-       */
-      if (
-        status ===
-          "delivered" &&
-        clientId
-      ) {
-        try {
-          const response =
-            await fetch(
-              "/api/production-delivered-email",
-              {
-                method:
-                  "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-
-                body:
-                  JSON.stringify({
-                    productionId:
-                      production.id,
-                  }),
-              }
-            )
-
-          const data =
-            await response.json()
-
-          if (
-            response.ok &&
-            data.sent
-          ) {
-            finalMessage =
-              "Cambios guardados correctamente. Email de entrega enviado al cliente."
-          } else if (
-            response.status ===
-            409
-          ) {
-            finalMessage =
-              "Cambios guardados correctamente. El email todavía no se envió porque no hay material cargado."
-          } else if (
-            response.ok &&
-            data.skipped
-          ) {
-            finalMessage =
-              "Cambios guardados correctamente."
-          } else {
-            console.error(
-              data
-            )
-
-            finalMessage =
-              "Cambios guardados correctamente, pero no pudimos enviar el email."
-          }
-        } catch (error) {
-          console.error(
-            error
-          )
-
-          finalMessage =
-            "Cambios guardados correctamente, pero no pudimos enviar el email."
-        }
-      }
-
-      if (
-        status ===
-          "delivered" &&
-        !clientId &&
-        production.client_email
-      ) {
-        finalMessage =
-          "Producción marcada como entregada. El cliente todavía no tiene una cuenta vinculada, por lo que no se envió el email del portal."
-      }
-
       setMessage(
-        finalMessage
+        "Cambios guardados correctamente."
       )
 
       setSaving(false)
@@ -827,8 +725,7 @@ export default function EditProductionForm({
         (current) =>
           current.filter(
             (file) =>
-              file.id !==
-              fileId
+              file.id !== fileId
           )
       )
 
@@ -850,24 +747,19 @@ export default function EditProductionForm({
         </Link>
 
         <div className="mt-8">
-
           <p className="text-sm font-semibold text-[#0A9396]">
             Clover Digital
           </p>
 
           <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
-            {
-              production.property_name
-            }
+            {production.property_name}
           </h1>
 
           <p className="mt-3 text-gray-500 dark:text-gray-400">
             Editá la producción y gestioná su material de entrega.
           </p>
-
         </div>
 
-        {/* DATOS PRODUCCIÓN */}
         <form
           onSubmit={
             handleSubmit
@@ -875,16 +767,13 @@ export default function EditProductionForm({
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
 
-          {/* CLIENTE */}
           <div>
-
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Cliente
             </label>
 
             {isPendingClient ? (
               <div className="mt-2 rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
-
                 <div className="flex items-start gap-4">
 
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
@@ -892,7 +781,6 @@ export default function EditProductionForm({
                   </div>
 
                   <div className="min-w-0">
-
                     <p className="font-semibold text-gray-900 dark:text-white">
                       {production.client_name ||
                         "Cliente sin cuenta"}
@@ -909,11 +797,9 @@ export default function EditProductionForm({
                     <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
                       Cuando esta persona se registre en Clover Digital con este mismo email, la producción se vinculará automáticamente a su cuenta.
                     </p>
-
                   </div>
 
                 </div>
-
               </div>
             ) : (
               <select
@@ -924,13 +810,11 @@ export default function EditProductionForm({
                   event
                 ) =>
                   setClientId(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
-
                 <option value="">
                   Sin cliente vinculado
                 </option>
@@ -938,12 +822,8 @@ export default function EditProductionForm({
                 {clients.map(
                   (client) => (
                     <option
-                      key={
-                        client.id
-                      }
-                      value={
-                        client.id
-                      }
+                      key={client.id}
+                      value={client.id}
                     >
                       {client.full_name ||
                         "Sin nombre"}{" "}
@@ -952,10 +832,8 @@ export default function EditProductionForm({
                     </option>
                   )
                 )}
-
               </select>
             )}
-
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
@@ -974,8 +852,7 @@ export default function EditProductionForm({
                   event
                 ) =>
                   setPropertyName(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -996,8 +873,7 @@ export default function EditProductionForm({
                   event
                 ) =>
                   setPropertyAddress(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -1014,7 +890,6 @@ export default function EditProductionForm({
               </label>
 
               <div className="relative mt-2">
-
                 <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
                 <input
@@ -1026,13 +901,11 @@ export default function EditProductionForm({
                     event
                   ) =>
                     setProductionDate(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
                 />
-
               </div>
             </div>
 
@@ -1049,44 +922,35 @@ export default function EditProductionForm({
                   event
                 ) =>
                   setStatus(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
-
                 <option value="confirmed">
                   Confirmada
                 </option>
-
                 <option value="completed">
                   Realizada
                 </option>
-
                 <option value="editing">
                   En edición
                 </option>
-
                 <option value="delivered">
                   Entregada
                 </option>
-
                 <option value="archived">
                   Archivada
                 </option>
-
                 <option value="cancelled">
                   Cancelada
                 </option>
-
               </select>
             </div>
 
           </div>
 
           <div>
-
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Servicios
             </p>
@@ -1102,9 +966,7 @@ export default function EditProductionForm({
 
                   return (
                     <button
-                      key={
-                        service
-                      }
+                      key={service}
                       type="button"
                       onClick={() =>
                         toggleService(
@@ -1143,8 +1005,7 @@ export default function EditProductionForm({
                   event
                 ) =>
                   setTotalAmount(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -1165,8 +1026,7 @@ export default function EditProductionForm({
                   event
                 ) =>
                   setEstimatedDelivery(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -1177,7 +1037,6 @@ export default function EditProductionForm({
 
           {production.delivered_at && (
             <div className="grid gap-4 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-500/10 md:grid-cols-2">
-
               <div>
                 <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
                   Entregada
@@ -1201,32 +1060,26 @@ export default function EditProductionForm({
                   )}
                 </p>
               </div>
-
             </div>
           )}
 
           <div>
-
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Notas internas
             </label>
 
             <textarea
               rows={5}
-              value={
-                notes
-              }
+              value={notes}
               onChange={(
                 event
               ) =>
                 setNotes(
-                  event.target
-                    .value
+                  event.target.value
                 )
               }
               className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
-
           </div>
 
           {message && (
@@ -1234,9 +1087,6 @@ export default function EditProductionForm({
               className={`text-sm ${
                 message.includes(
                   "correctamente"
-                ) ||
-                message.includes(
-                  "marcada como entregada"
                 )
                   ? "text-[#0A9396]"
                   : "text-red-600 dark:text-red-400"
@@ -1262,7 +1112,6 @@ export default function EditProductionForm({
               }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-60"
             >
-
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1274,13 +1123,12 @@ export default function EditProductionForm({
                   Guardar cambios
                 </>
               )}
-
             </button>
+
           </div>
 
         </form>
 
-        {/* MATERIAL */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
           <div className="flex items-start gap-4">
@@ -1290,7 +1138,6 @@ export default function EditProductionForm({
             </div>
 
             <div>
-
               <p className="text-sm font-semibold text-[#0A9396]">
                 Entrega
               </p>
@@ -1302,14 +1149,13 @@ export default function EditProductionForm({
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Agregá los enlaces que después estarán disponibles para el cliente.
               </p>
-
             </div>
+
           </div>
 
           <div className="mt-6 space-y-3">
 
-            {files.length ===
-            0 ? (
+            {files.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/10">
                 Todavía no cargaste material.
               </div>
@@ -1326,14 +1172,11 @@ export default function EditProductionForm({
 
                   return (
                     <div
-                      key={
-                        file.id
-                      }
+                      key={file.id}
                       className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
                     >
 
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
-
                         {file.file_type.includes(
                           "video"
                         ) ||
@@ -1343,7 +1186,6 @@ export default function EditProductionForm({
                         ) : (
                           <Link2 className="h-5 w-5" />
                         )}
-
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -1351,9 +1193,7 @@ export default function EditProductionForm({
                         <div className="flex flex-wrap items-center gap-2">
 
                           <p className="font-semibold text-gray-900 dark:text-white">
-                            {
-                              file.label
-                            }
+                            {file.label}
                           </p>
 
                           {file.expires_at && (
@@ -1375,9 +1215,7 @@ export default function EditProductionForm({
                         </div>
 
                         <p className="mt-1 truncate text-xs text-gray-400">
-                          {
-                            file.url
-                          }
+                          {file.url}
                         </p>
 
                       </div>
@@ -1386,9 +1224,7 @@ export default function EditProductionForm({
 
                         {!expired && (
                           <a
-                            href={
-                              file.url
-                            }
+                            href={file.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
@@ -1430,7 +1266,6 @@ export default function EditProductionForm({
             <div className="grid gap-4 md:grid-cols-2">
 
               <div>
-
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Tipo
                 </label>
@@ -1443,8 +1278,7 @@ export default function EditProductionForm({
                     event
                   ) =>
                     handleFileTypeChange(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
@@ -1452,46 +1286,34 @@ export default function EditProductionForm({
                   {FILE_TYPES.map(
                     (type) => (
                       <option
-                        key={
-                          type.value
-                        }
-                        value={
-                          type.value
-                        }
+                        key={type.value}
+                        value={type.value}
                       >
-                        {
-                          type.label
-                        }
+                        {type.label}
                       </option>
                     )
                   )}
                 </select>
-
               </div>
 
               <div>
-
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Nombre visible
                 </label>
 
                 <input
                   type="text"
-                  value={
-                    fileLabel
-                  }
+                  value={fileLabel}
                   onChange={(
                     event
                   ) =>
                     setFileLabel(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   placeholder="Opcional"
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                 />
-
               </div>
 
             </div>
@@ -1505,15 +1327,12 @@ export default function EditProductionForm({
               <input
                 type="url"
                 required
-                value={
-                  fileUrl
-                }
+                value={fileUrl}
                 onChange={(
                   event
                 ) =>
                   setFileUrl(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 placeholder="https://drive.google.com/..."
@@ -1532,15 +1351,12 @@ export default function EditProductionForm({
 
                 <input
                   type="datetime-local"
-                  value={
-                    fileExpiresAt
-                  }
+                  value={fileExpiresAt}
                   onChange={(
                     event
                   ) =>
                     setFileExpiresAt(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
@@ -1555,9 +1371,7 @@ export default function EditProductionForm({
 
             {fileMessage && (
               <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                {
-                  fileMessage
-                }
+                {fileMessage}
               </p>
             )}
 
@@ -1568,7 +1382,6 @@ export default function EditProductionForm({
               }
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#001219] disabled:opacity-60"
             >
-
               {addingFile ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
