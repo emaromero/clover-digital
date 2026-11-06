@@ -13,7 +13,8 @@ interface PageProps {
 export default async function AdminProductionPage({
   params,
 }: PageProps) {
-  const { id } = await params
+  const { id } =
+    await params
 
   const supabase =
     await createClient()
@@ -27,25 +28,35 @@ export default async function AdminProductionPage({
     redirect("/ingresar")
   }
 
-  const { data: roleData } =
+  const {
+    data: roleData,
+  } =
     await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq(
+        "user_id",
+        user.id
+      )
       .maybeSingle()
 
   if (
-    roleData?.role !== "admin"
+    roleData?.role !==
+    "admin"
   ) {
     redirect("/cuenta")
   }
 
-  const { data: production } =
+  const {
+    data: production,
+  } =
     await supabase
       .from("productions")
       .select(`
         id,
         user_id,
+        client_name,
+        client_email,
         property_name,
         property_address,
         production_date,
@@ -62,14 +73,19 @@ export default async function AdminProductionPage({
         created_at,
         updated_at
       `)
-      .eq("id", id)
+      .eq(
+        "id",
+        id
+      )
       .maybeSingle()
 
   if (!production) {
     notFound()
   }
 
-  const { data: profiles } =
+  const {
+    data: profiles,
+  } =
     await supabase
       .from("profiles")
       .select(`
@@ -77,13 +93,20 @@ export default async function AdminProductionPage({
         full_name,
         email
       `)
-      .order("full_name", {
-        ascending: true,
-      })
+      .order(
+        "full_name",
+        {
+          ascending: true,
+        }
+      )
 
-  const { data: files } =
+  const {
+    data: files,
+  } =
     await supabase
-      .from("production_files")
+      .from(
+        "production_files"
+      )
       .select(`
         id,
         production_id,
@@ -97,11 +120,16 @@ export default async function AdminProductionPage({
         "production_id",
         id
       )
-      .order("created_at", {
-        ascending: true,
-      })
+      .order(
+        "created_at",
+        {
+          ascending: true,
+        }
+      )
 
-  const { data: payments } =
+  const {
+    data: payments,
+  } =
     await supabase
       .from(
         "production_payments"
@@ -119,16 +147,25 @@ export default async function AdminProductionPage({
         "production_id",
         id
       )
-      .order("paid_at", {
-        ascending: false,
-      })
+      .order(
+        "paid_at",
+        {
+          ascending: false,
+        }
+      )
 
   return (
     <>
       <EditProductionForm
-        production={production}
-        clients={profiles || []}
-        initialFiles={files || []}
+        production={
+          production
+        }
+        clients={
+          profiles || []
+        }
+        initialFiles={
+          files || []
+        }
       />
 
       <div className="mx-auto -mt-8 max-w-5xl px-4 pb-16">

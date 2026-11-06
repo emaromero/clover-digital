@@ -15,6 +15,7 @@ import {
   Plus,
   Save,
   Trash2,
+  UserRound,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -27,7 +28,9 @@ interface Client {
 
 interface Production {
   id: string
-  user_id: string
+  user_id: string | null
+  client_name: string | null
+  client_email: string | null
   property_name: string
   property_address: string | null
   production_date: string | null
@@ -198,7 +201,8 @@ export default function EditProductionForm({
     setClientId,
   ] =
     useState(
-      production.user_id
+      production.user_id ||
+        ""
     )
 
   const [
@@ -333,6 +337,12 @@ export default function EditProductionForm({
   ] =
     useState("")
 
+  const isPendingClient =
+    !production.user_id &&
+    Boolean(
+      production.client_email
+    )
+
   const toggleService = (
     service: string
   ) => {
@@ -378,13 +388,6 @@ export default function EditProductionForm({
     ) => {
       event.preventDefault()
 
-      if (!clientId) {
-        setMessage(
-          "Elegí un cliente."
-        )
-        return
-      }
-
       if (
         !propertyName.trim()
       ) {
@@ -414,6 +417,15 @@ export default function EditProductionForm({
             ).toISOString()
           : null
 
+      const selectedClient =
+        clientId
+          ? clients.find(
+              (client) =>
+                client.id ===
+                clientId
+            )
+          : null
+
       let deliveredAt =
         production.delivered_at
 
@@ -421,11 +433,11 @@ export default function EditProductionForm({
         production.available_until
 
       /*
-       * La primera vez que
-       * pasa a Entregada:
+       * Primera vez que pasa
+       * a Entregada:
        *
-       * - guardamos fecha de entrega
-       * - calculamos 90 días
+       * - fecha de entrega
+       * - disponibilidad por 90 días
        */
       if (
         status ===
@@ -461,7 +473,16 @@ export default function EditProductionForm({
           )
           .update({
             user_id:
-              clientId,
+              clientId ||
+              null,
+
+            client_name:
+              selectedClient?.full_name ||
+              production.client_name,
+
+            client_email:
+              selectedClient?.email ||
+              production.client_email,
 
             property_name:
               propertyName.trim(),
@@ -522,17 +543,20 @@ export default function EditProductionForm({
         "Cambios guardados correctamente."
 
       /*
-       * Si quedó Entregada,
-       * intentamos enviar el email.
+       * El email de entrega solamente
+       * se intenta enviar cuando la
+       * producción ya está vinculada
+       * a una cuenta.
        *
-       * La API decide si:
-       * - ya se mandó
-       * - falta material
-       * - corresponde enviarlo
+       * Si todavía es un cliente
+       * pendiente, se guarda como
+       * entregada pero no se manda
+       * el email del portal.
        */
       if (
         status ===
-        "delivered"
+          "delivered" &&
+        clientId
       ) {
         try {
           const response =
@@ -592,6 +616,16 @@ export default function EditProductionForm({
           finalMessage =
             "Cambios guardados correctamente, pero no pudimos enviar el email."
         }
+      }
+
+      if (
+        status ===
+          "delivered" &&
+        !clientId &&
+        production.client_email
+      ) {
+        finalMessage =
+          "Producción marcada como entregada. El cliente todavía no tiene una cuenta vinculada, por lo que no se envió el email del portal."
       }
 
       setMessage(
@@ -841,42 +875,86 @@ export default function EditProductionForm({
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
 
+          {/* CLIENTE */}
           <div>
 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Cliente asignado
+              Cliente
             </label>
 
-            <select
-              value={clientId}
-              onChange={(
-                event
-              ) =>
-                setClientId(
-                  event.target
-                    .value
-                )
-              }
-              className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
-            >
-              {clients.map(
-                (client) => (
-                  <option
-                    key={
-                      client.id
-                    }
-                    value={
-                      client.id
-                    }
-                  >
-                    {client.full_name ||
-                      "Sin nombre"}{" "}
-                    —{" "}
-                    {client.email}
-                  </option>
-                )
-              )}
-            </select>
+            {isPendingClient ? (
+              <div className="mt-2 rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
+
+                <div className="flex items-start gap-4">
+
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    <UserRound className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {production.client_name ||
+                        "Cliente sin cuenta"}
+                    </p>
+
+                    <p className="mt-1 break-all text-sm text-gray-600 dark:text-gray-300">
+                      {production.client_email}
+                    </p>
+
+                    <div className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                      Pendiente de registro
+                    </div>
+
+                    <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                      Cuando esta persona se registre en Clover Digital con este mismo email, la producción se vinculará automáticamente a su cuenta.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+            ) : (
+              <select
+                value={
+                  clientId
+                }
+                onChange={(
+                  event
+                ) =>
+                  setClientId(
+                    event.target
+                      .value
+                  )
+                }
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+              >
+
+                <option value="">
+                  Sin cliente vinculado
+                </option>
+
+                {clients.map(
+                  (client) => (
+                    <option
+                      key={
+                        client.id
+                      }
+                      value={
+                        client.id
+                      }
+                    >
+                      {client.full_name ||
+                        "Sin nombre"}{" "}
+                      —{" "}
+                      {client.email}
+                    </option>
+                  )
+                )}
+
+              </select>
+            )}
 
           </div>
 
@@ -964,7 +1042,9 @@ export default function EditProductionForm({
               </label>
 
               <select
-                value={status}
+                value={
+                  status
+                }
                 onChange={(
                   event
                 ) =>
@@ -1133,7 +1213,9 @@ export default function EditProductionForm({
 
             <textarea
               rows={5}
-              value={notes}
+              value={
+                notes
+              }
               onChange={(
                 event
               ) =>
@@ -1152,6 +1234,9 @@ export default function EditProductionForm({
               className={`text-sm ${
                 message.includes(
                   "correctamente"
+                ) ||
+                message.includes(
+                  "marcada como entregada"
                 )
                   ? "text-[#0A9396]"
                   : "text-red-600 dark:text-red-400"
