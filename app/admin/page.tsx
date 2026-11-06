@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import {
+  ArchiveRestore,
+  ArrowRight,
   BookOpen,
+  FolderOpen,
   GraduationCap,
   Users,
   UserRound,
-  ArrowRight,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
@@ -82,20 +84,57 @@ export default async function AdminPage() {
       )
     `)
 
+  const { data: productions } = await supabase
+    .from("productions")
+    .select(`
+      id,
+      status
+    `)
+
+  const { data: recoveryRequests } = await supabase
+    .from("recovery_requests")
+    .select(`
+      id,
+      status
+    `)
+
   const students = profiles || []
   const allEnrollments = enrollments || []
   const allProgress = progress || []
   const allLessons = lessons || []
+  const allProductions = productions || []
+  const allRecoveryRequests =
+    recoveryRequests || []
 
-  const totalStudents = students.length
+  const totalUsers = students.length
 
-  const activeEnrollments = allEnrollments.filter(
-    (item) => item.status === "active"
-  ).length
+  const activeEnrollments =
+    allEnrollments.filter(
+      (item) => item.status === "active"
+    ).length
 
-  const completedProgress = allProgress.filter(
-    (item) => item.completed
-  ).length
+  const completedProgress =
+    allProgress.filter(
+      (item) => item.completed
+    ).length
+
+  const totalProductions =
+    allProductions.length
+
+  const activeProductions =
+    allProductions.filter(
+      (item) =>
+        item.status === "confirmed" ||
+        item.status === "completed" ||
+        item.status === "editing"
+    ).length
+
+  const pendingRecoveries =
+    allRecoveryRequests.filter(
+      (item) =>
+        item.status === "pending" ||
+        item.status === "reviewing"
+    ).length
 
   const getCourse = (enrollment: any) => {
     if (Array.isArray(enrollment.courses)) {
@@ -141,7 +180,9 @@ export default async function AdminPage() {
     )
   }
 
-  const getLastActivity = (userId: string) => {
+  const getLastActivity = (
+    userId: string
+  ) => {
     const userProgress = allProgress
       .filter(
         (item) =>
@@ -161,16 +202,21 @@ export default async function AdminPage() {
     return userProgress[0].updated_at
   }
 
-  const formatDate = (date?: string | null) => {
+  const formatDate = (
+    date?: string | null
+  ) => {
     if (!date) {
       return "Sin actividad"
     }
 
-    return new Intl.DateTimeFormat("es-AR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(new Date(date))
+    return new Intl.DateTimeFormat(
+      "es-AR",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }
+    ).format(new Date(date))
   }
 
   return (
@@ -178,19 +224,19 @@ export default async function AdminPage() {
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
 
         {/* HEADER */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-10">
+        <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold text-[#0A9396]">
-              Clover Academy
+              Clover Digital
             </p>
 
-            <h1 className="mt-2 text-3xl md:text-5xl font-bold text-gray-900 dark:text-white">
+            <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
               Administración
             </h1>
 
             <p className="mt-3 max-w-2xl text-gray-600 dark:text-gray-300">
-              Gestioná alumnos, inscripciones y progreso
-              de los cursos.
+              Gestioná producciones, recuperaciones,
+              clientes y Clover Academy desde un solo lugar.
             </p>
           </div>
 
@@ -202,67 +248,168 @@ export default async function AdminPage() {
           </Link>
         </div>
 
-        {/* MÉTRICAS */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-10">
-          <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-                <Users className="h-6 w-6" />
-              </div>
+        {/* ACCESOS PRINCIPALES */}
+        <div className="grid gap-4 md:grid-cols-2">
+
+          <Link
+            href="/admin/producciones"
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
+          >
+            <div className="flex items-start justify-between gap-4">
 
               <div>
-                <p className="text-sm text-gray-500">
-                  Usuarios
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <FolderOpen className="h-6 w-6" />
+                </div>
+
+                <h2 className="mt-5 text-xl font-bold text-gray-900 dark:text-white">
+                  Producciones
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                  Creá producciones, asigná clientes,
+                  actualizá estados y gestioná entregas.
                 </p>
 
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {totalStudents}
-                </p>
+                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                  <span className="text-gray-500">
+                    Total:{" "}
+                    <strong className="text-gray-900 dark:text-white">
+                      {totalProductions}
+                    </strong>
+                  </span>
+
+                  <span className="text-gray-500">
+                    Activas:{" "}
+                    <strong className="text-gray-900 dark:text-white">
+                      {activeProductions}
+                    </strong>
+                  </span>
+                </div>
               </div>
+
+              <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
             </div>
+          </Link>
+
+          <Link
+            href="/admin/recuperaciones"
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
+          >
+            <div className="flex items-start justify-between gap-4">
+
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                  <ArchiveRestore className="h-6 w-6" />
+                </div>
+
+                <h2 className="mt-5 text-xl font-bold text-gray-900 dark:text-white">
+                  Recuperaciones
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                  Revisá solicitudes de clientes
+                  para recuperar material archivado.
+                </p>
+
+                <div className="mt-5">
+                  <span className="text-sm text-gray-500">
+                    Pendientes:{" "}
+                    <strong
+                      className={
+                        pendingRecoveries > 0
+                          ? "text-amber-600"
+                          : "text-gray-900 dark:text-white"
+                      }
+                    >
+                      {pendingRecoveries}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
+            </div>
+          </Link>
+
+        </div>
+
+        {/* MÉTRICAS ACADEMY */}
+        <div className="mb-10 mt-8">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-[#0A9396]">
+              Clover Academy
+            </p>
+
+            <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+              Resumen de cursos
+            </h2>
           </div>
 
-          <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-                <GraduationCap className="h-6 w-6" />
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
-              <div>
-                <p className="text-sm text-gray-500">
-                  Inscripciones activas
-                </p>
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <Users className="h-6 w-6" />
+                </div>
 
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {activeEnrollments}
-                </p>
-              </div>
-            </div>
-          </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Usuarios
+                  </p>
 
-          <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-                <BookOpen className="h-6 w-6" />
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500">
-                  Clases completadas
-                </p>
-
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {completedProgress}
-                </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {totalUsers}
+                  </p>
+                </div>
               </div>
             </div>
+
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <GraduationCap className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Inscripciones activas
+                  </p>
+
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {activeEnrollments}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Clases completadas
+                  </p>
+
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {completedProgress}
+                  </p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
         {/* ALUMNOS */}
-        <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-[#06222c] overflow-hidden">
-          <div className="p-6 md:p-8 border-b border-gray-100 dark:border-white/10">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+
+          <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
               Alumnos
             </h2>
 
@@ -281,7 +428,8 @@ export default async function AdminPage() {
                 const enrollment =
                   allEnrollments.find(
                     (item) =>
-                      item.user_id === student.id &&
+                      item.user_id ===
+                        student.id &&
                       item.status === "active"
                   )
 
@@ -298,18 +446,23 @@ export default async function AdminPage() {
                     : 0
 
                 const lastActivity =
-                  getLastActivity(student.id)
+                  getLastActivity(
+                    student.id
+                  )
 
                 return (
                   <div
                     key={student.id}
-                    className="p-5 md:px-8 md:py-6 flex flex-col gap-5 lg:flex-row lg:items-center"
+                    className="flex flex-col gap-5 p-5 md:px-8 md:py-6 lg:flex-row lg:items-center"
                   >
+
                     {/* ALUMNO */}
                     <div className="flex items-center gap-4 lg:w-[28%]">
                       {student.avatar_url ? (
                         <img
-                          src={student.avatar_url}
+                          src={
+                            student.avatar_url
+                          }
                           alt=""
                           className="h-11 w-11 rounded-full object-cover"
                         />
@@ -320,12 +473,12 @@ export default async function AdminPage() {
                       )}
 
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-white truncate">
+                        <p className="truncate font-semibold text-gray-900 dark:text-white">
                           {student.full_name ||
                             "Sin nombre"}
                         </p>
 
-                        <p className="text-sm text-gray-500 truncate">
+                        <p className="truncate text-sm text-gray-500">
                           {student.email}
                         </p>
                       </div>
@@ -333,7 +486,7 @@ export default async function AdminPage() {
 
                     {/* CURSO */}
                     <div className="lg:w-[25%]">
-                      <p className="text-xs text-gray-400 mb-1">
+                      <p className="mb-1 text-xs text-gray-400">
                         Curso
                       </p>
 
@@ -345,7 +498,7 @@ export default async function AdminPage() {
 
                     {/* PROGRESO */}
                     <div className="lg:w-[25%]">
-                      <div className="flex justify-between text-xs mb-2">
+                      <div className="mb-2 flex justify-between text-xs">
                         <span className="text-gray-500">
                           Progreso
                         </span>
@@ -355,9 +508,9 @@ export default async function AdminPage() {
                         </span>
                       </div>
 
-                      <div className="h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
                         <div
-                          className="h-full bg-[#0A9396] rounded-full"
+                          className="h-full rounded-full bg-[#0A9396]"
                           style={{
                             width: `${percentage}%`,
                           }}
@@ -372,12 +525,14 @@ export default async function AdminPage() {
                       </p>
 
                       <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                        {formatDate(lastActivity)}
+                        {formatDate(
+                          lastActivity
+                        )}
                       </p>
                     </div>
 
                     {/* DETALLE */}
-                    <div className="lg:flex-1 flex lg:justify-end">
+                    <div className="flex lg:flex-1 lg:justify-end">
                       <Link
                         href={`/admin/alumnos/${student.id}`}
                         className="flex items-center gap-1 text-sm font-medium text-[#0A9396] hover:underline"
