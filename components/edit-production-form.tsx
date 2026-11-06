@@ -47,6 +47,7 @@ interface ProductionFile {
   label: string
   file_type: string
   url: string
+  expires_at: string | null
   created_at: string
 }
 
@@ -136,6 +137,44 @@ const formatDate = (
   ).format(new Date(value))
 }
 
+const formatDateTime = (
+  value: string | null
+) => {
+  if (!value) return "-"
+
+  return new Intl.DateTimeFormat(
+    "es-AR",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ).format(new Date(value))
+}
+
+const getDefaultWeTransferExpiry = () => {
+  const now = new Date()
+
+  now.setHours(
+    now.getHours() + 71
+  )
+
+  now.setMinutes(
+    now.getMinutes() + 40
+  )
+
+  const offset =
+    now.getTimezoneOffset() * 60000
+
+  return new Date(
+    now.getTime() - offset
+  )
+    .toISOString()
+    .slice(0, 16)
+}
+
 export default function EditProductionForm({
   production,
   clients,
@@ -202,6 +241,9 @@ export default function EditProductionForm({
   const [fileUrl, setFileUrl] =
     useState("")
 
+  const [fileExpiresAt, setFileExpiresAt] =
+    useState("")
+
   const [saving, setSaving] =
     useState(false)
 
@@ -224,6 +266,20 @@ export default function EditProductionForm({
           )
         : [...current, service]
     )
+  }
+
+  const handleFileTypeChange = (
+    nextType: string
+  ) => {
+    setFileType(nextType)
+
+    if (nextType === "wetransfer") {
+      setFileExpiresAt(
+        getDefaultWeTransferExpiry()
+      )
+    } else {
+      setFileExpiresAt("")
+    }
   }
 
   const handleSubmit = async (
@@ -293,37 +349,26 @@ export default function EditProductionForm({
       .from("productions")
       .update({
         user_id: clientId,
-
         property_name:
           propertyName.trim(),
-
         property_address:
           propertyAddress.trim() ||
           null,
-
         production_date:
           productionDateISO,
-
         status,
-
         services,
-
         total_amount: totalAmount
           ? Number(totalAmount)
           : null,
-
         estimated_delivery_at:
           estimatedDeliveryISO,
-
         delivered_at:
           deliveredAt,
-
         available_until:
           availableUntil,
-
         notes:
           notes.trim() || null,
-
         updated_at:
           new Date().toISOString(),
       })
@@ -384,6 +429,16 @@ export default function EditProductionForm({
       return
     }
 
+    if (
+      fileType === "wetransfer" &&
+      !fileExpiresAt
+    ) {
+      setFileMessage(
+        "Indicá cuándo vence el WeTransfer."
+      )
+      return
+    }
+
     setAddingFile(true)
     setFileMessage("")
 
@@ -392,6 +447,14 @@ export default function EditProductionForm({
         (item) =>
           item.value === fileType
       )?.label || "Material"
+
+    const expiresAtISO =
+      fileType === "wetransfer" &&
+      fileExpiresAt
+        ? new Date(
+            fileExpiresAt
+          ).toISOString()
+        : null
 
     const supabase = createClient()
 
@@ -403,16 +466,15 @@ export default function EditProductionForm({
       .insert({
         production_id:
           production.id,
-
         file_type:
           fileType,
-
         label:
           fileLabel.trim() ||
           defaultLabel,
-
         url:
           fileUrl.trim(),
+        expires_at:
+          expiresAtISO,
       })
       .select(`
         id,
@@ -420,6 +482,7 @@ export default function EditProductionForm({
         label,
         file_type,
         url,
+        expires_at,
         created_at
       `)
       .single()
@@ -444,6 +507,7 @@ export default function EditProductionForm({
 
     setFileLabel("")
     setFileUrl("")
+    setFileExpiresAt("")
 
     setFileMessage(
       "Material agregado correctamente."
@@ -525,7 +589,6 @@ export default function EditProductionForm({
           onSubmit={handleSubmit}
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
-
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Cliente asignado
@@ -556,7 +619,6 @@ export default function EditProductionForm({
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Nombre de la propiedad
@@ -590,11 +652,9 @@ export default function EditProductionForm({
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
             </div>
-
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Fecha y hora de producción
@@ -655,7 +715,6 @@ export default function EditProductionForm({
                 </option>
               </select>
             </div>
-
           </div>
 
           <div>
@@ -695,7 +754,6 @@ export default function EditProductionForm({
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Valor total
@@ -730,7 +788,6 @@ export default function EditProductionForm({
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
             </div>
-
           </div>
 
           {production.delivered_at && (
@@ -793,7 +850,6 @@ export default function EditProductionForm({
           )}
 
           <div className="flex flex-col gap-3 border-t border-gray-100 pt-6 dark:border-white/10 sm:flex-row sm:justify-end">
-
             <Link
               href="/admin/producciones"
               className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
@@ -818,13 +874,11 @@ export default function EditProductionForm({
                 </>
               )}
             </button>
-
           </div>
         </form>
 
         {/* MATERIAL */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
-
           <div className="flex items-start gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
               <FolderOpen className="h-5 w-5" />
@@ -845,76 +899,103 @@ export default function EditProductionForm({
             </div>
           </div>
 
-          {/* LINKS EXISTENTES */}
           <div className="mt-6 space-y-3">
             {files.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/10">
                 Todavía no cargaste material.
               </div>
             ) : (
-              files.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
-                    {file.file_type.includes(
-                      "video"
-                    ) ||
-                    file.file_type ===
-                      "talking_reel" ? (
-                      <FileVideo2 className="h-5 w-5" />
-                    ) : (
-                      <Link2 className="h-5 w-5" />
-                    )}
+              files.map((file) => {
+                const expired =
+                  file.expires_at
+                    ? new Date(
+                        file.expires_at
+                      ).getTime() <=
+                      Date.now()
+                    : false
+
+                return (
+                  <div
+                    key={file.id}
+                    className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+                      {file.file_type.includes(
+                        "video"
+                      ) ||
+                      file.file_type ===
+                        "talking_reel" ? (
+                        <FileVideo2 className="h-5 w-5" />
+                      ) : (
+                        <Link2 className="h-5 w-5" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {file.label}
+                        </p>
+
+                        {file.expires_at && (
+                          <span
+                            className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                              expired
+                                ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                            }`}
+                          >
+                            {expired
+                              ? "Vencido"
+                              : `Vence ${formatDateTime(
+                                  file.expires_at
+                                )}`}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-1 truncate text-xs text-gray-400">
+                        {file.url}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {!expired && (
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                        >
+                          Abrir
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeleteFile(
+                            file.id
+                          )
+                        }
+                        className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
+                        aria-label="Eliminar enlace"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {file.label}
-                    </p>
-
-                    <p className="mt-1 truncate text-xs text-gray-400">
-                      {file.url}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
-                    >
-                      Abrir
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleDeleteFile(
-                          file.id
-                        )
-                      }
-                      className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
-                      aria-label="Eliminar enlace"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
 
-          {/* AGREGAR LINK */}
           <form
             onSubmit={handleAddFile}
             className="mt-6 rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03]"
           >
             <div className="grid gap-4 md:grid-cols-2">
-
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Tipo
@@ -923,7 +1004,7 @@ export default function EditProductionForm({
                 <select
                   value={fileType}
                   onChange={(event) =>
-                    setFileType(
+                    handleFileTypeChange(
                       event.target.value
                     )
                   }
@@ -959,7 +1040,6 @@ export default function EditProductionForm({
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                 />
               </div>
-
             </div>
 
             <div className="mt-4">
@@ -981,6 +1061,29 @@ export default function EditProductionForm({
               />
             </div>
 
+            {fileType === "wetransfer" && (
+              <div className="mt-4">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Vencimiento de WeTransfer
+                </label>
+
+                <input
+                  type="datetime-local"
+                  value={fileExpiresAt}
+                  onChange={(event) =>
+                    setFileExpiresAt(
+                      event.target.value
+                    )
+                  }
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
+                />
+
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Clover propone automáticamente 71 h 40 min desde ahora. Podés corregirlo si el enlace ya fue creado antes.
+                </p>
+              </div>
+            )}
+
             {fileMessage && (
               <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                 {fileMessage}
@@ -1001,7 +1104,6 @@ export default function EditProductionForm({
               Agregar material
             </button>
           </form>
-
         </section>
       </div>
     </main>

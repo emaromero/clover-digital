@@ -77,6 +77,7 @@ export default async function AdminProductionPage({
       label,
       file_type,
       url,
+      expires_at,
       created_at
     `)
     .eq("production_id", id)
