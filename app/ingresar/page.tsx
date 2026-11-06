@@ -58,15 +58,15 @@ export default function IngresarPage() {
 
         <div className="text-center mb-8">
           <p className="text-sm font-medium text-[#0A9396] mb-2">
-            Clover Academy
+            Clover Digital
           </p>
 
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Ingresar
           </h1>
 
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            Accedé a tu cuenta y a tus cursos.
+          <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+            Accedé a tus producciones, entregas y cursos desde un solo lugar.
           </p>
         </div>
 

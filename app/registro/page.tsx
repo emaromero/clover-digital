@@ -72,15 +72,15 @@ export default function RegistroPage() {
 
         <div className="text-center mb-8">
           <p className="text-sm font-medium text-[#0A9396] mb-2">
-            Clover Academy
+            Clover Digital
           </p>
 
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Crear cuenta
           </h1>
 
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            Registrate para acceder a Clover Academy.
+          <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+            Registrate para acceder a tus producciones, entregas y Clover Academy.
           </p>
         </div>
 
