@@ -1,6 +1,12 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+} from "lucide-react"
+
 import { useLanguage } from "./language-provider"
 import { trackEvent } from "@/lib/analytics"
 
@@ -22,19 +28,47 @@ const VIATICO_BASE = 20000
 const ENTREGA_36 = 15000
 const ENTREGA_24 = 20000
 
-type ExtraId = "drone" | "reel" | "vert"
-type ZonaId = "dentro" | "fuera"
-type EntregaId = "72" | "36" | "24"
-type HoraId = "manana" | "mediodia" | "tarde"
+type ExtraId =
+  | "drone"
+  | "reel"
+  | "vert"
+
+type ZonaId =
+  | "dentro"
+  | "fuera"
+
+type EntregaId =
+  | "72"
+  | "36"
+  | "24"
+
+type HoraId =
+  | "manana"
+  | "mediodia"
+  | "tarde"
 
 const COPY = {
   es: {
-    title: "Cotizá tu producción",
-    intro:
-      "Armá tu pedido, mirá el valor al instante y enviá la solicitud por WhatsApp.",
+    title:
+      "Cotizá tu producción",
 
-    typeTitle: "1. Tipo de propiedad",
-    typeSubtitle: "Elegí la que más se parezca a tu propiedad.",
+    intro:
+      "Armá tu producción en pocos pasos, conocé el valor estimado y enviá tu solicitud por WhatsApp.",
+
+    step:
+      "Paso",
+
+    next:
+      "Continuar",
+
+    back:
+      "Volver",
+
+    typeTitle:
+      "Tipo de propiedad",
+
+    typeSubtitle:
+      "Elegí la opción que más se parezca a la propiedad que vamos a fotografiar.",
 
     tipos: [
       {
@@ -47,14 +81,18 @@ const COPY = {
       },
       {
         n: "Propiedad grande",
-        d: "Casas de gran cobertura: múltiples ambientes, exteriores amplios, pileta, quincho, varias plantas.",
+        d: "Casas de gran cobertura, múltiples ambientes, exteriores amplios, pileta, quincho o varias plantas.",
       },
     ],
 
-    packageTitle: "2. Paquete",
+    packageTitle:
+      "Elegí un paquete",
+
     packageSubtitle:
-      "Todos incluyen fotos HDR. Podés saltearlo si solo necesitás contenido adicional.",
-    chooseProperty: "Elegí primero el tipo de propiedad",
+      "Todos los paquetes incluyen fotografía HDR.",
+
+    chooseProperty:
+      "Elegí primero el tipo de propiedad",
 
     paquetes: [
       {
@@ -71,16 +109,24 @@ const COPY = {
       },
     ],
 
-    extrasTitle: "3. Contenido adicional",
+    extrasTitle:
+      "Contenido adicional",
 
-    droneWithPackage: "Con un paquete, el drone se suma a",
-    droneWithoutPackage: "Sin paquete, el drone se cotiza a",
+    extrasSubtitle:
+      "Podés sumar contenido a tu paquete o contratar algunos servicios de forma independiente.",
+
+    droneWithPackage:
+      "Con un paquete, el drone se suma por",
+
+    droneWithoutPackage:
+      "Sin paquete, el servicio de drone tiene un valor de",
 
     extras: [
       {
         id: "drone" as ExtraId,
         n: "Drone",
-        nAdditional: "Drone adicional",
+        nAdditional:
+          "Drone adicional",
         d: "Fotografía aérea + video aéreo",
         dAdditional:
           "Fotografía aérea + clips de video para incorporar al material",
@@ -88,75 +134,126 @@ const COPY = {
       {
         id: "reel" as ExtraId,
         n: "Reel hablado",
-        nAdditional: "Reel hablado",
-        d: "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos",
+        nAdditional:
+          "Reel hablado",
+        d: "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos.",
         dAdditional:
-          "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos",
+          "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos.",
       },
       {
         id: "vert" as ExtraId,
         n: "Video vertical para RRSS",
-        nAdditional: "Video vertical para RRSS",
-        d: "Grabación + edición de video vertical. Máximo 60 segundos",
+        nAdditional:
+          "Video vertical para RRSS",
+        d: "Grabación + edición de video vertical. Máximo 60 segundos.",
         dAdditional:
-          "Grabación + edición de video vertical. Máximo 60 segundos",
+          "Grabación + edición de video vertical. Máximo 60 segundos.",
       },
     ],
 
     specialNote:
-      "Desarrollos inmobiliarios, proyectos en pozo y de gran escala: se cotizan aparte. Producciones especiales, a consultar.",
+      "Desarrollos inmobiliarios, proyectos en pozo y producciones de gran escala se cotizan aparte.",
 
-    zoneTitle: "4. Ubicación de la propiedad",
+    zoneTitle:
+      "Ubicación y entrega",
+
     zoneSubtitle:
-      "CABA y Zona Norte mantienen el mismo valor. Para otras zonas se calculan viáticos.",
+      "Indicá dónde está la propiedad y cuándo necesitás recibir el material.",
 
-    zoneInside: "CABA y Zona Norte",
-    zoneInsideDesc: "Sin costo adicional",
+    zoneLabel:
+      "Ubicación de la propiedad",
 
-    zoneOutside: "Fuera de CABA y Zona Norte",
-    zoneOutsideDesc: "Viáticos desde $20.000",
+    zoneInside:
+      "CABA y Zona Norte",
+
+    zoneInsideDesc:
+      "Sin costo adicional",
+
+    zoneOutside:
+      "Fuera de CABA y Zona Norte",
+
+    zoneOutsideDesc:
+      "Viáticos desde $20.000",
 
     zoneWarning:
-      "El adicional de $20.000 es el viático mínimo. El valor final puede variar según la distancia y el tiempo de traslado.",
+      "El adicional de $20.000 es el viático mínimo. El valor final puede variar según distancia y tiempo de traslado.",
 
-    deliveryTitle: "5. Plazo de entrega",
+    deliveryLabel:
+      "Plazo de entrega",
+
     deliverySubtitle:
-      "Elegí cuándo necesitás recibir el material. Las entregas prioritarias están sujetas a disponibilidad.",
+      "Las entregas prioritarias están sujetas a disponibilidad.",
 
-    delivery72: "Entrega estándar",
-    delivery72Desc: "Hasta 72 hs hábiles",
+    delivery72:
+      "Estándar",
 
-    delivery36: "Entrega prioritaria",
-    delivery36Desc: "Hasta 36 hs",
+    delivery72Desc:
+      "Hasta 72 hs hábiles",
 
-    delivery24: "Entrega express",
-    delivery24Desc: "Hasta 24 hs",
+    delivery36:
+      "Prioritaria",
 
-    noExtra: "Sin costo adicional",
+    delivery36Desc:
+      "Hasta 36 hs",
 
-    dataTitle: "6. Tus datos",
+    delivery24:
+      "Express",
 
-    name: "Nombre y apellido",
-    company: "Inmobiliaria o empresa",
-    address: "Dirección de la propiedad",
-    date: "Fecha preferida",
-    time: "Franja horaria preferida",
+    delivery24Desc:
+      "Hasta 24 hs",
+
+    noExtra:
+      "Sin costo adicional",
+
+    dataTitle:
+      "Tus datos",
+
+    dataSubtitle:
+      "Completá los datos para enviar la solicitud.",
+
+    name:
+      "Nombre y apellido",
+
+    company:
+      "Inmobiliaria o empresa",
+
+    address:
+      "Dirección de la propiedad",
+
+    date:
+      "Fecha preferida",
+
+    time:
+      "Franja horaria preferida",
 
     horas: {
-      manana: "Mañana",
-      mediodia: "Mediodía",
-      tarde: "Tarde",
+      manana:
+        "Mañana",
+
+      mediodia:
+        "Mediodía",
+
+      tarde:
+        "Tarde",
     },
 
-    summary: "Resumen",
-    empty: "Todavía no elegiste ningún servicio.",
-    estimatedTotal: "Total estimado",
+    summary:
+      "Resumen de tu producción",
 
-    request: "Solicitar reserva",
+    empty:
+      "Todavía no elegiste ningún servicio.",
 
-    included: "Sin cargo",
+    estimatedTotal:
+      "Total estimado",
 
-    travelSummary: "Viáticos fuera de zona",
+    request:
+      "Solicitar reserva",
+
+    included:
+      "Sin cargo",
+
+    travelSummary:
+      "Viáticos fuera de zona",
 
     standardDeliverySummary:
       "Entrega estándar · hasta 72 hs hábiles",
@@ -170,28 +267,64 @@ const COPY = {
     whatsappHello:
       "¡Hola Clover Digital! Quiero solicitar una reserva.",
 
-    whatsappTotal: "Total estimado",
-    whatsappName: "Nombre",
-    whatsappCompany: "Empresa",
-    whatsappAddress: "Dirección",
-    whatsappZone: "Zona",
-    whatsappDate: "Fecha preferida",
-    whatsappTime: "Horario preferido",
-    whatsappDelivery: "Entrega",
+    whatsappTotal:
+      "Total estimado",
 
-    toCoordinate: "a coordinar",
+    whatsappName:
+      "Nombre",
+
+    whatsappCompany:
+      "Empresa",
+
+    whatsappAddress:
+      "Dirección",
+
+    whatsappZone:
+      "Zona",
+
+    whatsappDate:
+      "Fecha preferida",
+
+    whatsappTime:
+      "Horario preferido",
+
+    whatsappDelivery:
+      "Entrega",
+
+    toCoordinate:
+      "a coordinar",
 
     travelWhatsappNote:
       "Importante: el viático indicado es el mínimo y queda sujeto a confirmación según distancia y tiempo de traslado.",
+
+    selectService:
+      "Elegí un paquete o servicio para continuar.",
+
+    selectZone:
+      "Elegí la ubicación para continuar.",
   },
 
   en: {
-    title: "Get a quote",
-    intro:
-      "Build your production, see the estimated price instantly and send your request via WhatsApp.",
+    title:
+      "Get a quote",
 
-    typeTitle: "1. Property type",
-    typeSubtitle: "Choose the option that best matches the property.",
+    intro:
+      "Build your production in a few steps, see the estimated price and send your request via WhatsApp.",
+
+    step:
+      "Step",
+
+    next:
+      "Continue",
+
+    back:
+      "Back",
+
+    typeTitle:
+      "Property type",
+
+    typeSubtitle:
+      "Choose the option that best matches the property.",
 
     tipos: [
       {
@@ -200,7 +333,7 @@ const COPY = {
       },
       {
         n: "Expanded property",
-        d: "Large apartments, PH units and houses with additional spaces, terraces, gardens or other areas.",
+        d: "Large apartments, PH units and houses with terraces, gardens or additional areas.",
       },
       {
         n: "Large property",
@@ -208,10 +341,14 @@ const COPY = {
       },
     ],
 
-    packageTitle: "2. Package",
+    packageTitle:
+      "Choose a package",
+
     packageSubtitle:
-      "All packages include HDR photography. You can skip this step if you only need additional content.",
-    chooseProperty: "Choose the property type first",
+      "All packages include HDR photography.",
+
+    chooseProperty:
+      "Choose the property type first",
 
     paquetes: [
       {
@@ -224,96 +361,155 @@ const COPY = {
       },
       {
         n: "Complete",
-        d: "HDR photos + vertical video + walkthrough video for real estate portals",
+        d: "HDR photos + vertical video + walkthrough video",
       },
     ],
 
-    extrasTitle: "3. Additional content",
+    extrasTitle:
+      "Additional content",
 
-    droneWithPackage: "With a package, drone can be added for",
-    droneWithoutPackage: "Without a package, drone is priced at",
+    extrasSubtitle:
+      "Add content to your package or book selected services separately.",
+
+    droneWithPackage:
+      "With a package, drone can be added for",
+
+    droneWithoutPackage:
+      "Without a package, drone service costs",
 
     extras: [
       {
         id: "drone" as ExtraId,
         n: "Drone",
-        nAdditional: "Additional drone",
+        nAdditional:
+          "Additional drone",
         d: "Aerial photography + aerial video",
         dAdditional:
-          "Aerial photography + video clips to incorporate into the production",
+          "Aerial photography + video clips for the production",
       },
       {
         id: "reel" as ExtraId,
         n: "Talking reel",
-        nAdditional: "Talking reel",
-        d: "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds",
+        nAdditional:
+          "Talking reel",
+        d: "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds.",
         dAdditional:
-          "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds",
+          "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds.",
       },
       {
         id: "vert" as ExtraId,
-        n: "Vertical video for social media",
-        nAdditional: "Vertical video for social media",
-        d: "Vertical video recording + editing. Maximum 60 seconds",
+        n: "Vertical social media video",
+        nAdditional:
+          "Vertical social media video",
+        d: "Vertical video recording + editing. Maximum 60 seconds.",
         dAdditional:
-          "Vertical video recording + editing. Maximum 60 seconds",
+          "Vertical video recording + editing. Maximum 60 seconds.",
       },
     ],
 
     specialNote:
-      "Real estate developments, off-plan projects and large-scale productions are quoted separately. Special productions are available upon request.",
+      "Real estate developments, off-plan projects and large-scale productions are quoted separately.",
 
-    zoneTitle: "4. Property location",
+    zoneTitle:
+      "Location and delivery",
+
     zoneSubtitle:
-      "CABA and North Zone keep the standard service price. Travel fees apply to other areas.",
+      "Tell us where the property is located and when you need the content.",
 
-    zoneInside: "CABA and North Zone",
-    zoneInsideDesc: "No additional charge",
+    zoneLabel:
+      "Property location",
 
-    zoneOutside: "Outside CABA and North Zone",
-    zoneOutsideDesc: "Travel fee from ARS 20,000",
+    zoneInside:
+      "CABA and North Zone",
+
+    zoneInsideDesc:
+      "No additional charge",
+
+    zoneOutside:
+      "Outside CABA and North Zone",
+
+    zoneOutsideDesc:
+      "Travel fee from ARS 20,000",
 
     zoneWarning:
-      "ARS 20,000 is the minimum travel fee. The final amount may vary depending on distance and travel time.",
+      "ARS 20,000 is the minimum travel fee. Final pricing may vary depending on distance and travel time.",
 
-    deliveryTitle: "5. Delivery time",
+    deliveryLabel:
+      "Delivery time",
+
     deliverySubtitle:
-      "Choose when you need the content. Priority and express delivery are subject to availability.",
+      "Priority delivery is subject to availability.",
 
-    delivery72: "Standard delivery",
-    delivery72Desc: "Within 72 business hours",
+    delivery72:
+      "Standard",
 
-    delivery36: "Priority delivery",
-    delivery36Desc: "Within 36 hours",
+    delivery72Desc:
+      "Within 72 business hours",
 
-    delivery24: "Express delivery",
-    delivery24Desc: "Within 24 hours",
+    delivery36:
+      "Priority",
 
-    noExtra: "No additional charge",
+    delivery36Desc:
+      "Within 36 hours",
 
-    dataTitle: "6. Your information",
+    delivery24:
+      "Express",
 
-    name: "Full name",
-    company: "Real estate agency or company",
-    address: "Property address",
-    date: "Preferred date",
-    time: "Preferred time",
+    delivery24Desc:
+      "Within 24 hours",
+
+    noExtra:
+      "No additional charge",
+
+    dataTitle:
+      "Your information",
+
+    dataSubtitle:
+      "Complete your information to send the request.",
+
+    name:
+      "Full name",
+
+    company:
+      "Real estate agency or company",
+
+    address:
+      "Property address",
+
+    date:
+      "Preferred date",
+
+    time:
+      "Preferred time",
 
     horas: {
-      manana: "Morning",
-      mediodia: "Midday",
-      tarde: "Afternoon",
+      manana:
+        "Morning",
+
+      mediodia:
+        "Midday",
+
+      tarde:
+        "Afternoon",
     },
 
-    summary: "Summary",
-    empty: "You haven't selected any services yet.",
-    estimatedTotal: "Estimated total",
+    summary:
+      "Production summary",
 
-    request: "Request booking",
+    empty:
+      "You haven't selected any services yet.",
 
-    included: "Included",
+    estimatedTotal:
+      "Estimated total",
 
-    travelSummary: "Travel fee outside service area",
+    request:
+      "Request booking",
+
+    included:
+      "Included",
+
+    travelSummary:
+      "Travel fee outside service area",
 
     standardDeliverySummary:
       "Standard delivery · within 72 business hours",
@@ -327,166 +523,301 @@ const COPY = {
     whatsappHello:
       "Hi Clover Digital! I'd like to request a booking.",
 
-    whatsappTotal: "Estimated total",
-    whatsappName: "Name",
-    whatsappCompany: "Company",
-    whatsappAddress: "Address",
-    whatsappZone: "Area",
-    whatsappDate: "Preferred date",
-    whatsappTime: "Preferred time",
-    whatsappDelivery: "Delivery",
+    whatsappTotal:
+      "Estimated total",
 
-    toCoordinate: "to be arranged",
+    whatsappName:
+      "Name",
+
+    whatsappCompany:
+      "Company",
+
+    whatsappAddress:
+      "Address",
+
+    whatsappZone:
+      "Area",
+
+    whatsappDate:
+      "Preferred date",
+
+    whatsappTime:
+      "Preferred time",
+
+    whatsappDelivery:
+      "Delivery",
+
+    toCoordinate:
+      "to be arranged",
 
     travelWhatsappNote:
       "Important: the displayed travel fee is the minimum and is subject to confirmation depending on distance and travel time.",
+
+    selectService:
+      "Choose a package or service to continue.",
+
+    selectZone:
+      "Choose the location to continue.",
   },
 }
 
-const money = (n: number) =>
-  "$ " + n.toLocaleString("es-AR")
+const money = (
+  value: number
+) =>
+  "$ " +
+  value.toLocaleString(
+    "es-AR"
+  )
 
 const optBase =
-  "text-left rounded-lg border-2 p-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e5c6e]"
+  "relative w-full text-left rounded-2xl border-2 p-5 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e5c6e]"
 
 const optOff =
-  "bg-white dark:bg-[#06222c] border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:border-[#0e5c6e]"
+  "bg-white dark:bg-[#06222c] border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:border-[#0e5c6e]/50"
 
 const optOn =
-  "bg-[#0e5c6e] border-[#001219] dark:border-white text-white"
+  "bg-[#0e5c6e] border-[#0e5c6e] text-white shadow-sm"
 
 export default function Cotizador() {
-  const { language } = useLanguage()
+  const {
+    language,
+  } =
+    useLanguage()
 
-  const c = COPY[language]
+  const c =
+    COPY[language]
 
-  const [tipo, setTipo] =
-    useState<number | null>(null)
+  const [
+    step,
+    setStep,
+  ] =
+    useState(1)
 
-  const [paq, setPaq] =
-    useState<number | null>(null)
+  const [
+    tipo,
+    setTipo,
+  ] =
+    useState<
+      number | null
+    >(null)
 
-  const [extras, setExtras] =
-    useState<Record<ExtraId, boolean>>({
+  const [
+    paq,
+    setPaq,
+  ] =
+    useState<
+      number | null
+    >(null)
+
+  const [
+    extras,
+    setExtras,
+  ] =
+    useState<
+      Record<
+        ExtraId,
+        boolean
+      >
+    >({
       drone: false,
       reel: false,
       vert: false,
     })
 
-  const [zona, setZona] =
-    useState<ZonaId | null>(null)
+  const [
+    zona,
+    setZona,
+  ] =
+    useState<
+      ZonaId | null
+    >(null)
 
-  const [entrega, setEntrega] =
-    useState<EntregaId>("72")
+  const [
+    entrega,
+    setEntrega,
+  ] =
+    useState<EntregaId>(
+      "72"
+    )
 
-  const [hora, setHora] =
-    useState<HoraId | null>(null)
+  const [
+    hora,
+    setHora,
+  ] =
+    useState<
+      HoraId | null
+    >(null)
 
-  const [f, setF] = useState({
-    nombre: "",
-    empresa: "",
-    dir: "",
-    fecha: "",
-  })
+  const [
+    warning,
+    setWarning,
+  ] =
+    useState("")
 
-  const lineasServicio = useMemo(() => {
-    const lineas: [string, number][] = []
+  const [
+    f,
+    setF,
+  ] =
+    useState({
+      nombre: "",
+      empresa: "",
+      dir: "",
+      fecha: "",
+    })
 
-    if (tipo !== null && paq !== null) {
-      lineas.push([
-        `${c.tipos[tipo].n} · ${c.paquetes[paq].n}`,
-        PRECIOS_TIPOS[tipo][paq],
-      ])
-    }
+  const lineasServicio =
+    useMemo(
+      () => {
+        const lineas: [
+          string,
+          number,
+        ][] = []
 
-    if (extras.drone) {
-      lineas.push([
-        paq !== null
-          ? c.extras[0].nAdditional
-          : c.extras[0].n,
+        if (
+          tipo !==
+            null &&
+          paq !== null
+        ) {
+          lineas.push([
+            `${c.tipos[tipo].n} · ${c.paquetes[paq].n}`,
+            PRECIOS_TIPOS[
+              tipo
+            ][paq],
+          ])
+        }
 
-        paq !== null
-          ? DRONE_ADICIONAL
-          : DRONE_SOLO,
-      ])
-    }
+        if (
+          extras.drone
+        ) {
+          lineas.push([
+            paq !== null
+              ? c.extras[0]
+                  .nAdditional
+              : c.extras[0].n,
 
-    if (extras.reel) {
-      lineas.push([
-        c.extras[1].n,
-        REEL_HABLADO,
-      ])
-    }
+            paq !== null
+              ? DRONE_ADICIONAL
+              : DRONE_SOLO,
+          ])
+        }
 
-    if (extras.vert) {
-      lineas.push([
-        c.extras[2].n,
-        VIDEO_VERTICAL,
-      ])
-    }
+        if (
+          extras.reel
+        ) {
+          lineas.push([
+            c.extras[1].n,
+            REEL_HABLADO,
+          ])
+        }
 
-    return lineas
-  }, [tipo, paq, extras, c])
+        if (
+          extras.vert
+        ) {
+          lineas.push([
+            c.extras[2].n,
+            VIDEO_VERTICAL,
+          ])
+        }
+
+        return lineas
+      },
+      [
+        tipo,
+        paq,
+        extras,
+        c,
+      ]
+    )
 
   const hasService =
-    lineasServicio.length > 0
-
-  const resumen = useMemo(() => {
-    const lineas: [string, number][] = [
-      ...lineasServicio,
-    ]
-
-    if (zona === "dentro") {
-      lineas.push([
-        c.zoneInside,
-        0,
-      ])
-    }
-
-    if (zona === "fuera") {
-      lineas.push([
-        c.travelSummary,
-        VIATICO_BASE,
-      ])
-    }
-
-    if (hasService) {
-      if (entrega === "72") {
-        lineas.push([
-          c.standardDeliverySummary,
-          0,
-        ])
-      }
-
-      if (entrega === "36") {
-        lineas.push([
-          c.priorityDeliverySummary,
-          ENTREGA_36,
-        ])
-      }
-
-      if (entrega === "24") {
-        lineas.push([
-          c.expressDeliverySummary,
-          ENTREGA_24,
-        ])
-      }
-    }
-
-    return lineas
-  }, [
-    lineasServicio,
-    zona,
-    entrega,
-    hasService,
-    c,
-  ])
-
-  const total = resumen.reduce(
-    (acumulado, linea) =>
-      acumulado + linea[1],
+    lineasServicio.length >
     0
-  )
+
+  const resumen =
+    useMemo(
+      () => {
+        const lineas: [
+          string,
+          number,
+        ][] = [
+          ...lineasServicio,
+        ]
+
+        if (
+          zona ===
+          "dentro"
+        ) {
+          lineas.push([
+            c.zoneInside,
+            0,
+          ])
+        }
+
+        if (
+          zona ===
+          "fuera"
+        ) {
+          lineas.push([
+            c.travelSummary,
+            VIATICO_BASE,
+          ])
+        }
+
+        if (
+          hasService
+        ) {
+          if (
+            entrega ===
+            "72"
+          ) {
+            lineas.push([
+              c.standardDeliverySummary,
+              0,
+            ])
+          }
+
+          if (
+            entrega ===
+            "36"
+          ) {
+            lineas.push([
+              c.priorityDeliverySummary,
+              ENTREGA_36,
+            ])
+          }
+
+          if (
+            entrega ===
+            "24"
+          ) {
+            lineas.push([
+              c.expressDeliverySummary,
+              ENTREGA_24,
+            ])
+          }
+        }
+
+        return lineas
+      },
+      [
+        lineasServicio,
+        zona,
+        entrega,
+        hasService,
+        c,
+      ]
+    )
+
+  const total =
+    resumen.reduce(
+      (
+        acumulado,
+        linea
+      ) =>
+        acumulado +
+        linea[1],
+      0
+    )
 
   const zonaTexto =
     zona === "dentro"
@@ -507,17 +838,67 @@ export default function Cotizador() {
       ? c.horas[hora]
       : c.toCoordinate
 
-  const enviar = () => {
-    const detalle = resumen
-      .map(
-        (linea) =>
-          `• ${linea[0]}: ${
-            linea[1] === 0
-              ? c.included
-              : money(linea[1])
-          }`
+  const goNext = () => {
+    setWarning("")
+
+    if (
+      step === 1 &&
+      !hasService
+    ) {
+      setWarning(
+        c.selectService
       )
-      .join("\n")
+      return
+    }
+
+    if (
+      step === 3 &&
+      zona === null
+    ) {
+      setWarning(
+        c.selectZone
+      )
+      return
+    }
+
+    setStep(
+      (current) =>
+        Math.min(
+          current + 1,
+          4
+        )
+    )
+  }
+
+  const goBack = () => {
+    setWarning("")
+
+    setStep(
+      (current) =>
+        Math.max(
+          current - 1,
+          1
+        )
+    )
+  }
+
+  const enviar = () => {
+    const detalle =
+      resumen
+        .map(
+          (
+            linea
+          ) =>
+            `• ${linea[0]}: ${
+              linea[1] ===
+              0
+                ? c.included
+                : money(
+                    linea[1]
+                  )
+            }`
+        )
+        .join("\n")
 
     const notaViatico =
       zona === "fuera"
@@ -527,568 +908,1123 @@ export default function Cotizador() {
     const msg =
       `${c.whatsappHello}\n\n` +
       `${detalle}` +
-      `\n\n${c.whatsappTotal}: ${money(total)}` +
-      `\n${c.whatsappName}: ${f.nombre || "-"}` +
-      `\n${c.whatsappCompany}: ${f.empresa || "-"}` +
-      `\n${c.whatsappAddress}: ${f.dir || "-"}` +
+      `\n\n${c.whatsappTotal}: ${money(
+        total
+      )}` +
+      `\n${c.whatsappName}: ${
+        f.nombre || "-"
+      }` +
+      `\n${c.whatsappCompany}: ${
+        f.empresa || "-"
+      }` +
+      `\n${c.whatsappAddress}: ${
+        f.dir || "-"
+      }` +
       `\n${c.whatsappZone}: ${zonaTexto}` +
-      `\n${c.whatsappDate}: ${f.fecha || c.toCoordinate}` +
+      `\n${c.whatsappDate}: ${
+        f.fecha ||
+        c.toCoordinate
+      }` +
       `\n${c.whatsappTime}: ${horaTexto}` +
       `\n${c.whatsappDelivery}: ${entregaTexto}` +
       notaViatico
 
-    trackEvent("quote_request", {
-      value: total,
-      currency: "ARS",
-      services: lineasServicio.length,
-      zone: zona || "sin_seleccionar",
-      delivery: entrega,
-    })
+    trackEvent(
+      "quote_request",
+      {
+        value:
+          total,
+        currency:
+          "ARS",
+        services:
+          lineasServicio.length,
+        zone:
+          zona ||
+          "sin_seleccionar",
+        delivery:
+          entrega,
+      }
+    )
 
     window.open(
-      `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`,
+      `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+        msg
+      )}`,
       "_blank",
       "noopener"
     )
   }
 
   const input =
-    "w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#06222c] text-gray-800 dark:text-gray-100 px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0e5c6e]"
+    "w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#06222c] text-gray-800 dark:text-gray-100 px-4 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0e5c6e]"
 
-  const h3 =
-    "text-xl font-bold text-gray-800 dark:text-white"
-
-  const sub =
-    "text-sm text-gray-600 dark:text-gray-300 mb-4"
+  const stepTitles = [
+    c.typeTitle,
+    c.extrasTitle,
+    c.zoneTitle,
+    c.dataTitle,
+  ]
 
   return (
     <section
       id="cotizador"
-      className="pt-16 md:pt-24 pb-52 md:pb-8 bg-white dark:bg-[#001219]"
+      className="bg-white pb-52 pt-16 dark:bg-[#001219] md:pb-24 md:pt-24"
     >
-      <div className="container mx-auto px-4 max-w-4xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-3 text-gray-800 dark:text-white">
-          {c.title}
-        </h2>
 
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-12">
-          {c.intro}
-        </p>
+      <div className="container mx-auto max-w-5xl px-4">
 
-        <div className="space-y-12">
-          <div>
-            <h3 className={h3}>
-              {c.typeTitle}
-            </h3>
+        <div className="mx-auto max-w-2xl text-center">
 
-            <p className={sub}>
-              {c.typeSubtitle}
-            </p>
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-white md:text-4xl">
+            {
+              c.title
+            }
+          </h2>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              {c.tipos.map((x, i) => (
-                <button
-                  key={x.n}
-                  type="button"
-                  aria-pressed={tipo === i}
-                  onClick={() => setTipo(i)}
-                  className={`${optBase} ${
-                    tipo === i
-                      ? optOn
-                      : optOff
-                  }`}
-                >
-                  <b className="block">
-                    {x.n}
-                  </b>
+          <p className="mt-3 text-gray-600 dark:text-gray-300">
+            {
+              c.intro
+            }
+          </p>
 
-                  <span className="text-sm opacity-80">
-                    {x.d}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+        </div>
 
-          <div>
-            <h3 className={h3}>
-              {c.packageTitle}
-            </h3>
+        {/* PROGRESO */}
+        <div className="mx-auto mt-10 max-w-3xl">
 
-            <p className={sub}>
-              {c.packageSubtitle}
-            </p>
+          <div className="grid grid-cols-4 gap-2">
 
-            <div className="grid gap-3 md:grid-cols-3">
-              {c.paquetes.map((x, i) => (
-                <button
-                  key={x.n}
-                  type="button"
-                  aria-pressed={paq === i}
-                  disabled={tipo === null}
-                  onClick={() =>
-                    setPaq(
-                      paq === i
-                        ? null
-                        : i
-                    )
-                  }
-                  className={`${optBase} ${
-                    paq === i
-                      ? optOn
-                      : optOff
-                  } disabled:opacity-60 disabled:cursor-not-allowed`}
-                >
-                  <b className="block">
-                    {x.n}
-                  </b>
+            {stepTitles.map(
+              (
+                title,
+                index
+              ) => {
+                const number =
+                  index + 1
 
-                  <span className="text-sm opacity-80 block">
-                    {x.d}
-                  </span>
+                const completed =
+                  step >
+                  number
 
-                  <span className="block mt-2 font-bold text-lg">
-                    {tipo !== null ? (
-                      money(
-                        PRECIOS_TIPOS[tipo][i]
-                      )
-                    ) : (
-                      <span className="text-sm font-normal">
-                        {c.chooseProperty}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className={h3}>
-              {c.extrasTitle}
-            </h3>
-
-            <p className={sub}>
-              {paq !== null
-                ? `${c.droneWithPackage} ${money(DRONE_ADICIONAL)}.`
-                : `${c.droneWithoutPackage} ${money(DRONE_SOLO)}.`}
-            </p>
-
-            <div className="grid gap-3">
-              {c.extras.map((x) => {
-                const id = x.id
-
-                const isDrone =
-                  id === "drone"
-
-                const precio =
-                  id === "drone"
-                    ? paq !== null
-                      ? DRONE_ADICIONAL
-                      : DRONE_SOLO
-                    : id === "reel"
-                      ? REEL_HABLADO
-                      : VIDEO_VERTICAL
-
-                const nombre =
-                  isDrone &&
-                  paq !== null
-                    ? x.nAdditional
-                    : x.n
-
-                const descripcion =
-                  isDrone &&
-                  paq !== null
-                    ? x.dAdditional
-                    : x.d
-
-                const on =
-                  extras[id]
+                const active =
+                  step ===
+                  number
 
                 return (
                   <button
-                    key={id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() =>
-                      setExtras(
-                        (actual) => ({
-                          ...actual,
-                          [id]:
-                            !actual[id],
-                        })
-                      )
+                    key={
+                      number
                     }
-                    className={`${optBase} ${
-                      on
-                        ? optOn
-                        : optOff
-                    } grid grid-cols-[100px_1fr] gap-4 items-baseline`}
+                    type="button"
+                    onClick={() => {
+                      if (
+                        number <
+                        step
+                      ) {
+                        setStep(
+                          number
+                        )
+                        setWarning(
+                          ""
+                        )
+                      }
+                    }}
+                    className="text-left"
                   >
-                    <span className="font-bold text-lg">
-                      {money(precio)}
-                    </span>
 
-                    <span>
-                      <b className="block">
-                        {nombre}
-                      </b>
+                    <div
+                      className={`h-2 rounded-full transition ${
+                        completed ||
+                        active
+                          ? "bg-[#0e5c6e]"
+                          : "bg-gray-200 dark:bg-white/10"
+                      }`}
+                    />
 
-                      <span className="text-sm opacity-80">
-                        {descripcion}
-                      </span>
-                    </span>
+                    <p
+                      className={`mt-2 hidden text-xs font-medium sm:block ${
+                        active
+                          ? "text-[#0e5c6e]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {c.step}{" "}
+                      {
+                        number
+                      }
+                    </p>
+
+                    <p className="mt-0.5 hidden truncate text-xs text-gray-500 sm:block">
+                      {
+                        title
+                      }
+                    </p>
+
                   </button>
                 )
-              })}
-            </div>
-
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-4">
-              {c.specialNote}
-            </p>
-          </div>
-
-          <div>
-            <h3 className={h3}>
-              {c.zoneTitle}
-            </h3>
-
-            <p className={sub}>
-              {c.zoneSubtitle}
-            </p>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <button
-                type="button"
-                aria-pressed={
-                  zona === "dentro"
-                }
-                onClick={() =>
-                  setZona("dentro")
-                }
-                className={`${optBase} ${
-                  zona === "dentro"
-                    ? optOn
-                    : optOff
-                }`}
-              >
-                <b className="block">
-                  {c.zoneInside}
-                </b>
-
-                <span className="text-sm opacity-80">
-                  {c.zoneInsideDesc}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                aria-pressed={
-                  zona === "fuera"
-                }
-                onClick={() =>
-                  setZona("fuera")
-                }
-                className={`${optBase} ${
-                  zona === "fuera"
-                    ? optOn
-                    : optOff
-                }`}
-              >
-                <b className="block">
-                  {c.zoneOutside}
-                </b>
-
-                <span className="text-sm opacity-80">
-                  {c.zoneOutsideDesc}
-                </span>
-              </button>
-            </div>
-
-            {zona === "fuera" && (
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-3">
-                {c.zoneWarning}
-              </p>
+              }
             )}
+
           </div>
 
-          <div>
-            <h3 className={h3}>
-              {c.deliveryTitle}
-            </h3>
+        </div>
 
-            <p className={sub}>
-              {c.deliverySubtitle}
-            </p>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <button
-                type="button"
-                aria-pressed={
-                  entrega === "72"
-                }
-                onClick={() =>
-                  setEntrega("72")
-                }
-                className={`${optBase} ${
-                  entrega === "72"
-                    ? optOn
-                    : optOff
-                }`}
-              >
-                <b className="block">
-                  {c.delivery72}
-                </b>
+          {/* CONTENIDO */}
+          <div className="rounded-3xl border border-gray-200 bg-[#f8fbfb] p-5 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
-                <span className="text-sm opacity-80 block">
-                  {c.delivery72Desc}
-                </span>
+            {/* PASO 1 */}
+            {step === 1 && (
+              <div>
 
-                <span className="block mt-2 font-bold">
-                  {c.noExtra}
-                </span>
-              </button>
+                <p className="text-sm font-semibold text-[#0A9396]">
+                  {c.step} 1
+                </p>
 
-              <button
-                type="button"
-                aria-pressed={
-                  entrega === "36"
-                }
-                onClick={() =>
-                  setEntrega("36")
-                }
-                className={`${optBase} ${
-                  entrega === "36"
-                    ? optOn
-                    : optOff
-                }`}
-              >
-                <b className="block">
-                  {c.delivery36}
-                </b>
-
-                <span className="text-sm opacity-80 block">
-                  {c.delivery36Desc}
-                </span>
-
-                <span className="block mt-2 font-bold text-lg">
-                  + {money(ENTREGA_36)}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                aria-pressed={
-                  entrega === "24"
-                }
-                onClick={() =>
-                  setEntrega("24")
-                }
-                className={`${optBase} ${
-                  entrega === "24"
-                    ? optOn
-                    : optOff
-                }`}
-              >
-                <b className="block">
-                  {c.delivery24}
-                </b>
-
-                <span className="text-sm opacity-80 block">
-                  {c.delivery24Desc}
-                </span>
-
-                <span className="block mt-2 font-bold text-lg">
-                  + {money(ENTREGA_24)}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <h3 className={`${h3} mb-4`}>
-              {c.dataTitle}
-            </h3>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                {c.name}
-
-                <input
-                  className={`${input} mt-1`}
-                  value={f.nombre}
-                  onChange={(e) =>
-                    setF({
-                      ...f,
-                      nombre:
-                        e.target.value,
-                    })
+                <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {
+                    c.typeTitle
                   }
-                  autoComplete="name"
-                />
-              </label>
+                </h3>
 
-              <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                {c.company}
-
-                <input
-                  className={`${input} mt-1`}
-                  value={f.empresa}
-                  onChange={(e) =>
-                    setF({
-                      ...f,
-                      empresa:
-                        e.target.value,
-                    })
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {
+                    c.typeSubtitle
                   }
-                  autoComplete="organization"
-                />
-              </label>
+                </p>
 
-              <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                {c.address}
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
 
-                <input
-                  className={`${input} mt-1`}
-                  value={f.dir}
-                  onChange={(e) =>
-                    setF({
-                      ...f,
-                      dir:
-                        e.target.value,
-                    })
-                  }
-                  autoComplete="street-address"
-                />
-              </label>
+                  {c.tipos.map(
+                    (
+                      item,
+                      index
+                    ) => (
+                      <button
+                        key={
+                          item.n
+                        }
+                        type="button"
+                        aria-pressed={
+                          tipo ===
+                          index
+                        }
+                        onClick={() => {
+                          setTipo(
+                            index
+                          )
 
-              <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                {c.date}
+                          setPaq(
+                            null
+                          )
 
-                <input
-                  type="date"
-                  className={`${input} mt-1`}
-                  value={f.fecha}
-                  onChange={(e) =>
-                    setF({
-                      ...f,
-                      fecha:
-                        e.target.value,
-                    })
-                  }
-                />
-              </label>
-            </div>
+                          setWarning(
+                            ""
+                          )
+                        }}
+                        className={`${optBase} ${
+                          tipo ===
+                          index
+                            ? optOn
+                            : optOff
+                        }`}
+                      >
 
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-100 mt-6 mb-2">
-              {c.time}
-            </p>
+                        {tipo ===
+                          index && (
+                          <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
+                            <Check className="h-4 w-4" />
+                          </div>
+                        )}
 
-            <div className="grid gap-3 grid-cols-3">
-              {(
-                [
-                  "manana",
-                  "mediodia",
-                  "tarde",
-                ] as HoraId[]
-              ).map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={
-                    hora === id
-                  }
-                  onClick={() =>
-                    setHora(
-                      hora === id
-                        ? null
-                        : id
+                        <b className="block pr-8">
+                          {
+                            item.n
+                          }
+                        </b>
+
+                        <span className="mt-2 block text-sm opacity-80">
+                          {
+                            item.d
+                          }
+                        </span>
+
+                      </button>
                     )
+                  )}
+
+                </div>
+
+                <div className="mt-10">
+
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {
+                      c.packageTitle
+                    }
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {
+                      c.packageSubtitle
+                    }
+                  </p>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+
+                    {c.paquetes.map(
+                      (
+                        item,
+                        index
+                      ) => (
+                        <button
+                          key={
+                            item.n
+                          }
+                          type="button"
+                          aria-pressed={
+                            paq ===
+                            index
+                          }
+                          disabled={
+                            tipo ===
+                            null
+                          }
+                          onClick={() => {
+                            setPaq(
+                              paq ===
+                                index
+                                ? null
+                                : index
+                            )
+
+                            setWarning(
+                              ""
+                            )
+                          }}
+                          className={`${optBase} ${
+                            paq ===
+                            index
+                              ? optOn
+                              : optOff
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+
+                          <b className="block">
+                            {
+                              item.n
+                            }
+                          </b>
+
+                          <span className="mt-2 block text-sm opacity-80">
+                            {
+                              item.d
+                            }
+                          </span>
+
+                          <span className="mt-4 block text-lg font-bold">
+                            {tipo !==
+                            null
+                              ? money(
+                                  PRECIOS_TIPOS[
+                                    tipo
+                                  ][
+                                    index
+                                  ]
+                                )
+                              : c.chooseProperty}
+                          </span>
+
+                        </button>
+                      )
+                    )}
+
+                  </div>
+
+                  <p className="mt-4 text-xs text-gray-400">
+                    También podés continuar sin paquete si únicamente necesitás alguno de los servicios adicionales del siguiente paso.
+                  </p>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* PASO 2 */}
+            {step === 2 && (
+              <div>
+
+                <p className="text-sm font-semibold text-[#0A9396]">
+                  {c.step} 2
+                </p>
+
+                <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {
+                    c.extrasTitle
                   }
-                  className={`${optBase} ${
-                    hora === id
-                      ? optOn
-                      : optOff
-                  } text-center font-bold`}
-                >
-                  {c.horas[id]}
-                </button>
-              ))}
-            </div>
-          </div>
+                </h3>
 
-          <div>
-            <h3 className={`${h3} mb-3`}>
-              {c.summary}
-            </h3>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {
+                    c.extrasSubtitle
+                  }
+                </p>
 
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#06222c] p-4 text-sm text-gray-800 dark:text-gray-100">
-              {resumen.length ? (
-                resumen.map(
-                  (linea, i) => (
-                    <div
-                      key={`${linea[0]}-${i}`}
-                      className="flex justify-between gap-4 py-1"
+                <div className="mt-6 space-y-3">
+
+                  {c.extras.map(
+                    (
+                      item
+                    ) => {
+                      const id =
+                        item.id
+
+                      const isDrone =
+                        id ===
+                        "drone"
+
+                      const precio =
+                        id ===
+                        "drone"
+                          ? paq !==
+                            null
+                            ? DRONE_ADICIONAL
+                            : DRONE_SOLO
+                          : id ===
+                              "reel"
+                            ? REEL_HABLADO
+                            : VIDEO_VERTICAL
+
+                      const nombre =
+                        isDrone &&
+                        paq !==
+                          null
+                          ? item.nAdditional
+                          : item.n
+
+                      const descripcion =
+                        isDrone &&
+                        paq !==
+                          null
+                          ? item.dAdditional
+                          : item.d
+
+                      const on =
+                        extras[id]
+
+                      return (
+                        <button
+                          key={
+                            id
+                          }
+                          type="button"
+                          aria-pressed={
+                            on
+                          }
+                          onClick={() => {
+                            setExtras(
+                              (
+                                current
+                              ) => ({
+                                ...current,
+                                [id]:
+                                  !current[
+                                    id
+                                  ],
+                              })
+                            )
+
+                            setWarning(
+                              ""
+                            )
+                          }}
+                          className={`${optBase} ${
+                            on
+                              ? optOn
+                              : optOff
+                          } flex items-start justify-between gap-5`}
+                        >
+
+                          <div>
+
+                            <b className="block">
+                              {
+                                nombre
+                              }
+                            </b>
+
+                            <span className="mt-1 block text-sm opacity-80">
+                              {
+                                descripcion
+                              }
+                            </span>
+
+                          </div>
+
+                          <span className="shrink-0 text-lg font-bold">
+                            {money(
+                              precio
+                            )}
+                          </span>
+
+                        </button>
+                      )
+                    }
+                  )}
+
+                </div>
+
+                <p className="mt-5 text-sm text-gray-500 dark:text-gray-400">
+                  {paq !==
+                  null
+                    ? `${c.droneWithPackage} ${money(
+                        DRONE_ADICIONAL
+                      )}.`
+                    : `${c.droneWithoutPackage} ${money(
+                        DRONE_SOLO
+                      )}.`}
+                </p>
+
+                <div className="mt-6 rounded-2xl bg-white p-4 text-sm leading-6 text-gray-500 dark:bg-[#001219] dark:text-gray-400">
+                  {
+                    c.specialNote
+                  }
+                </div>
+
+              </div>
+            )}
+
+            {/* PASO 3 */}
+            {step === 3 && (
+              <div>
+
+                <p className="text-sm font-semibold text-[#0A9396]">
+                  {c.step} 3
+                </p>
+
+                <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {
+                    c.zoneTitle
+                  }
+                </h3>
+
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {
+                    c.zoneSubtitle
+                  }
+                </p>
+
+                <div className="mt-7">
+
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {
+                      c.zoneLabel
+                    }
+                  </p>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+
+                    <button
+                      type="button"
+                      aria-pressed={
+                        zona ===
+                        "dentro"
+                      }
+                      onClick={() => {
+                        setZona(
+                          "dentro"
+                        )
+                        setWarning(
+                          ""
+                        )
+                      }}
+                      className={`${optBase} ${
+                        zona ===
+                        "dentro"
+                          ? optOn
+                          : optOff
+                      }`}
                     >
-                      <span>
-                        {linea[0]}
+
+                      <b className="block">
+                        {
+                          c.zoneInside
+                        }
+                      </b>
+
+                      <span className="mt-1 block text-sm opacity-80">
+                        {
+                          c.zoneInsideDesc
+                        }
                       </span>
 
-                      <b className="text-right">
-                        {linea[1] === 0
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-pressed={
+                        zona ===
+                        "fuera"
+                      }
+                      onClick={() => {
+                        setZona(
+                          "fuera"
+                        )
+                        setWarning(
+                          ""
+                        )
+                      }}
+                      className={`${optBase} ${
+                        zona ===
+                        "fuera"
+                          ? optOn
+                          : optOff
+                      }`}
+                    >
+
+                      <b className="block">
+                        {
+                          c.zoneOutside
+                        }
+                      </b>
+
+                      <span className="mt-1 block text-sm opacity-80">
+                        {
+                          c.zoneOutsideDesc
+                        }
+                      </span>
+
+                    </button>
+
+                  </div>
+
+                  {zona ===
+                    "fuera" && (
+                    <p className="mt-3 text-sm leading-6 text-amber-600 dark:text-amber-300">
+                      {
+                        c.zoneWarning
+                      }
+                    </p>
+                  )}
+
+                </div>
+
+                <div className="mt-10">
+
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {
+                      c.deliveryLabel
+                    }
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    {
+                      c.deliverySubtitle
+                    }
+                  </p>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+
+                    <button
+                      type="button"
+                      aria-pressed={
+                        entrega ===
+                        "72"
+                      }
+                      onClick={() =>
+                        setEntrega(
+                          "72"
+                        )
+                      }
+                      className={`${optBase} ${
+                        entrega ===
+                        "72"
+                          ? optOn
+                          : optOff
+                      }`}
+                    >
+
+                      <b className="block">
+                        {
+                          c.delivery72
+                        }
+                      </b>
+
+                      <span className="mt-1 block text-sm opacity-80">
+                        {
+                          c.delivery72Desc
+                        }
+                      </span>
+
+                      <span className="mt-3 block font-bold">
+                        {
+                          c.noExtra
+                        }
+                      </span>
+
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-pressed={
+                        entrega ===
+                        "36"
+                      }
+                      onClick={() =>
+                        setEntrega(
+                          "36"
+                        )
+                      }
+                      className={`${optBase} ${
+                        entrega ===
+                        "36"
+                          ? optOn
+                          : optOff
+                      }`}
+                    >
+
+                      <b className="block">
+                        {
+                          c.delivery36
+                        }
+                      </b>
+
+                      <span className="mt-1 block text-sm opacity-80">
+                        {
+                          c.delivery36Desc
+                        }
+                      </span>
+
+                      <span className="mt-3 block text-lg font-bold">
+                        +{" "}
+                        {money(
+                          ENTREGA_36
+                        )}
+                      </span>
+
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-pressed={
+                        entrega ===
+                        "24"
+                      }
+                      onClick={() =>
+                        setEntrega(
+                          "24"
+                        )
+                      }
+                      className={`${optBase} ${
+                        entrega ===
+                        "24"
+                          ? optOn
+                          : optOff
+                      }`}
+                    >
+
+                      <b className="block">
+                        {
+                          c.delivery24
+                        }
+                      </b>
+
+                      <span className="mt-1 block text-sm opacity-80">
+                        {
+                          c.delivery24Desc
+                        }
+                      </span>
+
+                      <span className="mt-3 block text-lg font-bold">
+                        +{" "}
+                        {money(
+                          ENTREGA_24
+                        )}
+                      </span>
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* PASO 4 */}
+            {step === 4 && (
+              <div>
+
+                <p className="text-sm font-semibold text-[#0A9396]">
+                  {c.step} 4
+                </p>
+
+                <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {
+                    c.dataTitle
+                  }
+                </h3>
+
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {
+                    c.dataSubtitle
+                  }
+                </p>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+                  <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
+
+                    {
+                      c.name
+                    }
+
+                    <input
+                      className={`${input} mt-2`}
+                      value={
+                        f.nombre
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setF({
+                          ...f,
+                          nombre:
+                            event
+                              .target
+                              .value,
+                        })
+                      }
+                      autoComplete="name"
+                    />
+
+                  </label>
+
+                  <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
+
+                    {
+                      c.company
+                    }
+
+                    <input
+                      className={`${input} mt-2`}
+                      value={
+                        f.empresa
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setF({
+                          ...f,
+                          empresa:
+                            event
+                              .target
+                              .value,
+                        })
+                      }
+                      autoComplete="organization"
+                    />
+
+                  </label>
+
+                  <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
+
+                    {
+                      c.address
+                    }
+
+                    <input
+                      className={`${input} mt-2`}
+                      value={
+                        f.dir
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setF({
+                          ...f,
+                          dir:
+                            event
+                              .target
+                              .value,
+                        })
+                      }
+                      autoComplete="street-address"
+                    />
+
+                  </label>
+
+                  <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
+
+                    {
+                      c.date
+                    }
+
+                    <input
+                      type="date"
+                      className={`${input} mt-2`}
+                      value={
+                        f.fecha
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setF({
+                          ...f,
+                          fecha:
+                            event
+                              .target
+                              .value,
+                        })
+                      }
+                    />
+
+                  </label>
+
+                </div>
+
+                <div className="mt-6">
+
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    {
+                      c.time
+                    }
+                  </p>
+
+                  <div className="mt-3 grid grid-cols-3 gap-3">
+
+                    {(
+                      [
+                        "manana",
+                        "mediodia",
+                        "tarde",
+                      ] as HoraId[]
+                    ).map(
+                      (
+                        id
+                      ) => (
+                        <button
+                          key={
+                            id
+                          }
+                          type="button"
+                          aria-pressed={
+                            hora ===
+                            id
+                          }
+                          onClick={() =>
+                            setHora(
+                              hora ===
+                                id
+                                ? null
+                                : id
+                            )
+                          }
+                          className={`${optBase} ${
+                            hora ===
+                            id
+                              ? optOn
+                              : optOff
+                          } text-center`}
+                        >
+                          <b>
+                            {
+                              c.horas[
+                                id
+                              ]
+                            }
+                          </b>
+                        </button>
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {warning && (
+              <div className="mt-6 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                {
+                  warning
+                }
+              </div>
+            )}
+
+            {/* NAVEGACIÓN */}
+            <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6 dark:border-white/10">
+
+              {step >
+              1 ? (
+                <button
+                  type="button"
+                  onClick={
+                    goBack
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-white dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  {
+                    c.back
+                  }
+                </button>
+              ) : (
+                <div />
+              )}
+
+              {step <
+              4 ? (
+                <button
+                  type="button"
+                  onClick={
+                    goNext
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
+                >
+                  {
+                    c.next
+                  }
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={
+                    enviar
+                  }
+                  disabled={
+                    !hasService ||
+                    zona ===
+                      null
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {
+                    c.request
+                  }
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+
+            </div>
+
+          </div>
+
+          {/* RESUMEN */}
+          <aside className="h-fit rounded-3xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] lg:sticky lg:top-24">
+
+            <p className="text-sm font-semibold text-[#0A9396]">
+              {
+                c.summary
+              }
+            </p>
+
+            <div className="mt-4 space-y-3">
+
+              {resumen.length >
+              0 ? (
+                resumen.map(
+                  (
+                    linea,
+                    index
+                  ) => (
+                    <div
+                      key={`${linea[0]}-${index}`}
+                      className="flex justify-between gap-4 text-sm"
+                    >
+
+                      <span className="text-gray-600 dark:text-gray-300">
+                        {
+                          linea[0]
+                        }
+                      </span>
+
+                      <strong className="shrink-0 text-right text-gray-900 dark:text-white">
+                        {linea[1] ===
+                        0
                           ? c.included
                           : money(
                               linea[1]
                             )}
-                      </b>
+                      </strong>
+
                     </div>
                   )
                 )
               ) : (
-                c.empty
-              )}
-
-              {zona === "fuera" && (
-                <p className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-300">
-                  * {c.zoneWarning}
+                <p className="text-sm text-gray-400">
+                  {
+                    c.empty
+                  }
                 </p>
               )}
+
             </div>
-          </div>
+
+            {zona ===
+              "fuera" && (
+              <p className="mt-5 border-t border-gray-100 pt-4 text-xs leading-5 text-gray-500 dark:border-white/10 dark:text-gray-400">
+                *{" "}
+                {
+                  c.zoneWarning
+                }
+              </p>
+            )}
+
+            <div className="mt-5 border-t border-gray-200 pt-5 dark:border-white/10">
+
+              <p className="text-xs uppercase tracking-wide text-gray-400">
+                {
+                  c.estimatedTotal
+                }
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-[#0e5c6e] dark:text-[#5fb8cc]">
+                {money(
+                  total
+                )}
+              </p>
+
+            </div>
+
+          </aside>
+
         </div>
+
       </div>
 
-      <div className="sticky bottom-[166px] md:bottom-4 z-[80] mt-10 px-4 pointer-events-none">
-        <div className="max-w-md mx-auto pointer-events-auto">
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-[#06222c]/95 backdrop-blur-md shadow-lg px-5 py-3">
-            <div className="min-w-0">
-              <span className="block text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {c.estimatedTotal}
-              </span>
+      {/* TOTAL MOBILE */}
+      <div className="fixed bottom-0 left-0 right-0 z-[80] border-t border-gray-200 bg-white/95 p-3 backdrop-blur-md dark:border-white/10 dark:bg-[#06222c]/95 lg:hidden">
 
-              <strong className="block text-xl md:text-2xl leading-tight text-[#0e5c6e] dark:text-[#5fb8cc]">
-                {money(total)}
-              </strong>
-            </div>
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
 
-            <button
-              type="button"
-              disabled={
-                !hasService ||
-                zona === null
+          <div>
+
+            <span className="block text-[10px] uppercase tracking-wide text-gray-500">
+              {
+                c.estimatedTotal
               }
-              onClick={enviar}
-              className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] hover:bg-[#001219] text-white text-sm font-semibold px-5 py-3 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {c.request}
+            </span>
 
-              <span aria-hidden="true">
-                →
-              </span>
-            </button>
+            <strong className="text-xl text-[#0e5c6e] dark:text-[#5fb8cc]">
+              {money(
+                total
+              )}
+            </strong>
+
           </div>
+
+          <span className="text-xs font-medium text-gray-400">
+            {c.step}{" "}
+            {step}/4
+          </span>
+
         </div>
+
       </div>
+
     </section>
   )
 }
