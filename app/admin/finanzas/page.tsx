@@ -6,8 +6,12 @@ import {
   ArrowRight,
   Banknote,
   CalendarDays,
+  CheckCircle2,
   CircleDollarSign,
   FileText,
+  Filter,
+  HandCoins,
+  ReceiptText,
   WalletCards,
 } from "lucide-react"
 
@@ -17,6 +21,7 @@ interface PageProps {
   searchParams: Promise<{
     month?: string
     year?: string
+    filter?: string
   }>
 }
 
@@ -44,6 +49,33 @@ const INVOICE_LABELS: Record<
   invoiced: "Facturada",
 }
 
+const FILTERS = [
+  {
+    value: "all",
+    label: "Todas",
+  },
+  {
+    value: "pending_balance",
+    label: "Saldo pendiente",
+  },
+  {
+    value: "paid",
+    label: "Pagadas",
+  },
+  {
+    value: "partial",
+    label: "Pago parcial",
+  },
+  {
+    value: "unpaid",
+    label: "Sin pagos",
+  },
+  {
+    value: "invoice_pending",
+    label: "Factura pendiente",
+  },
+]
+
 const formatCurrency = (
   value: number
 ) => {
@@ -60,7 +92,9 @@ const formatCurrency = (
 const formatDate = (
   value?: string | null
 ) => {
-  if (!value) return "-"
+  if (!value) {
+    return "-"
+  }
 
   return new Intl.DateTimeFormat(
     "es-AR",
@@ -77,18 +111,29 @@ const getPeriodBounds = (
   month: number
 ) => {
   const monthString =
-    String(month).padStart(2, "0")
+    String(month).padStart(
+      2,
+      "0"
+    )
 
-  let nextYear = year
-  let nextMonth = month + 1
+  let nextYear =
+    year
 
-  if (nextMonth === 13) {
+  let nextMonth =
+    month + 1
+
+  if (
+    nextMonth === 13
+  ) {
     nextMonth = 1
-    nextYear = year + 1
+    nextYear =
+      year + 1
   }
 
   const nextMonthString =
-    String(nextMonth).padStart(
+    String(
+      nextMonth
+    ).padStart(
       2,
       "0"
     )
@@ -110,7 +155,8 @@ export default async function AdminFinanzasPage({
   const params =
     await searchParams
 
-  const now = new Date()
+  const now =
+    new Date()
 
   const currentYear =
     now.getFullYear()
@@ -119,16 +165,37 @@ export default async function AdminFinanzasPage({
     now.getMonth() + 1
 
   const selectedMonth =
-    Number(params.month) >= 1 &&
-    Number(params.month) <= 12
-      ? Number(params.month)
+    Number(
+      params.month
+    ) >= 1 &&
+    Number(
+      params.month
+    ) <= 12
+      ? Number(
+          params.month
+        )
       : currentMonth
 
   const selectedYear =
-    Number(params.year) >= 2020 &&
-    Number(params.year) <= 2100
-      ? Number(params.year)
+    Number(
+      params.year
+    ) >= 2020 &&
+    Number(
+      params.year
+    ) <= 2100
+      ? Number(
+          params.year
+        )
       : currentYear
+
+  const selectedFilter =
+    FILTERS.some(
+      (filter) =>
+        filter.value ===
+        params.filter
+    )
+      ? params.filter!
+      : "all"
 
   const period =
     getPeriodBounds(
@@ -155,7 +222,9 @@ export default async function AdminFinanzasPage({
     redirect("/ingresar")
   }
 
-  const { data: roleData } =
+  const {
+    data: roleData,
+  } =
     await supabase
       .from("user_roles")
       .select("role")
@@ -166,17 +235,22 @@ export default async function AdminFinanzasPage({
       .maybeSingle()
 
   if (
-    roleData?.role !== "admin"
+    roleData?.role !==
+    "admin"
   ) {
     redirect("/cuenta")
   }
 
-  const { data: productions } =
+  const {
+    data: productions,
+  } =
     await supabase
       .from("productions")
       .select(`
         id,
         user_id,
+        client_name,
+        client_email,
         property_name,
         property_address,
         production_date,
@@ -199,7 +273,9 @@ export default async function AdminFinanzasPage({
         }
       )
 
-  const { data: payments } =
+  const {
+    data: payments,
+  } =
     await supabase
       .from(
         "production_payments"
@@ -218,7 +294,9 @@ export default async function AdminFinanzasPage({
         }
       )
 
-  const { data: profiles } =
+  const {
+    data: profiles,
+  } =
     await supabase
       .from("profiles")
       .select(`
@@ -236,7 +314,9 @@ export default async function AdminFinanzasPage({
   const profileMap =
     new Map(
       (profiles || []).map(
-        (profile) => [
+        (
+          profile
+        ) => [
           profile.id,
           profile,
         ]
@@ -245,11 +325,12 @@ export default async function AdminFinanzasPage({
 
   /*
    * PRODUCCIONES DEL PERÍODO
-   * Se toma la fecha de producción.
    */
   const periodProductions =
     allProductions.filter(
-      (production) => {
+      (
+        production
+      ) => {
         if (
           !production.production_date
         ) {
@@ -262,8 +343,10 @@ export default async function AdminFinanzasPage({
           )
 
         return (
-          date >= period.start &&
-          date < period.end
+          date >=
+            period.start &&
+          date <
+            period.end
         )
       }
     )
@@ -271,19 +354,24 @@ export default async function AdminFinanzasPage({
   const periodProductionIds =
     new Set(
       periodProductions.map(
-        (production) =>
+        (
+          production
+        ) =>
           production.id
       )
     )
 
   /*
    * PAGOS DEL PERÍODO
-   * Se toma la fecha real del cobro.
    */
   const periodPayments =
     allPayments.filter(
-      (payment) => {
-        if (!payment.paid_at) {
+      (
+        payment
+      ) => {
+        if (
+          !payment.paid_at
+        ) {
           return false
         }
 
@@ -293,16 +381,17 @@ export default async function AdminFinanzasPage({
           )
 
         return (
-          date >= period.start &&
-          date < period.end
+          date >=
+            period.start &&
+          date <
+            period.end
         )
       }
     )
 
   /*
-   * PAGOS HISTÓRICOS POR PRODUCCIÓN
-   * Se usan para saber cuánto falta
-   * cobrar de cada producción.
+   * PAGOS HISTÓRICOS
+   * POR PRODUCCIÓN
    */
   const paymentsByProduction =
     new Map<
@@ -311,7 +400,9 @@ export default async function AdminFinanzasPage({
     >()
 
   allPayments.forEach(
-    (payment) => {
+    (
+      payment
+    ) => {
       const current =
         paymentsByProduction.get(
           payment.production_id
@@ -328,7 +419,7 @@ export default async function AdminFinanzasPage({
   )
 
   /*
-   * TOTAL PRODUCIDO DEL MES
+   * TOTALES DEL PERÍODO
    */
   const totalProduced =
     periodProductions.reduce(
@@ -344,9 +435,6 @@ export default async function AdminFinanzasPage({
       0
     )
 
-  /*
-   * COBRADO DURANTE EL MES
-   */
   const totalCollected =
     periodPayments.reduce(
       (
@@ -360,10 +448,6 @@ export default async function AdminFinanzasPage({
       0
     )
 
-  /*
-   * SALDO ACTUAL PENDIENTE
-   * DE LAS PRODUCCIONES DEL MES
-   */
   const totalPending =
     periodProductions.reduce(
       (
@@ -394,49 +478,218 @@ export default async function AdminFinanzasPage({
 
   const pendingInvoices =
     periodProductions.filter(
-      (production) =>
+      (
+        production
+      ) =>
         production.invoice_status ===
         "pending"
     ).length
 
   /*
-   * PRODUCCIONES DEL PERÍODO
-   * QUE RECIBIERON ALGÚN PAGO
-   * EN ESTE MISMO PERÍODO
+   * PRODUCCIONES CON PAGO
+   * REGISTRADO EN ESTE MES
    */
   const paidPeriodProductionIds =
     new Set(
       periodPayments
         .filter(
-          (payment) =>
+          (
+            payment
+          ) =>
             periodProductionIds.has(
               payment.production_id
             )
         )
         .map(
-          (payment) =>
+          (
+            payment
+          ) =>
             payment.production_id
         )
     )
+
+  /*
+   * ESTADO FINANCIERO
+   * DE CADA PRODUCCIÓN
+   */
+  const productionRows =
+    periodProductions.map(
+      (
+        production
+      ) => {
+        const total =
+          Number(
+            production.total_amount ||
+              0
+          )
+
+        const paid =
+          paymentsByProduction.get(
+            production.id
+          ) || 0
+
+        const pending =
+          Math.max(
+            total - paid,
+            0
+          )
+
+        const paymentStatus =
+          total <= 0
+            ? "no_value"
+            : paid <= 0
+              ? "unpaid"
+              : paid < total
+                ? "partial"
+                : "paid"
+
+        return {
+          ...production,
+          total,
+          paid,
+          pending,
+          paymentStatus,
+        }
+      }
+    )
+
+  /*
+   * FILTROS RÁPIDOS
+   */
+  const filteredProductions =
+    productionRows.filter(
+      (
+        production
+      ) => {
+        if (
+          selectedFilter ===
+          "all"
+        ) {
+          return true
+        }
+
+        if (
+          selectedFilter ===
+          "pending_balance"
+        ) {
+          return (
+            production.pending >
+            0
+          )
+        }
+
+        if (
+          selectedFilter ===
+          "paid"
+        ) {
+          return (
+            production.paymentStatus ===
+            "paid"
+          )
+        }
+
+        if (
+          selectedFilter ===
+          "partial"
+        ) {
+          return (
+            production.paymentStatus ===
+            "partial"
+          )
+        }
+
+        if (
+          selectedFilter ===
+          "unpaid"
+        ) {
+          return (
+            production.paymentStatus ===
+            "unpaid"
+          )
+        }
+
+        if (
+          selectedFilter ===
+          "invoice_pending"
+        ) {
+          return (
+            production.invoice_status ===
+            "pending"
+          )
+        }
+
+        return true
+      }
+    )
+
+  const paidCount =
+    productionRows.filter(
+      (
+        production
+      ) =>
+        production.paymentStatus ===
+        "paid"
+    ).length
+
+  const partialCount =
+    productionRows.filter(
+      (
+        production
+      ) =>
+        production.paymentStatus ===
+        "partial"
+    ).length
+
+  const unpaidCount =
+    productionRows.filter(
+      (
+        production
+      ) =>
+        production.paymentStatus ===
+        "unpaid"
+    ).length
+
+  const pendingBalanceCount =
+    productionRows.filter(
+      (
+        production
+      ) =>
+        production.pending >
+        0
+    ).length
 
   const yearOptions =
     Array.from(
       {
         length: 5,
       },
-      (_, index) =>
+      (
+        _,
+        index
+      ) =>
         currentYear -
         2 +
         index
     )
 
+  const buildFilterUrl =
+    (
+      filter:
+        string
+    ) => {
+      return `/admin/finanzas?month=${selectedMonth}&year=${selectedYear}&filter=${filter}`
+    }
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
 
+        {/* CABECERA */}
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
 
           <div>
+
             <p className="text-sm font-semibold text-[#0A9396]">
               Clover Digital
             </p>
@@ -448,6 +701,7 @@ export default async function AdminFinanzasPage({
             <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
               Control de producción, cobros, saldos y facturación por período.
             </p>
+
           </div>
 
           <Link
@@ -460,14 +714,24 @@ export default async function AdminFinanzasPage({
 
         </div>
 
-        {/* FILTRO */}
+        {/* PERÍODO */}
         <form
           method="GET"
           className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]"
         >
+
+          <input
+            type="hidden"
+            name="filter"
+            value={
+              selectedFilter
+            }
+          />
+
           <div className="flex flex-col gap-4 md:flex-row md:items-end">
 
             <div className="flex-1">
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Mes
               </label>
@@ -480,7 +744,9 @@ export default async function AdminFinanzasPage({
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
                 {MONTHS.map(
-                  (month) => (
+                  (
+                    month
+                  ) => (
                     <option
                       key={
                         month.value
@@ -489,14 +755,18 @@ export default async function AdminFinanzasPage({
                         month.value
                       }
                     >
-                      {month.label}
+                      {
+                        month.label
+                      }
                     </option>
                   )
                 )}
               </select>
+
             </div>
 
             <div className="flex-1">
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Año
               </label>
@@ -509,16 +779,23 @@ export default async function AdminFinanzasPage({
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
                 {yearOptions.map(
-                  (year) => (
+                  (
+                    year
+                  ) => (
                     <option
-                      key={year}
-                      value={year}
+                      key={
+                        year
+                      }
+                      value={
+                        year
+                      }
                     >
                       {year}
                     </option>
                   )
                 )}
               </select>
+
             </div>
 
             <button
@@ -530,9 +807,11 @@ export default async function AdminFinanzasPage({
             </button>
 
           </div>
+
         </form>
 
         <div className="mt-6">
+
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Mostrando{" "}
             <strong className="font-semibold text-gray-900 dark:text-white">
@@ -540,6 +819,7 @@ export default async function AdminFinanzasPage({
               {selectedYear}
             </strong>
           </p>
+
         </div>
 
         {/* MÉTRICAS */}
@@ -606,7 +886,15 @@ export default async function AdminFinanzasPage({
             </p>
 
             <p className="mt-2 text-xs text-gray-400">
-              De las producciones del período
+              {
+                pendingBalanceCount
+              }{" "}
+              producción
+              {pendingBalanceCount ===
+              1
+                ? ""
+                : "es"}{" "}
+              con saldo
             </p>
 
           </div>
@@ -620,7 +908,9 @@ export default async function AdminFinanzasPage({
             </p>
 
             <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-              {pendingInvoices}
+              {
+                pendingInvoices
+              }
             </p>
 
             <p className="mt-2 text-xs text-gray-400">
@@ -631,77 +921,221 @@ export default async function AdminFinanzasPage({
 
         </div>
 
+        {/* FILTROS RÁPIDOS */}
+        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+
+          <div className="flex items-center gap-2">
+
+            <Filter className="h-5 w-5 text-[#0A9396]" />
+
+            <h2 className="font-semibold text-gray-900 dark:text-white">
+              Filtros rápidos
+            </h2>
+
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+
+            {FILTERS.map(
+              (
+                filter
+              ) => {
+                let count =
+                  periodProductions.length
+
+                if (
+                  filter.value ===
+                  "pending_balance"
+                ) {
+                  count =
+                    pendingBalanceCount
+                }
+
+                if (
+                  filter.value ===
+                  "paid"
+                ) {
+                  count =
+                    paidCount
+                }
+
+                if (
+                  filter.value ===
+                  "partial"
+                ) {
+                  count =
+                    partialCount
+                }
+
+                if (
+                  filter.value ===
+                  "unpaid"
+                ) {
+                  count =
+                    unpaidCount
+                }
+
+                if (
+                  filter.value ===
+                  "invoice_pending"
+                ) {
+                  count =
+                    pendingInvoices
+                }
+
+                const active =
+                  selectedFilter ===
+                  filter.value
+
+                return (
+                  <Link
+                    key={
+                      filter.value
+                    }
+                    href={
+                      buildFilterUrl(
+                        filter.value
+                      )
+                    }
+                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${
+                      active
+                        ? "border-[#0A9396] bg-[#0A9396]/10 text-[#0A9396]"
+                        : "border-gray-200 text-gray-600 hover:border-[#0A9396]/40 hover:text-[#0A9396] dark:border-white/10 dark:text-gray-300"
+                    }`}
+                  >
+                    {
+                      filter.label
+                    }
+
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        active
+                          ? "bg-[#0A9396]/15"
+                          : "bg-gray-100 dark:bg-white/5"
+                      }`}
+                    >
+                      {
+                        count
+                      }
+                    </span>
+
+                  </Link>
+                )
+              }
+            )}
+
+          </div>
+
+        </section>
+
         {/* PRODUCCIONES */}
         <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
 
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Producciones de{" "}
-              {selectedMonthName}
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 
-            <p className="mt-1 text-sm text-gray-500">
-              Estado financiero actual de cada producción realizada durante este período.
-            </p>
+              <div>
+
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Producciones de{" "}
+                  {
+                    selectedMonthName
+                  }
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Estado financiero actual de cada producción realizada durante este período.
+                </p>
+
+              </div>
+
+              <p className="text-sm text-gray-400">
+                {
+                  filteredProductions.length
+                }{" "}
+                resultado
+                {filteredProductions.length ===
+                1
+                  ? ""
+                  : "s"}
+              </p>
+
+            </div>
 
           </div>
 
-          {periodProductions.length ===
+          {filteredProductions.length ===
           0 ? (
             <div className="p-10 text-center">
 
               <CircleDollarSign className="mx-auto h-8 w-8 text-gray-300" />
 
               <p className="mt-4 font-semibold text-gray-800 dark:text-gray-200">
-                No hay producciones en este período
+                No hay producciones para este filtro
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Probá seleccionando otro mes o año.
+                Probá con otro estado financiero o cambiá el período.
               </p>
+
+              {selectedFilter !==
+                "all" && (
+                <Link
+                  href={
+                    buildFilterUrl(
+                      "all"
+                    )
+                  }
+                  className="mt-4 inline-flex text-sm font-semibold text-[#0A9396] hover:underline"
+                >
+                  Ver todas
+                </Link>
+              )}
 
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
 
-              {periodProductions.map(
-                (production) => {
-                  const total =
-                    Number(
-                      production.total_amount ||
-                        0
-                    )
-
-                  const paid =
-                    paymentsByProduction.get(
-                      production.id
-                    ) || 0
-
-                  const pending =
-                    Math.max(
-                      total - paid,
-                      0
-                    )
-
-                  const paymentStatus =
-                    total <= 0
-                      ? "Sin valor"
-                      : paid <= 0
-                        ? "Pendiente"
-                        : paid < total
-                          ? "Parcial"
-                          : "Pagado"
-
+              {filteredProductions.map(
+                (
+                  production
+                ) => {
                   const profile =
-                    profileMap.get(
-                      production.user_id
-                    )
+                    production.user_id
+                      ? profileMap.get(
+                          production.user_id
+                        )
+                      : null
+
+                  const clientName =
+                    profile?.full_name ||
+                    production.client_name ||
+                    profile?.email ||
+                    production.client_email ||
+                    "Cliente"
+
+                  const clientEmail =
+                    profile?.email ||
+                    production.client_email ||
+                    null
 
                   const receivedPaymentThisMonth =
                     paidPeriodProductionIds.has(
                       production.id
                     )
+
+                  const paymentLabel =
+                    production.paymentStatus ===
+                    "paid"
+                      ? "Pagado"
+                      : production.paymentStatus ===
+                          "partial"
+                        ? "Parcial"
+                        : production.paymentStatus ===
+                            "unpaid"
+                          ? "Pendiente"
+                          : "Sin valor"
 
                   return (
                     <div
@@ -730,12 +1164,20 @@ export default async function AdminFinanzasPage({
                         </div>
 
                         <p className="mt-1 text-sm text-gray-500">
-                          {profile?.full_name ||
-                            profile?.email ||
-                            "Cliente"}
+                          {
+                            clientName
+                          }
                         </p>
 
-                        <p className="mt-1 text-xs text-gray-400">
+                        {clientEmail && (
+                          <p className="mt-1 text-xs text-gray-400">
+                            {
+                              clientEmail
+                            }
+                          </p>
+                        )}
+
+                        <p className="mt-2 text-xs text-gray-400">
                           {formatDate(
                             production.production_date
                           )}
@@ -751,7 +1193,7 @@ export default async function AdminFinanzasPage({
 
                         <p className="mt-1 font-semibold text-gray-800 dark:text-gray-200">
                           {formatCurrency(
-                            total
+                            production.total
                           )}
                         </p>
 
@@ -765,7 +1207,7 @@ export default async function AdminFinanzasPage({
 
                         <p className="mt-1 font-semibold text-emerald-600">
                           {formatCurrency(
-                            paid
+                            production.paid
                           )}
                         </p>
 
@@ -777,32 +1219,41 @@ export default async function AdminFinanzasPage({
                           Pendiente
                         </p>
 
-                        <p className="mt-1 font-semibold text-amber-600">
+                        <p
+                          className={`mt-1 font-semibold ${
+                            production.pending >
+                            0
+                              ? "text-amber-600"
+                              : "text-gray-400"
+                          }`}
+                        >
                           {formatCurrency(
-                            pending
+                            production.pending
                           )}
                         </p>
 
                       </div>
 
-                      <div className="lg:w-[110px]">
+                      <div className="lg:w-[115px]">
 
                         <p className="text-xs text-gray-400">
-                          Estado
+                          Cobro
                         </p>
 
                         <p
                           className={`mt-1 text-sm font-semibold ${
-                            paymentStatus ===
-                            "Pagado"
+                            production.paymentStatus ===
+                            "paid"
                               ? "text-emerald-600"
-                              : paymentStatus ===
-                                  "Parcial"
+                              : production.paymentStatus ===
+                                  "partial"
                                 ? "text-amber-600"
                                 : "text-gray-500"
                           }`}
                         >
-                          {paymentStatus}
+                          {
+                            paymentLabel
+                          }
                         </p>
 
                       </div>
@@ -813,7 +1264,17 @@ export default async function AdminFinanzasPage({
                           Factura
                         </p>
 
-                        <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <p
+                          className={`mt-1 text-sm font-medium ${
+                            production.invoice_status ===
+                            "pending"
+                              ? "text-amber-600"
+                              : production.invoice_status ===
+                                  "invoiced"
+                                ? "text-emerald-600"
+                                : "text-gray-500"
+                          }`}
+                        >
                           {INVOICE_LABELS[
                             production.invoice_status
                           ] ||
@@ -841,19 +1302,134 @@ export default async function AdminFinanzasPage({
 
         </section>
 
+        {/* RESUMEN OPERATIVO */}
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+
+          <Link
+            href={
+              buildFilterUrl(
+                "pending_balance"
+              )
+            }
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-amber-300 dark:border-white/10 dark:bg-[#06222c]"
+          >
+
+            <WalletCards className="h-6 w-6 text-amber-600" />
+
+            <p className="mt-4 font-semibold text-gray-900 dark:text-white">
+              Cobros pendientes
+            </p>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {
+                pendingBalanceCount
+              }{" "}
+              producción
+              {pendingBalanceCount ===
+              1
+                ? ""
+                : "es"}{" "}
+              todavía tienen saldo.
+            </p>
+
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396]">
+
+              Revisar
+
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+
+            </span>
+
+          </Link>
+
+          <Link
+            href={
+              buildFilterUrl(
+                "invoice_pending"
+              )
+            }
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-amber-300 dark:border-white/10 dark:bg-[#06222c]"
+          >
+
+            <ReceiptText className="h-6 w-6 text-amber-600" />
+
+            <p className="mt-4 font-semibold text-gray-900 dark:text-white">
+              Facturas pendientes
+            </p>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {
+                pendingInvoices
+              }{" "}
+              producción
+              {pendingInvoices ===
+              1
+                ? ""
+                : "es"}{" "}
+              requieren facturación.
+            </p>
+
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396]">
+
+              Revisar
+
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+
+            </span>
+
+          </Link>
+
+          <Link
+            href={
+              buildFilterUrl(
+                "paid"
+              )
+            }
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-emerald-300 dark:border-white/10 dark:bg-[#06222c]"
+          >
+
+            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+
+            <p className="mt-4 font-semibold text-gray-900 dark:text-white">
+              Producciones pagadas
+            </p>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {
+                paidCount
+              }{" "}
+              producción
+              {paidCount ===
+              1
+                ? ""
+                : "es"}{" "}
+              están completamente cobradas.
+            </p>
+
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396]">
+
+              Ver pagadas
+
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+
+            </span>
+
+          </Link>
+
+        </div>
+
         {/* ACLARACIÓN */}
         <div className="mt-6 rounded-2xl border border-gray-200/70 bg-white p-5 text-sm leading-6 text-gray-500 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-400">
 
           <strong className="text-gray-800 dark:text-gray-200">
             Cómo se calculan los números:
           </strong>{" "}
-          “Producción del mes” usa la fecha de la sesión.
-          “Cobrado en el mes” usa la fecha en que realmente ingresó el pago.
-          El saldo pendiente considera todos los pagos realizados hasta hoy sobre las producciones del período.
+          “Producción del mes” usa la fecha de la sesión. “Cobrado en el mes” usa la fecha en que realmente ingresó el pago. El saldo pendiente considera todos los pagos registrados hasta hoy sobre las producciones del período.
 
         </div>
 
       </div>
+
     </main>
   )
 }
