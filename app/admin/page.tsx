@@ -1,9 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+
 import {
   ArchiveRestore,
   ArrowRight,
+  Banknote,
   BookOpen,
+  CircleDollarSign,
   FolderOpen,
   GraduationCap,
   Users,
@@ -12,110 +15,176 @@ import {
 
 import { createClient } from "@/lib/supabase/server"
 
+const formatCurrency = (
+  value: number
+) => {
+  return new Intl.NumberFormat(
+    "es-AR",
+    {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0,
+    }
+  ).format(value)
+}
+
 export default async function AdminPage() {
-  const supabase = await createClient()
+  const supabase =
+    await createClient()
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } =
+    await supabase.auth.getUser()
 
   if (!user) {
     redirect("/ingresar")
   }
 
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const { data: roleData } =
+    await supabase
+      .from("user_roles")
+      .select("role")
+      .eq(
+        "user_id",
+        user.id
+      )
+      .maybeSingle()
 
-  if (roleData?.role !== "admin") {
+  if (
+    roleData?.role !== "admin"
+  ) {
     redirect("/cuenta")
   }
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select(`
-      id,
-      full_name,
-      email,
-      avatar_url,
-      phone,
-      created_at
-    `)
-    .order("created_at", {
-      ascending: false,
-    })
-
-  const { data: enrollments } = await supabase
-    .from("enrollments")
-    .select(`
-      id,
-      user_id,
-      course_id,
-      status,
-      enrolled_at,
-      courses (
+  const { data: profiles } =
+    await supabase
+      .from("profiles")
+      .select(`
         id,
-        title,
-        slug
+        full_name,
+        email,
+        avatar_url,
+        phone,
+        created_at
+      `)
+      .order(
+        "created_at",
+        {
+          ascending: false,
+        }
       )
-    `)
-    .order("enrolled_at", {
-      ascending: false,
-    })
 
-  const { data: progress } = await supabase
-    .from("lesson_progress")
-    .select(`
-      user_id,
-      lesson_id,
-      completed,
-      updated_at
-    `)
-
-  const { data: lessons } = await supabase
-    .from("lessons")
-    .select(`
-      id,
-      module_id,
-      modules (
-        course_id
+  const { data: enrollments } =
+    await supabase
+      .from("enrollments")
+      .select(`
+        id,
+        user_id,
+        course_id,
+        status,
+        enrolled_at,
+        courses (
+          id,
+          title,
+          slug
+        )
+      `)
+      .order(
+        "enrolled_at",
+        {
+          ascending: false,
+        }
       )
-    `)
 
-  const { data: productions } = await supabase
-    .from("productions")
-    .select(`
-      id,
-      status
-    `)
+  const { data: progress } =
+    await supabase
+      .from("lesson_progress")
+      .select(`
+        user_id,
+        lesson_id,
+        completed,
+        updated_at
+      `)
 
-  const { data: recoveryRequests } = await supabase
-    .from("recovery_requests")
-    .select(`
-      id,
-      status
-    `)
+  const { data: lessons } =
+    await supabase
+      .from("lessons")
+      .select(`
+        id,
+        module_id,
+        modules (
+          course_id
+        )
+      `)
 
-  const students = profiles || []
-  const allEnrollments = enrollments || []
-  const allProgress = progress || []
-  const allLessons = lessons || []
-  const allProductions = productions || []
+  const { data: productions } =
+    await supabase
+      .from("productions")
+      .select(`
+        id,
+        status,
+        total_amount
+      `)
+
+  const {
+    data: recoveryRequests,
+  } =
+    await supabase
+      .from(
+        "recovery_requests"
+      )
+      .select(`
+        id,
+        status
+      `)
+
+  const { data: payments } =
+    await supabase
+      .from(
+        "production_payments"
+      )
+      .select(`
+        id,
+        amount,
+        paid_at
+      `)
+
+  const students =
+    profiles || []
+
+  const allEnrollments =
+    enrollments || []
+
+  const allProgress =
+    progress || []
+
+  const allLessons =
+    lessons || []
+
+  const allProductions =
+    productions || []
+
   const allRecoveryRequests =
     recoveryRequests || []
 
-  const totalUsers = students.length
+  const allPayments =
+    payments || []
+
+  const totalUsers =
+    students.length
 
   const activeEnrollments =
     allEnrollments.filter(
-      (item) => item.status === "active"
+      (item) =>
+        item.status ===
+        "active"
     ).length
 
   const completedProgress =
     allProgress.filter(
-      (item) => item.completed
+      (item) =>
+        item.completed
     ).length
 
   const totalProductions =
@@ -124,29 +193,82 @@ export default async function AdminPage() {
   const activeProductions =
     allProductions.filter(
       (item) =>
-        item.status === "confirmed" ||
-        item.status === "completed" ||
-        item.status === "editing"
+        item.status ===
+          "confirmed" ||
+        item.status ===
+          "completed" ||
+        item.status ===
+          "editing"
     ).length
 
   const pendingRecoveries =
     allRecoveryRequests.filter(
       (item) =>
-        item.status === "pending" ||
-        item.status === "reviewing"
+        item.status ===
+          "pending" ||
+        item.status ===
+          "reviewing"
     ).length
 
-  const getCourse = (enrollment: any) => {
-    if (Array.isArray(enrollment.courses)) {
-      return enrollment.courses[0]
+  const totalProduced =
+    allProductions.reduce(
+      (
+        sum,
+        production
+      ) =>
+        sum +
+        Number(
+          production.total_amount ||
+            0
+        ),
+      0
+    )
+
+  const totalCollected =
+    allPayments.reduce(
+      (
+        sum,
+        payment
+      ) =>
+        sum +
+        Number(
+          payment.amount
+        ),
+      0
+    )
+
+  const totalPending =
+    Math.max(
+      totalProduced -
+        totalCollected,
+      0
+    )
+
+  const getCourse = (
+    enrollment: any
+  ) => {
+    if (
+      Array.isArray(
+        enrollment.courses
+      )
+    ) {
+      return enrollment
+        .courses[0]
     }
 
     return enrollment.courses
   }
 
-  const getModules = (lesson: any) => {
-    if (Array.isArray(lesson.modules)) {
-      return lesson.modules[0]
+  const getModules = (
+    lesson: any
+  ) => {
+    if (
+      Array.isArray(
+        lesson.modules
+      )
+    ) {
+      return lesson
+        .modules[0]
     }
 
     return lesson.modules
@@ -156,50 +278,82 @@ export default async function AdminPage() {
     userId: string,
     courseId: string
   ) => {
-    const courseLessonIds = allLessons
-      .filter((lesson) => {
-        const module = getModules(lesson)
+    const courseLessonIds =
+      allLessons
+        .filter(
+          (lesson) => {
+            const module =
+              getModules(
+                lesson
+              )
 
-        return module?.course_id === courseId
-      })
-      .map((lesson) => lesson.id)
+            return (
+              module?.course_id ===
+              courseId
+            )
+          }
+        )
+        .map(
+          (lesson) =>
+            lesson.id
+        )
 
-    if (courseLessonIds.length === 0) {
+    if (
+      courseLessonIds.length ===
+      0
+    ) {
       return 0
     }
 
-    const completed = allProgress.filter(
-      (item) =>
-        item.user_id === userId &&
-        item.completed === true &&
-        courseLessonIds.includes(item.lesson_id)
-    ).length
+    const completed =
+      allProgress.filter(
+        (item) =>
+          item.user_id ===
+            userId &&
+          item.completed ===
+            true &&
+          courseLessonIds.includes(
+            item.lesson_id
+          )
+      ).length
 
     return Math.round(
-      (completed / courseLessonIds.length) * 100
+      (completed /
+        courseLessonIds.length) *
+        100
     )
   }
 
   const getLastActivity = (
     userId: string
   ) => {
-    const userProgress = allProgress
-      .filter(
-        (item) =>
-          item.user_id === userId &&
-          item.updated_at
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.updated_at).getTime() -
-          new Date(a.updated_at).getTime()
-      )
+    const userProgress =
+      allProgress
+        .filter(
+          (item) =>
+            item.user_id ===
+              userId &&
+            item.updated_at
+        )
+        .sort(
+          (a, b) =>
+            new Date(
+              b.updated_at
+            ).getTime() -
+            new Date(
+              a.updated_at
+            ).getTime()
+        )
 
-    if (userProgress.length === 0) {
+    if (
+      userProgress.length ===
+      0
+    ) {
       return null
     }
 
-    return userProgress[0].updated_at
+    return userProgress[0]
+      .updated_at
   }
 
   const formatDate = (
@@ -216,7 +370,9 @@ export default async function AdminPage() {
         month: "2-digit",
         year: "numeric",
       }
-    ).format(new Date(date))
+    ).format(
+      new Date(date)
+    )
   }
 
   return (
@@ -225,6 +381,7 @@ export default async function AdminPage() {
 
         {/* HEADER */}
         <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+
           <div>
             <p className="text-sm font-semibold text-[#0A9396]">
               Clover Digital
@@ -235,22 +392,24 @@ export default async function AdminPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-gray-600 dark:text-gray-300">
-              Gestioná producciones, recuperaciones,
-              clientes y Clover Academy desde un solo lugar.
+              Gestioná clientes, producciones, finanzas,
+              recuperaciones y Clover Academy desde un solo lugar.
             </p>
           </div>
 
           <Link
             href="/cuenta"
-            className="text-sm text-[#0A9396] hover:underline"
+            className="text-sm font-medium text-[#0A9396] hover:underline"
           >
             ← Mi cuenta
           </Link>
+
         </div>
 
         {/* ACCESOS PRINCIPALES */}
         <div className="grid gap-4 md:grid-cols-2">
 
+          {/* PRODUCCIONES */}
           <Link
             href="/admin/producciones"
             className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
@@ -272,26 +431,117 @@ export default async function AdminPage() {
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+
                   <span className="text-gray-500">
                     Total:{" "}
                     <strong className="text-gray-900 dark:text-white">
-                      {totalProductions}
+                      {
+                        totalProductions
+                      }
                     </strong>
                   </span>
 
                   <span className="text-gray-500">
                     Activas:{" "}
                     <strong className="text-gray-900 dark:text-white">
-                      {activeProductions}
+                      {
+                        activeProductions
+                      }
                     </strong>
                   </span>
+
                 </div>
               </div>
 
               <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
+
             </div>
           </Link>
 
+          {/* CLIENTES */}
+          <Link
+            href="/admin/clientes"
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
+          >
+            <div className="flex items-start justify-between gap-4">
+
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+                  <Users className="h-6 w-6" />
+                </div>
+
+                <h2 className="mt-5 text-xl font-bold text-gray-900 dark:text-white">
+                  Clientes
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                  Consultá cada cliente, sus datos,
+                  producciones y actividad dentro de Clover.
+                </p>
+
+                <div className="mt-5 text-sm text-gray-500">
+                  Registrados:{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    {totalUsers}
+                  </strong>
+                </div>
+              </div>
+
+              <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
+
+            </div>
+          </Link>
+
+          {/* FINANZAS */}
+          <Link
+            href="/admin/finanzas"
+            className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
+          >
+            <div className="flex items-start justify-between gap-4">
+
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  <CircleDollarSign className="h-6 w-6" />
+                </div>
+
+                <h2 className="mt-5 text-xl font-bold text-gray-900 dark:text-white">
+                  Finanzas
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                  Revisá cobros, saldos pendientes,
+                  pagos y estado de facturación.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+
+                  <span className="text-gray-500">
+                    Cobrado:{" "}
+                    <strong className="text-emerald-600">
+                      {formatCurrency(
+                        totalCollected
+                      )}
+                    </strong>
+                  </span>
+
+                  <span className="text-gray-500">
+                    Pendiente:{" "}
+                    <strong className="text-amber-600">
+                      {formatCurrency(
+                        totalPending
+                      )}
+                    </strong>
+                  </span>
+
+                </div>
+              </div>
+
+              <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
+
+            </div>
+          </Link>
+
+          {/* RECUPERACIONES */}
           <Link
             href="/admin/recuperaciones"
             className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
@@ -308,8 +558,8 @@ export default async function AdminPage() {
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                  Revisá solicitudes de clientes
-                  para recuperar material archivado.
+                  Revisá solicitudes de clientes para
+                  recuperar material archivado.
                 </p>
 
                 <div className="mt-5">
@@ -317,39 +567,65 @@ export default async function AdminPage() {
                     Pendientes:{" "}
                     <strong
                       className={
-                        pendingRecoveries > 0
+                        pendingRecoveries >
+                        0
                           ? "text-amber-600"
                           : "text-gray-900 dark:text-white"
                       }
                     >
-                      {pendingRecoveries}
+                      {
+                        pendingRecoveries
+                      }
                     </strong>
                   </span>
                 </div>
               </div>
 
               <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
+
             </div>
           </Link>
 
         </div>
 
-        {/* MÉTRICAS ACADEMY */}
-        <div className="mb-10 mt-8">
+        {/* ACADEMY */}
+        <div className="mb-10 mt-10">
+
           <div className="mb-4">
+
             <p className="text-sm font-semibold text-[#0A9396]">
               Clover Academy
             </p>
 
-            <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-              Resumen de cursos
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+
+              <div>
+                <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                  Resumen de cursos
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Seguimiento de alumnos y progreso.
+                </p>
+              </div>
+
+              <Link
+                href="/academy"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline"
+              >
+                Ver Academy
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
             <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
               <div className="flex items-center gap-4">
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
                   <Users className="h-6 w-6" />
                 </div>
@@ -363,11 +639,14 @@ export default async function AdminPage() {
                     {totalUsers}
                   </p>
                 </div>
+
               </div>
             </div>
 
             <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
               <div className="flex items-center gap-4">
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
                   <GraduationCap className="h-6 w-6" />
                 </div>
@@ -378,14 +657,19 @@ export default async function AdminPage() {
                   </p>
 
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {activeEnrollments}
+                    {
+                      activeEnrollments
+                    }
                   </p>
                 </div>
+
               </div>
             </div>
 
             <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
               <div className="flex items-center gap-4">
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
                   <BookOpen className="h-6 w-6" />
                 </div>
@@ -396,9 +680,12 @@ export default async function AdminPage() {
                   </p>
 
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {completedProgress}
+                    {
+                      completedProgress
+                    }
                   </p>
                 </div>
+
               </div>
             </div>
 
@@ -406,147 +693,225 @@ export default async function AdminPage() {
         </div>
 
         {/* ALUMNOS */}
-        <div className="overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+        <section className="overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
-              Alumnos
-            </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Seguimiento general de Clover Academy.
-            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
+                  Alumnos
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Seguimiento general de Clover Academy.
+                </p>
+              </div>
+
+              <GraduationCap className="h-6 w-6 text-[#0A9396]" />
+
+            </div>
+
           </div>
 
-          {students.length === 0 ? (
+          {students.length ===
+          0 ? (
             <div className="p-8 text-center text-gray-500">
               Todavía no hay usuarios registrados.
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
-              {students.map((student) => {
-                const enrollment =
-                  allEnrollments.find(
-                    (item) =>
-                      item.user_id ===
-                        student.id &&
-                      item.status === "active"
-                  )
 
-                const course = enrollment
-                  ? getCourse(enrollment)
-                  : null
+              {students.map(
+                (student) => {
+                  const enrollment =
+                    allEnrollments.find(
+                      (item) =>
+                        item.user_id ===
+                          student.id &&
+                        item.status ===
+                          "active"
+                    )
 
-                const percentage =
-                  enrollment && course
-                    ? calculateProgress(
-                        student.id,
-                        course.id
-                      )
-                    : 0
+                  const course =
+                    enrollment
+                      ? getCourse(
+                          enrollment
+                        )
+                      : null
 
-                const lastActivity =
-                  getLastActivity(
-                    student.id
-                  )
+                  const percentage =
+                    enrollment &&
+                    course
+                      ? calculateProgress(
+                          student.id,
+                          course.id
+                        )
+                      : 0
 
-                return (
-                  <div
-                    key={student.id}
-                    className="flex flex-col gap-5 p-5 md:px-8 md:py-6 lg:flex-row lg:items-center"
-                  >
+                  const lastActivity =
+                    getLastActivity(
+                      student.id
+                    )
 
-                    {/* ALUMNO */}
-                    <div className="flex items-center gap-4 lg:w-[28%]">
-                      {student.avatar_url ? (
-                        <img
-                          src={
-                            student.avatar_url
-                          }
-                          alt=""
-                          className="h-11 w-11 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
-                          <UserRound className="h-5 w-5" />
-                        </div>
-                      )}
+                  return (
+                    <div
+                      key={
+                        student.id
+                      }
+                      className="flex flex-col gap-5 p-5 md:px-8 md:py-6 lg:flex-row lg:items-center"
+                    >
 
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-gray-900 dark:text-white">
-                          {student.full_name ||
-                            "Sin nombre"}
-                        </p>
+                      {/* ALUMNO */}
+                      <div className="flex items-center gap-4 lg:w-[28%]">
 
-                        <p className="truncate text-sm text-gray-500">
-                          {student.email}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* CURSO */}
-                    <div className="lg:w-[25%]">
-                      <p className="mb-1 text-xs text-gray-400">
-                        Curso
-                      </p>
-
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                        {course?.title ||
-                          "Sin inscripción"}
-                      </p>
-                    </div>
-
-                    {/* PROGRESO */}
-                    <div className="lg:w-[25%]">
-                      <div className="mb-2 flex justify-between text-xs">
-                        <span className="text-gray-500">
-                          Progreso
-                        </span>
-
-                        <span className="font-semibold text-gray-700 dark:text-gray-200">
-                          {percentage}%
-                        </span>
-                      </div>
-
-                      <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-[#0A9396]"
-                          style={{
-                            width: `${percentage}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* ACTIVIDAD */}
-                    <div className="lg:w-[15%]">
-                      <p className="text-xs text-gray-400">
-                        Última actividad
-                      </p>
-
-                      <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                        {formatDate(
-                          lastActivity
+                        {student.avatar_url ? (
+                          <img
+                            src={
+                              student.avatar_url
+                            }
+                            alt=""
+                            className="h-11 w-11 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+                            <UserRound className="h-5 w-5" />
+                          </div>
                         )}
-                      </p>
-                    </div>
 
-                    {/* DETALLE */}
-                    <div className="flex lg:flex-1 lg:justify-end">
-                      <Link
-                        href={`/admin/alumnos/${student.id}`}
-                        className="flex items-center gap-1 text-sm font-medium text-[#0A9396] hover:underline"
-                      >
-                        Ver alumno
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
+                        <div className="min-w-0">
+
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">
+                            {student.full_name ||
+                              "Sin nombre"}
+                          </p>
+
+                          <p className="truncate text-sm text-gray-500">
+                            {
+                              student.email
+                            }
+                          </p>
+
+                        </div>
+                      </div>
+
+                      {/* CURSO */}
+                      <div className="lg:w-[25%]">
+
+                        <p className="mb-1 text-xs text-gray-400">
+                          Curso
+                        </p>
+
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {course?.title ||
+                            "Sin inscripción"}
+                        </p>
+
+                      </div>
+
+                      {/* PROGRESO */}
+                      <div className="lg:w-[25%]">
+
+                        <div className="mb-2 flex justify-between text-xs">
+
+                          <span className="text-gray-500">
+                            Progreso
+                          </span>
+
+                          <span className="font-semibold text-gray-700 dark:text-gray-200">
+                            {
+                              percentage
+                            }
+                            %
+                          </span>
+
+                        </div>
+
+                        <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+
+                          <div
+                            className="h-full rounded-full bg-[#0A9396]"
+                            style={{
+                              width: `${percentage}%`,
+                            }}
+                          />
+
+                        </div>
+                      </div>
+
+                      {/* ACTIVIDAD */}
+                      <div className="lg:w-[15%]">
+
+                        <p className="text-xs text-gray-400">
+                          Última actividad
+                        </p>
+
+                        <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                          {formatDate(
+                            lastActivity
+                          )}
+                        </p>
+
+                      </div>
+
+                      {/* DETALLE */}
+                      <div className="flex lg:flex-1 lg:justify-end">
+
+                        <Link
+                          href={`/admin/alumnos/${student.id}`}
+                          className="flex items-center gap-1 text-sm font-medium text-[#0A9396] hover:underline"
+                        >
+                          Ver alumno
+
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+
+                      </div>
+
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                }
+              )}
+
             </div>
           )}
+
+        </section>
+
+        {/* RESUMEN FINANCIERO */}
+        <div className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <Banknote className="h-5 w-5" />
+            </div>
+
+            <div className="flex-1">
+
+              <p className="font-semibold text-gray-900 dark:text-white">
+                Resumen financiero general
+              </p>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Los valores corresponden a todos los pagos y producciones registrados hasta el momento.
+              </p>
+
+            </div>
+
+            <Link
+              href="/admin/finanzas"
+              className="hidden items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline sm:inline-flex"
+            >
+              Ver Finanzas
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+
+          </div>
+
         </div>
+
       </div>
     </main>
   )
