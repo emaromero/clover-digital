@@ -1,6 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import {
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -49,16 +54,23 @@ type HoraId =
 
 const COPY = {
   es: {
-    title: "Cotizá tu producción",
+    title:
+      "Cotizá tu producción",
 
     intro:
       "Armá tu producción en pocos pasos, conocé el valor estimado y enviá tu solicitud por WhatsApp.",
 
-    step: "Paso",
-    next: "Continuar",
-    back: "Volver",
+    step:
+      "Paso",
 
-    typeTitle: "Tipo de propiedad",
+    next:
+      "Continuar",
+
+    back:
+      "Volver",
+
+    typeTitle:
+      "Tipo de propiedad",
 
     typeSubtitle:
       "Elegí la opción que más se parezca a la propiedad que vamos a fotografiar.",
@@ -81,7 +93,8 @@ const COPY = {
       },
     ],
 
-    packageTitle: "Elegí un paquete",
+    packageTitle:
+      "Elegí un paquete",
 
     packageSubtitle:
       "Todos los paquetes incluyen fotografía HDR. Si solo necesitás contenido adicional, podés continuar sin elegir paquete.",
@@ -104,7 +117,8 @@ const COPY = {
       },
     ],
 
-    extrasTitle: "Contenido adicional",
+    extrasTitle:
+      "Contenido adicional",
 
     extrasSubtitle:
       "Podés sumar contenido al paquete o contratar determinados servicios de forma independiente.",
@@ -119,7 +133,8 @@ const COPY = {
       {
         id: "drone" as ExtraId,
         n: "Drone",
-        nAdditional: "Drone adicional",
+        nAdditional:
+          "Drone adicional",
         d: "Fotografía aérea + video aéreo",
         dAdditional:
           "Fotografía aérea + clips de video para incorporar al material",
@@ -127,7 +142,8 @@ const COPY = {
       {
         id: "reel" as ExtraId,
         n: "Reel hablado",
-        nAdditional: "Reel hablado",
+        nAdditional:
+          "Reel hablado",
         d: "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos.",
         dAdditional:
           "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos.",
@@ -135,7 +151,8 @@ const COPY = {
       {
         id: "vert" as ExtraId,
         n: "Video vertical para RRSS",
-        nAdditional: "Video vertical para RRSS",
+        nAdditional:
+          "Video vertical para RRSS",
         d: "Grabación + edición de video vertical. Máximo 60 segundos.",
         dAdditional:
           "Grabación + edición de video vertical. Máximo 60 segundos.",
@@ -148,15 +165,20 @@ const COPY = {
     selectService:
       "Elegí al menos un paquete o servicio adicional para continuar.",
 
-    zoneTitle: "Ubicación y entrega",
+    zoneTitle:
+      "Ubicación y entrega",
 
     zoneSubtitle:
       "Indicá dónde está la propiedad y cuándo necesitás recibir el material.",
 
-    zoneLabel: "Ubicación de la propiedad",
+    zoneLabel:
+      "Ubicación de la propiedad",
 
-    zoneInside: "CABA y Zona Norte",
-    zoneInsideDesc: "Sin costo adicional",
+    zoneInside:
+      "CABA y Zona Norte",
+
+    zoneInsideDesc:
+      "Sin costo adicional",
 
     zoneOutside:
       "Fuera de CABA y Zona Norte",
@@ -170,43 +192,67 @@ const COPY = {
     selectZone:
       "Elegí la ubicación para continuar.",
 
-    deliveryLabel: "Plazo de entrega",
+    deliveryLabel:
+      "Plazo de entrega",
 
     deliverySubtitle:
       "Las entregas prioritarias están sujetas a disponibilidad.",
 
-    delivery72: "Estándar",
-    delivery72Desc: "Hasta 72 hs hábiles",
+    delivery72:
+      "Estándar",
 
-    delivery36: "Prioritaria",
-    delivery36Desc: "Hasta 36 hs",
+    delivery72Desc:
+      "Hasta 72 hs hábiles",
 
-    delivery24: "Express",
-    delivery24Desc: "Hasta 24 hs",
+    delivery36:
+      "Prioritaria",
 
-    noExtra: "Sin costo adicional",
+    delivery36Desc:
+      "Hasta 36 hs",
 
-    dataTitle: "Tus datos",
+    delivery24:
+      "Express",
+
+    delivery24Desc:
+      "Hasta 24 hs",
+
+    noExtra:
+      "Sin costo adicional",
+
+    dataTitle:
+      "Tus datos",
 
     dataSubtitle:
       "Completá los datos para enviar la solicitud.",
 
-    name: "Nombre y apellido",
-    company: "Inmobiliaria o empresa",
-    address: "Dirección de la propiedad",
-    date: "Fecha preferida",
-    time: "Franja horaria preferida",
+    name:
+      "Nombre y apellido",
+
+    company:
+      "Inmobiliaria o empresa",
+
+    address:
+      "Dirección de la propiedad",
+
+    date:
+      "Fecha preferida",
+
+    time:
+      "Franja horaria preferida",
 
     horas: {
-      manana: "Mañana",
-      mediodia: "Mediodía",
-      tarde: "Tarde",
+      manana:
+        "Mañana",
+
+      mediodia:
+        "Mediodía",
+
+      tarde:
+        "Tarde",
     },
 
-    summary: "Resumen de tu producción",
-
-    empty:
-      "Todavía no elegiste ningún servicio.",
+    summary:
+      "Resumen de tu producción",
 
     estimatedTotal:
       "Total estimado",
@@ -235,13 +281,26 @@ const COPY = {
     whatsappTotal:
       "Total estimado",
 
-    whatsappName: "Nombre",
-    whatsappCompany: "Empresa",
-    whatsappAddress: "Dirección",
-    whatsappZone: "Zona",
-    whatsappDate: "Fecha preferida",
-    whatsappTime: "Horario preferido",
-    whatsappDelivery: "Entrega",
+    whatsappName:
+      "Nombre",
+
+    whatsappCompany:
+      "Empresa",
+
+    whatsappAddress:
+      "Dirección",
+
+    whatsappZone:
+      "Zona",
+
+    whatsappDate:
+      "Fecha preferida",
+
+    whatsappTime:
+      "Horario preferido",
+
+    whatsappDelivery:
+      "Entrega",
 
     toCoordinate:
       "a coordinar",
@@ -251,16 +310,23 @@ const COPY = {
   },
 
   en: {
-    title: "Get a quote",
+    title:
+      "Get a quote",
 
     intro:
       "Build your production in a few steps, see the estimated price and send your request via WhatsApp.",
 
-    step: "Step",
-    next: "Continue",
-    back: "Back",
+    step:
+      "Step",
 
-    typeTitle: "Property type",
+    next:
+      "Continue",
+
+    back:
+      "Back",
+
+    typeTitle:
+      "Property type",
 
     typeSubtitle:
       "Choose the option that best matches the property.",
@@ -323,7 +389,8 @@ const COPY = {
       {
         id: "drone" as ExtraId,
         n: "Drone",
-        nAdditional: "Additional drone",
+        nAdditional:
+          "Additional drone",
         d: "Aerial photography + aerial video",
         dAdditional:
           "Aerial photography + video clips for the production",
@@ -331,7 +398,8 @@ const COPY = {
       {
         id: "reel" as ExtraId,
         n: "Talking reel",
-        nAdditional: "Talking reel",
+        nAdditional:
+          "Talking reel",
         d: "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds.",
         dAdditional:
           "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds.",
@@ -386,15 +454,21 @@ const COPY = {
     deliverySubtitle:
       "Priority delivery is subject to availability.",
 
-    delivery72: "Standard",
+    delivery72:
+      "Standard",
+
     delivery72Desc:
       "Within 72 business hours",
 
-    delivery36: "Priority",
+    delivery36:
+      "Priority",
+
     delivery36Desc:
       "Within 36 hours",
 
-    delivery24: "Express",
+    delivery24:
+      "Express",
+
     delivery24Desc:
       "Within 24 hours",
 
@@ -407,27 +481,34 @@ const COPY = {
     dataSubtitle:
       "Complete your information to send the request.",
 
-    name: "Full name",
+    name:
+      "Full name",
+
     company:
       "Real estate agency or company",
+
     address:
       "Property address",
+
     date:
       "Preferred date",
+
     time:
       "Preferred time",
 
     horas: {
-      manana: "Morning",
-      mediodia: "Midday",
-      tarde: "Afternoon",
+      manana:
+        "Morning",
+
+      mediodia:
+        "Midday",
+
+      tarde:
+        "Afternoon",
     },
 
     summary:
       "Production summary",
-
-    empty:
-      "You haven't selected any services yet.",
 
     estimatedTotal:
       "Estimated total",
@@ -456,13 +537,26 @@ const COPY = {
     whatsappTotal:
       "Estimated total",
 
-    whatsappName: "Name",
-    whatsappCompany: "Company",
-    whatsappAddress: "Address",
-    whatsappZone: "Area",
-    whatsappDate: "Preferred date",
-    whatsappTime: "Preferred time",
-    whatsappDelivery: "Delivery",
+    whatsappName:
+      "Name",
+
+    whatsappCompany:
+      "Company",
+
+    whatsappAddress:
+      "Address",
+
+    whatsappZone:
+      "Area",
+
+    whatsappDate:
+      "Preferred date",
+
+    whatsappTime:
+      "Preferred time",
+
+    whatsappDelivery:
+      "Delivery",
 
     toCoordinate:
       "to be arranged",
@@ -474,14 +568,11 @@ const COPY = {
 
 const money = (
   value: number
-) => {
-  return (
-    "$ " +
-    value.toLocaleString(
-      "es-AR"
-    )
+) =>
+  "$ " +
+  value.toLocaleString(
+    "es-AR"
   )
-}
 
 const optBase =
   "relative w-full rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e5c6e] md:p-5"
@@ -500,6 +591,11 @@ export default function Cotizador() {
 
   const c =
     COPY[language]
+
+  const topRef =
+    useRef<HTMLDivElement | null>(
+      null
+    )
 
   const [
     step,
@@ -751,143 +847,189 @@ export default function Cotizador() {
       ? c.horas[hora]
       : c.toCoordinate
 
-  const goNext = () => {
-    setWarning("")
-
-    if (
-      step === 1 &&
-      tipo === null
-    ) {
-      setWarning(
-        c.selectProperty
+  const scrollToStep =
+    () => {
+      window.setTimeout(
+        () => {
+          topRef.current?.scrollIntoView({
+            behavior:
+              "smooth",
+            block:
+              "start",
+          })
+        },
+        60
       )
-
-      return
     }
 
-    if (
-      step === 2 &&
-      !hasService
-    ) {
-      setWarning(
-        c.selectService
-      )
+  const goNext =
+    () => {
+      setWarning("")
 
-      return
-    }
-
-    if (
-      step === 3 &&
-      zona === null
-    ) {
-      setWarning(
-        c.selectZone
-      )
-
-      return
-    }
-
-    setStep(
-      (
-        current
-      ) =>
-        Math.min(
-          current + 1,
-          4
+      if (
+        step === 1 &&
+        tipo === null
+      ) {
+        setWarning(
+          c.selectProperty
         )
-    )
-  }
-
-  const goBack = () => {
-    setWarning("")
-
-    setStep(
-      (
-        current
-      ) =>
-        Math.max(
-          current - 1,
-          1
-        )
-    )
-  }
-
-  const enviar = () => {
-    if (
-      !hasService ||
-      zona === null
-    ) {
-      return
-    }
-
-    const detalle =
-      resumen
-        .map(
-          (
-            linea
-          ) =>
-            `• ${linea[0]}: ${
-              linea[1] ===
-              0
-                ? c.included
-                : money(
-                    linea[1]
-                  )
-            }`
-        )
-        .join("\n")
-
-    const notaViatico =
-      zona === "fuera"
-        ? `\n\n${c.travelWhatsappNote}`
-        : ""
-
-    const msg =
-      `${c.whatsappHello}\n\n` +
-      `${detalle}` +
-      `\n\n${c.whatsappTotal}: ${money(
-        total
-      )}` +
-      `\n${c.whatsappName}: ${
-        f.nombre || "-"
-      }` +
-      `\n${c.whatsappCompany}: ${
-        f.empresa || "-"
-      }` +
-      `\n${c.whatsappAddress}: ${
-        f.dir || "-"
-      }` +
-      `\n${c.whatsappZone}: ${zonaTexto}` +
-      `\n${c.whatsappDate}: ${
-        f.fecha ||
-        c.toCoordinate
-      }` +
-      `\n${c.whatsappTime}: ${horaTexto}` +
-      `\n${c.whatsappDelivery}: ${entregaTexto}` +
-      notaViatico
-
-    trackEvent(
-      "quote_request",
-      {
-        value: total,
-        currency: "ARS",
-        services:
-          lineasServicio.length,
-        zone:
-          zona,
-        delivery:
-          entrega,
+        return
       }
-    )
 
-    window.open(
-      `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
-        msg
-      )}`,
-      "_blank",
-      "noopener"
-    )
-  }
+      if (
+        step === 2 &&
+        !hasService
+      ) {
+        setWarning(
+          c.selectService
+        )
+        return
+      }
+
+      if (
+        step === 3 &&
+        zona === null
+      ) {
+        setWarning(
+          c.selectZone
+        )
+        return
+      }
+
+      setStep(
+        (
+          current
+        ) =>
+          Math.min(
+            current + 1,
+            4
+          )
+      )
+
+      scrollToStep()
+    }
+
+  const goBack =
+    () => {
+      setWarning("")
+
+      setStep(
+        (
+          current
+        ) =>
+          Math.max(
+            current - 1,
+            1
+          )
+      )
+
+      scrollToStep()
+    }
+
+  const jumpToPreviousStep =
+    (
+      number: number
+    ) => {
+      if (
+        number >=
+        step
+      ) {
+        return
+      }
+
+      setWarning(
+        ""
+      )
+
+      setStep(
+        number
+      )
+
+      scrollToStep()
+    }
+
+  const enviar =
+    () => {
+      if (
+        !hasService ||
+        zona === null
+      ) {
+        return
+      }
+
+      const detalle =
+        resumen
+          .map(
+            (
+              linea
+            ) =>
+              `• ${linea[0]}: ${
+                linea[1] ===
+                0
+                  ? c.included
+                  : money(
+                      linea[1]
+                    )
+              }`
+          )
+          .join("\n")
+
+      const notaViatico =
+        zona === "fuera"
+          ? `\n\n${c.travelWhatsappNote}`
+          : ""
+
+      const msg =
+        `${c.whatsappHello}\n\n` +
+        `${detalle}` +
+        `\n\n${c.whatsappTotal}: ${money(
+          total
+        )}` +
+        `\n${c.whatsappName}: ${
+          f.nombre ||
+          "-"
+        }` +
+        `\n${c.whatsappCompany}: ${
+          f.empresa ||
+          "-"
+        }` +
+        `\n${c.whatsappAddress}: ${
+          f.dir ||
+          "-"
+        }` +
+        `\n${c.whatsappZone}: ${zonaTexto}` +
+        `\n${c.whatsappDate}: ${
+          f.fecha ||
+          c.toCoordinate
+        }` +
+        `\n${c.whatsappTime}: ${horaTexto}` +
+        `\n${c.whatsappDelivery}: ${entregaTexto}` +
+        notaViatico
+
+      trackEvent(
+        "quote_request",
+        {
+          value:
+            total,
+          currency:
+            "ARS",
+          services:
+            lineasServicio.length,
+          zone:
+            zona,
+          delivery:
+            entrega,
+        }
+      )
+
+      window.open(
+        `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+          msg
+        )}`,
+        "_blank",
+        "noopener"
+      )
+    }
 
   const input =
     "mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-800 outline-none focus:ring-2 focus:ring-[#0e5c6e] dark:border-gray-700 dark:bg-[#001219] dark:text-gray-100"
@@ -904,17 +1046,27 @@ export default function Cotizador() {
       id="cotizador"
       className="bg-white px-4 pb-28 pt-16 dark:bg-[#001219] md:pb-20 md:pt-24"
     >
-      <div className="mx-auto max-w-5xl">
+
+      <div
+        ref={
+          topRef
+        }
+        className="mx-auto max-w-5xl scroll-mt-24"
+      >
 
         {/* TÍTULO */}
         <div className="mx-auto max-w-2xl text-center">
 
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
-            {c.title}
+            {
+              c.title
+            }
           </h2>
 
           <p className="mt-3 text-gray-600 dark:text-gray-300">
-            {c.intro}
+            {
+              c.intro
+            }
           </p>
 
         </div>
@@ -950,20 +1102,11 @@ export default function Cotizador() {
                       number >
                       step
                     }
-                    onClick={() => {
-                      if (
-                        number <
-                        step
-                      ) {
-                        setStep(
-                          number
-                        )
-
-                        setWarning(
-                          ""
-                        )
-                      }
-                    }}
+                    onClick={() =>
+                      jumpToPreviousStep(
+                        number
+                      )
+                    }
                     className="min-w-0 text-left disabled:cursor-default"
                   >
 
@@ -984,11 +1127,15 @@ export default function Cotizador() {
                       }`}
                     >
                       {c.step}{" "}
-                      {number}
+                      {
+                        number
+                      }
                     </p>
 
                     <p className="mt-1 hidden truncate text-xs text-gray-500 sm:block">
-                      {title}
+                      {
+                        title
+                      }
                     </p>
 
                   </button>
@@ -1000,8 +1147,51 @@ export default function Cotizador() {
 
         </div>
 
-        {/* CONTENIDO + RESUMEN */}
-        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {/* RESUMEN STICKY MOBILE / TABLET */}
+        <div className="sticky top-0 z-40 -mx-4 mt-5 border-y border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-[#06222c]/95 lg:hidden">
+
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+
+            <div>
+
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                {
+                  c.estimatedTotal
+                }
+              </p>
+
+              <p className="text-xl font-bold leading-tight text-[#0e5c6e] dark:text-[#5fb8cc]">
+                {money(
+                  total
+                )}
+              </p>
+
+            </div>
+
+            <div className="text-right">
+
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                {c.step}{" "}
+                {step}/4
+              </p>
+
+              <p className="mt-0.5 max-w-[150px] truncate text-xs text-gray-400">
+                {
+                  steps[
+                    step -
+                      1
+                  ]
+                }
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* CONTENIDO + RESUMEN DESKTOP */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
 
           {/* FORMULARIO */}
           <div className="min-w-0 rounded-3xl border border-gray-200 bg-[#f8fbfb] p-5 dark:border-white/10 dark:bg-[#06222c] md:p-8">
@@ -1015,11 +1205,15 @@ export default function Cotizador() {
                 </p>
 
                 <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {c.typeTitle}
+                  {
+                    c.typeTitle
+                  }
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                  {c.typeSubtitle}
+                  {
+                    c.typeSubtitle
+                  }
                 </p>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -1067,11 +1261,15 @@ export default function Cotizador() {
                         )}
 
                         <b className="block pr-8">
-                          {item.n}
+                          {
+                            item.n
+                          }
                         </b>
 
                         <span className="mt-2 block text-sm leading-5 opacity-80">
-                          {item.d}
+                          {
+                            item.d
+                          }
                         </span>
 
                       </button>
@@ -1083,11 +1281,15 @@ export default function Cotizador() {
                 <div className="mt-10">
 
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {c.packageTitle}
+                    {
+                      c.packageTitle
+                    }
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                    {c.packageSubtitle}
+                    {
+                      c.packageSubtitle
+                    }
                   </p>
 
                   <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -1138,11 +1340,15 @@ export default function Cotizador() {
                           )}
 
                           <b className="block pr-8">
-                            {item.n}
+                            {
+                              item.n
+                            }
                           </b>
 
                           <span className="mt-2 block text-sm leading-5 opacity-80">
-                            {item.d}
+                            {
+                              item.d
+                            }
                           </span>
 
                           <span className="mt-4 block text-lg font-bold">
@@ -1178,11 +1384,15 @@ export default function Cotizador() {
                 </p>
 
                 <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {c.extrasTitle}
+                  {
+                    c.extrasTitle
+                  }
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                  {c.extrasSubtitle}
+                  {
+                    c.extrasSubtitle
+                  }
                 </p>
 
                 <div className="mt-6 space-y-3">
@@ -1271,11 +1481,15 @@ export default function Cotizador() {
                             <div>
 
                               <b className="block">
-                                {nombre}
+                                {
+                                  nombre
+                                }
                               </b>
 
                               <span className="mt-1 block text-sm leading-5 opacity-80">
-                                {descripcion}
+                                {
+                                  descripcion
+                                }
                               </span>
 
                             </div>
@@ -1307,7 +1521,9 @@ export default function Cotizador() {
                 </p>
 
                 <div className="mt-6 rounded-2xl bg-white p-4 text-sm leading-6 text-gray-500 dark:bg-[#001219] dark:text-gray-400">
-                  {c.specialNote}
+                  {
+                    c.specialNote
+                  }
                 </div>
 
               </div>
@@ -1322,17 +1538,23 @@ export default function Cotizador() {
                 </p>
 
                 <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {c.zoneTitle}
+                  {
+                    c.zoneTitle
+                  }
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                  {c.zoneSubtitle}
+                  {
+                    c.zoneSubtitle
+                  }
                 </p>
 
                 <div className="mt-7">
 
                   <p className="font-semibold text-gray-900 dark:text-white">
-                    {c.zoneLabel}
+                    {
+                      c.zoneLabel
+                    }
                   </p>
 
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -1361,11 +1583,15 @@ export default function Cotizador() {
                     >
 
                       <b className="block">
-                        {c.zoneInside}
+                        {
+                          c.zoneInside
+                        }
                       </b>
 
                       <span className="mt-1 block text-sm opacity-80">
-                        {c.zoneInsideDesc}
+                        {
+                          c.zoneInsideDesc
+                        }
                       </span>
 
                     </button>
@@ -1394,11 +1620,15 @@ export default function Cotizador() {
                     >
 
                       <b className="block">
-                        {c.zoneOutside}
+                        {
+                          c.zoneOutside
+                        }
                       </b>
 
                       <span className="mt-1 block text-sm opacity-80">
-                        {c.zoneOutsideDesc}
+                        {
+                          c.zoneOutsideDesc
+                        }
                       </span>
 
                     </button>
@@ -1408,7 +1638,9 @@ export default function Cotizador() {
                   {zona ===
                     "fuera" && (
                     <p className="mt-3 text-sm leading-6 text-amber-600 dark:text-amber-300">
-                      {c.zoneWarning}
+                      {
+                        c.zoneWarning
+                      }
                     </p>
                   )}
 
@@ -1417,11 +1649,15 @@ export default function Cotizador() {
                 <div className="mt-10">
 
                   <p className="font-semibold text-gray-900 dark:text-white">
-                    {c.deliveryLabel}
+                    {
+                      c.deliveryLabel
+                    }
                   </p>
 
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {c.deliverySubtitle}
+                    {
+                      c.deliverySubtitle
+                    }
                   </p>
 
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
@@ -1446,15 +1682,21 @@ export default function Cotizador() {
                     >
 
                       <b className="block">
-                        {c.delivery72}
+                        {
+                          c.delivery72
+                        }
                       </b>
 
                       <span className="mt-1 block text-sm opacity-80">
-                        {c.delivery72Desc}
+                        {
+                          c.delivery72Desc
+                        }
                       </span>
 
                       <span className="mt-3 block font-bold">
-                        {c.noExtra}
+                        {
+                          c.noExtra
+                        }
                       </span>
 
                     </button>
@@ -1479,11 +1721,15 @@ export default function Cotizador() {
                     >
 
                       <b className="block">
-                        {c.delivery36}
+                        {
+                          c.delivery36
+                        }
                       </b>
 
                       <span className="mt-1 block text-sm opacity-80">
-                        {c.delivery36Desc}
+                        {
+                          c.delivery36Desc
+                        }
                       </span>
 
                       <span className="mt-3 block text-lg font-bold">
@@ -1515,11 +1761,15 @@ export default function Cotizador() {
                     >
 
                       <b className="block">
-                        {c.delivery24}
+                        {
+                          c.delivery24
+                        }
                       </b>
 
                       <span className="mt-1 block text-sm opacity-80">
-                        {c.delivery24Desc}
+                        {
+                          c.delivery24Desc
+                        }
                       </span>
 
                       <span className="mt-3 block text-lg font-bold">
@@ -1547,18 +1797,24 @@ export default function Cotizador() {
                 </p>
 
                 <h3 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {c.dataTitle}
+                  {
+                    c.dataTitle
+                  }
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                  {c.dataSubtitle}
+                  {
+                    c.dataSubtitle
+                  }
                 </p>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
 
                   <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
 
-                    {c.name}
+                    {
+                      c.name
+                    }
 
                     <input
                       className={
@@ -1585,7 +1841,9 @@ export default function Cotizador() {
 
                   <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
 
-                    {c.company}
+                    {
+                      c.company
+                    }
 
                     <input
                       className={
@@ -1612,7 +1870,9 @@ export default function Cotizador() {
 
                   <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
 
-                    {c.address}
+                    {
+                      c.address
+                    }
 
                     <input
                       className={
@@ -1639,7 +1899,9 @@ export default function Cotizador() {
 
                   <label className="text-sm font-medium text-gray-800 dark:text-gray-100">
 
-                    {c.date}
+                    {
+                      c.date
+                    }
 
                     <input
                       type="date"
@@ -1669,7 +1931,9 @@ export default function Cotizador() {
                 <div className="mt-6">
 
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                    {c.time}
+                    {
+                      c.time
+                    }
                   </p>
 
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -1709,7 +1973,11 @@ export default function Cotizador() {
                           } text-center`}
                         >
                           <b>
-                            {c.horas[id]}
+                            {
+                              c.horas[
+                                id
+                              ]
+                            }
                           </b>
                         </button>
                       )
@@ -1725,11 +1993,13 @@ export default function Cotizador() {
             {/* AVISO */}
             {warning && (
               <div className="mt-6 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                {warning}
+                {
+                  warning
+                }
               </div>
             )}
 
-            {/* NAVEGACIÓN WIZARD */}
+            {/* NAVEGACIÓN */}
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-gray-200 pt-6 dark:border-white/10">
 
               {step >
@@ -1742,7 +2012,10 @@ export default function Cotizador() {
                   className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-white dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  {c.back}
+
+                  {
+                    c.back
+                  }
                 </button>
               ) : (
                 <div />
@@ -1757,7 +2030,9 @@ export default function Cotizador() {
                   }
                   className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
                 >
-                  {c.next}
+                  {
+                    c.next
+                  }
 
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -1774,7 +2049,9 @@ export default function Cotizador() {
                   }
                   className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {c.request}
+                  {
+                    c.request
+                  }
 
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -1784,13 +2061,15 @@ export default function Cotizador() {
 
           </div>
 
-          {/* RESUMEN */}
-          <aside className="h-fit min-w-0 rounded-3xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] lg:sticky lg:top-24">
+          {/* RESUMEN DESKTOP */}
+          <aside className="hidden h-fit min-w-0 rounded-3xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] lg:sticky lg:top-24 lg:block">
 
             <div className="flex items-center justify-between gap-3">
 
               <p className="text-sm font-semibold text-[#0A9396]">
-                {c.summary}
+                {
+                  c.summary
+                }
               </p>
 
               <span className="rounded-full bg-[#0A9396]/10 px-2.5 py-1 text-xs font-semibold text-[#0A9396]">
@@ -1802,38 +2081,33 @@ export default function Cotizador() {
 
             <div className="mt-4 space-y-3">
 
-              {resumen.length >
-              0 ? (
-                resumen.map(
-                  (
-                    linea,
-                    index
-                  ) => (
-                    <div
-                      key={`${linea[0]}-${index}`}
-                      className="flex items-start justify-between gap-4 text-sm"
-                    >
+              {resumen.map(
+                (
+                  linea,
+                  index
+                ) => (
+                  <div
+                    key={`${linea[0]}-${index}`}
+                    className="flex items-start justify-between gap-4 text-sm"
+                  >
 
-                      <span className="min-w-0 text-gray-600 dark:text-gray-300">
-                        {linea[0]}
-                      </span>
+                    <span className="min-w-0 text-gray-600 dark:text-gray-300">
+                      {
+                        linea[0]
+                      }
+                    </span>
 
-                      <strong className="shrink-0 text-right text-gray-900 dark:text-white">
-                        {linea[1] ===
-                        0
-                          ? c.included
-                          : money(
-                              linea[1]
-                            )}
-                      </strong>
+                    <strong className="shrink-0 text-right text-gray-900 dark:text-white">
+                      {linea[1] ===
+                      0
+                        ? c.included
+                        : money(
+                            linea[1]
+                          )}
+                    </strong>
 
-                    </div>
-                  )
+                  </div>
                 )
-              ) : (
-                <p className="text-sm text-gray-400">
-                  {c.empty}
-                </p>
               )}
 
             </div>
@@ -1841,17 +2115,22 @@ export default function Cotizador() {
             {zona ===
               "fuera" && (
               <p className="mt-5 border-t border-gray-100 pt-4 text-xs leading-5 text-gray-500 dark:border-white/10 dark:text-gray-400">
-                * {c.zoneWarning}
+                *{" "}
+                {
+                  c.zoneWarning
+                }
               </p>
             )}
 
             <div className="mt-5 border-t border-gray-200 pt-5 dark:border-white/10">
 
               <p className="text-xs uppercase tracking-wide text-gray-400">
-                {c.estimatedTotal}
+                {
+                  c.estimatedTotal
+                }
               </p>
 
-              <p className="mt-1 break-words text-3xl font-bold text-[#0e5c6e] dark:text-[#5fb8cc]">
+              <p className="mt-1 text-3xl font-bold text-[#0e5c6e] dark:text-[#5fb8cc]">
                 {money(
                   total
                 )}
