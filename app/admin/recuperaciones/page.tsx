@@ -13,41 +13,60 @@ import { createClient } from "@/lib/supabase/server"
 import RecoveryStatusSelect from "@/components/recovery-status-select"
 
 export default async function RecuperacionesAdminPage() {
-  const supabase = await createClient()
+  const supabase =
+    await createClient()
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } =
+    await supabase.auth.getUser()
 
   if (!user) {
     redirect("/ingresar")
   }
 
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const {
+    data: roleData,
+  } =
+    await supabase
+      .from("user_roles")
+      .select("role")
+      .eq(
+        "user_id",
+        user.id
+      )
+      .maybeSingle()
 
-  if (roleData?.role !== "admin") {
+  if (
+    roleData?.role !==
+    "admin"
+  ) {
     redirect("/cuenta")
   }
 
-  const { data: requests } = await supabase
-    .from("recovery_requests")
-    .select(`
-      id,
-      production_id,
-      user_id,
-      status,
-      message,
-      admin_notes,
-      requested_at,
-      updated_at
-    `)
-    .order("requested_at", {
-      ascending: false,
-    })
+  const {
+    data: requests,
+  } =
+    await supabase
+      .from(
+        "recovery_requests"
+      )
+      .select(`
+        id,
+        production_id,
+        user_id,
+        status,
+        message,
+        admin_notes,
+        requested_at,
+        updated_at
+      `)
+      .order(
+        "requested_at",
+        {
+          ascending: false,
+        }
+      )
 
   const allRequests =
     requests || []
@@ -55,7 +74,10 @@ export default async function RecuperacionesAdminPage() {
   const userIds = [
     ...new Set(
       allRequests.map(
-        (item) => item.user_id
+        (
+          item
+        ) =>
+          item.user_id
       )
     ),
   ]
@@ -63,16 +85,23 @@ export default async function RecuperacionesAdminPage() {
   const productionIds = [
     ...new Set(
       allRequests.map(
-        (item) =>
+        (
+          item
+        ) =>
           item.production_id
       )
     ),
   ]
 
-  const { data: profiles } =
-    userIds.length > 0
+  const {
+    data: profiles,
+  } =
+    userIds.length >
+    0
       ? await supabase
-          .from("profiles")
+          .from(
+            "profiles"
+          )
           .select(`
             id,
             full_name,
@@ -80,13 +109,23 @@ export default async function RecuperacionesAdminPage() {
             phone,
             avatar_url
           `)
-          .in("id", userIds)
-      : { data: [] }
+          .in(
+            "id",
+            userIds
+          )
+      : {
+          data: [],
+        }
 
-  const { data: productions } =
-    productionIds.length > 0
+  const {
+    data: productions,
+  } =
+    productionIds.length >
+    0
       ? await supabase
-          .from("productions")
+          .from(
+            "productions"
+          )
           .select(`
             id,
             property_name,
@@ -94,49 +133,86 @@ export default async function RecuperacionesAdminPage() {
             production_date,
             delivered_at
           `)
-          .in("id", productionIds)
-      : { data: [] }
+          .in(
+            "id",
+            productionIds
+          )
+      : {
+          data: [],
+        }
 
-  const profileMap = new Map(
-    (profiles || []).map(
-      (profile) => [
-        profile.id,
-        profile,
-      ]
+  const profileMap =
+    new Map(
+      (
+        profiles ||
+        []
+      ).map(
+        (
+          profile
+        ) => [
+          profile.id,
+          profile,
+        ]
+      )
     )
-  )
 
-  const productionMap = new Map(
-    (productions || []).map(
-      (production) => [
-        production.id,
-        production,
-      ]
+  const productionMap =
+    new Map(
+      (
+        productions ||
+        []
+      ).map(
+        (
+          production
+        ) => [
+          production.id,
+          production,
+        ]
+      )
     )
-  )
 
   const pendingCount =
     allRequests.filter(
-      (request) =>
-        request.status === "pending"
+      (
+        request
+      ) =>
+        request.status ===
+        "pending"
     ).length
 
   const reviewingCount =
     allRequests.filter(
-      (request) =>
-        request.status === "reviewing"
+      (
+        request
+      ) =>
+        request.status ===
+        "reviewing"
     ).length
 
   const approvedCount =
     allRequests.filter(
-      (request) =>
-        request.status === "approved"
+      (
+        request
+      ) =>
+        request.status ===
+        "approved"
+    ).length
+
+  const completedCount =
+    allRequests.filter(
+      (
+        request
+      ) =>
+        request.status ===
+        "completed"
     ).length
 
   const formatDateTime = (
     value?: string | null
   ) => {
-    if (!value) return "-"
+    if (!value) {
+      return "-"
+    }
 
     return new Intl.DateTimeFormat(
       "es-AR",
@@ -147,13 +223,17 @@ export default async function RecuperacionesAdminPage() {
         hour: "2-digit",
         minute: "2-digit",
       }
-    ).format(new Date(value))
+    ).format(
+      new Date(value)
+    )
   }
 
   const formatDate = (
     value?: string | null
   ) => {
-    if (!value) return "-"
+    if (!value) {
+      return "-"
+    }
 
     return new Intl.DateTimeFormat(
       "es-AR",
@@ -162,11 +242,14 @@ export default async function RecuperacionesAdminPage() {
         month: "2-digit",
         year: "numeric",
       }
-    ).format(new Date(value))
+    ).format(
+      new Date(value)
+    )
   }
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
 
         <Link
@@ -178,6 +261,7 @@ export default async function RecuperacionesAdminPage() {
         </Link>
 
         <div className="mt-8">
+
           <p className="text-sm font-semibold text-[#0A9396]">
             Clover Digital
           </p>
@@ -187,51 +271,82 @@ export default async function RecuperacionesAdminPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
-            Gestioná las solicitudes de clientes que necesitan recuperar material archivado.
+            Gestioná solicitudes de clientes que necesitan recuperar material archivado.
           </p>
+
         </div>
 
         {/* MÉTRICAS */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+
             <p className="text-sm text-gray-500">
               Solicitudes
             </p>
 
             <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-              {allRequests.length}
+              {
+                allRequests.length
+              }
             </p>
+
           </div>
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+
             <p className="text-sm text-gray-500">
               Pendientes
             </p>
 
             <p className="mt-1 text-3xl font-bold text-amber-600">
-              {pendingCount}
+              {
+                pendingCount
+              }
             </p>
+
           </div>
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+
             <p className="text-sm text-gray-500">
               En revisión
             </p>
 
             <p className="mt-1 text-3xl font-bold text-blue-600">
-              {reviewingCount}
+              {
+                reviewingCount
+              }
             </p>
+
           </div>
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+
             <p className="text-sm text-gray-500">
               Aprobadas
             </p>
 
             <p className="mt-1 text-3xl font-bold text-[#0A9396]">
-              {approvedCount}
+              {
+                approvedCount
+              }
             </p>
+
+          </div>
+
+          <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+
+            <p className="text-sm text-gray-500">
+              Completadas
+            </p>
+
+            <p className="mt-1 text-3xl font-bold text-emerald-600">
+              {
+                completedCount
+              }
+            </p>
+
           </div>
 
         </div>
@@ -240,25 +355,33 @@ export default async function RecuperacionesAdminPage() {
         <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
+
             <div className="flex items-center gap-3">
+
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
                 <ArchiveRestore className="h-5 w-5" />
               </div>
 
               <div>
+
                 <h2 className="font-semibold text-gray-900 dark:text-white">
                   Solicitudes de recuperación
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Revisá si conservamos el material antes de aprobar.
+                  Revisá el archivo, registrá notas internas y actualizá el estado de cada pedido.
                 </p>
+
               </div>
+
             </div>
+
           </div>
 
-          {allRequests.length === 0 ? (
+          {allRequests.length ===
+          0 ? (
             <div className="p-10 text-center">
+
               <ArchiveRestore className="mx-auto h-8 w-8 text-gray-300" />
 
               <p className="mt-4 font-semibold text-gray-800 dark:text-gray-200">
@@ -268,11 +391,15 @@ export default async function RecuperacionesAdminPage() {
               <p className="mt-1 text-sm text-gray-500">
                 Cuando un cliente solicite material archivado aparecerá acá.
               </p>
+
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
+
               {allRequests.map(
-                (request) => {
+                (
+                  request
+                ) => {
                   const profile =
                     profileMap.get(
                       request.user_id
@@ -285,16 +412,22 @@ export default async function RecuperacionesAdminPage() {
 
                   return (
                     <article
-                      key={request.id}
+                      key={
+                        request.id
+                      }
                       className="p-6 md:p-8"
                     >
-                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+
+                      <div className="grid gap-6 lg:grid-cols-[1.2fr_1.4fr_180px_260px]">
 
                         {/* CLIENTE */}
-                        <div className="flex min-w-0 flex-1 items-start gap-4">
+                        <div className="flex min-w-0 items-start gap-4">
+
                           {profile?.avatar_url ? (
                             <img
-                              src={profile.avatar_url}
+                              src={
+                                profile.avatar_url
+                              }
                               alt=""
                               className="h-12 w-12 rounded-full object-cover"
                             />
@@ -305,6 +438,7 @@ export default async function RecuperacionesAdminPage() {
                           )}
 
                           <div className="min-w-0">
+
                             <p className="font-semibold text-gray-900 dark:text-white">
                               {profile?.full_name ||
                                 "Sin nombre"}
@@ -312,20 +446,27 @@ export default async function RecuperacionesAdminPage() {
 
                             {profile?.email && (
                               <p className="mt-1 truncate text-sm text-gray-500">
-                                {profile.email}
+                                {
+                                  profile.email
+                                }
                               </p>
                             )}
 
                             {profile?.phone && (
                               <p className="mt-1 text-xs text-gray-400">
-                                {profile.phone}
+                                {
+                                  profile.phone
+                                }
                               </p>
                             )}
+
                           </div>
+
                         </div>
 
                         {/* PROPIEDAD */}
-                        <div className="flex-1">
+                        <div>
+
                           <p className="text-xs uppercase tracking-wide text-gray-400">
                             Propiedad
                           </p>
@@ -337,7 +478,9 @@ export default async function RecuperacionesAdminPage() {
 
                           {production?.property_address && (
                             <p className="mt-1 text-sm text-gray-500">
-                              {production.property_address}
+                              {
+                                production.property_address
+                              }
                             </p>
                           )}
 
@@ -349,10 +492,26 @@ export default async function RecuperacionesAdminPage() {
                               )}
                             </p>
                           )}
+
+                          {request.message && (
+                            <div className="mt-4 rounded-xl bg-gray-50 p-3 text-sm leading-6 text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">
+
+                              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                Mensaje del cliente
+                              </p>
+
+                              {
+                                request.message
+                              }
+
+                            </div>
+                          )}
+
                         </div>
 
-                        {/* FECHA SOLICITUD */}
-                        <div className="lg:w-[180px]">
+                        {/* FECHA */}
+                        <div>
+
                           <p className="text-xs uppercase tracking-wide text-gray-400">
                             Solicitada
                           </p>
@@ -362,24 +521,35 @@ export default async function RecuperacionesAdminPage() {
                               request.requested_at
                             )}
                           </p>
-                        </div>
 
-                        {/* ESTADO */}
-                        <div className="lg:w-[190px]">
-                          <p className="mb-2 text-xs uppercase tracking-wide text-gray-400">
-                            Estado
+                          <p className="mt-3 text-xs text-gray-400">
+                            Última actualización
                           </p>
 
-                          <RecoveryStatusSelect
-                            requestId={request.id}
-                            initialStatus={
-                              request.status
-                            }
-                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            {formatDateTime(
+                              request.updated_at
+                            )}
+                          </p>
+
                         </div>
+
+                        {/* GESTIÓN */}
+                        <RecoveryStatusSelect
+                          requestId={
+                            request.id
+                          }
+                          initialStatus={
+                            request.status
+                          }
+                          initialAdminNotes={
+                            request.admin_notes
+                          }
+                        />
+
                       </div>
 
-                      <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3 border-t border-gray-100 pt-5 dark:border-white/10">
+                      <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 border-t border-gray-100 pt-5 dark:border-white/10">
 
                         <Link
                           href={`/admin/producciones/${request.production_id}`}
@@ -407,19 +577,25 @@ export default async function RecuperacionesAdminPage() {
                             Llamar
                           </a>
                         )}
+
                       </div>
 
                       <p className="mt-4 text-xs text-gray-400">
                         La recuperación está sujeta a disponibilidad del archivo y puede tener un costo adicional.
                       </p>
+
                     </article>
                   )
                 }
               )}
+
             </div>
           )}
+
         </section>
+
       </div>
+
     </main>
   )
 }
