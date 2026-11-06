@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import {
   ArchiveRestore,
   FolderOpen,
@@ -6,22 +7,46 @@ import {
   Home,
   LayoutDashboard,
   UserRound,
+  Users,
 } from "lucide-react"
 
-export default function AdminLayout({
+import { createClient } from "@/lib/supabase/server"
+
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/ingresar")
+  }
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (roleData?.role !== "admin") {
+    redirect("/cuenta")
+  }
+
   return (
     <div className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
 
       <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#001219]/95">
+
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
 
           <Link
             href="/admin"
-            className="flex items-center gap-3"
+            className="flex shrink-0 items-center gap-3"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
               <LayoutDashboard className="h-5 w-5" />
@@ -33,7 +58,7 @@ export default function AdminLayout({
               </p>
 
               <p className="text-xs text-gray-400">
-                Panel de administración
+                Administración
               </p>
             </div>
           </Link>
@@ -45,7 +70,7 @@ export default function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <Home className="h-4 w-4" />
-              <span className="hidden lg:inline">
+              <span className="hidden xl:inline">
                 Inicio
               </span>
             </Link>
@@ -55,8 +80,18 @@ export default function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <FolderOpen className="h-4 w-4" />
-              <span className="hidden md:inline">
+              <span className="hidden lg:inline">
                 Producciones
+              </span>
+            </Link>
+
+            <Link
+              href="/admin/clientes"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden lg:inline">
+                Clientes
               </span>
             </Link>
 
@@ -65,7 +100,7 @@ export default function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <ArchiveRestore className="h-4 w-4" />
-              <span className="hidden md:inline">
+              <span className="hidden lg:inline">
                 Recuperaciones
               </span>
             </Link>
@@ -75,7 +110,7 @@ export default function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <GraduationCap className="h-4 w-4" />
-              <span className="hidden lg:inline">
+              <span className="hidden xl:inline">
                 Academy
               </span>
             </Link>
@@ -85,7 +120,7 @@ export default function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <UserRound className="h-4 w-4" />
-              <span className="hidden lg:inline">
+              <span className="hidden xl:inline">
                 Mi cuenta
               </span>
             </Link>
@@ -94,10 +129,7 @@ export default function AdminLayout({
               href="/"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition hover:border-[#0A9396]/30 hover:text-[#0A9396] dark:border-white/10 dark:text-gray-300"
             >
-              <Home className="h-4 w-4" />
-              <span className="hidden xl:inline">
-                Ver sitio
-              </span>
+              Ver sitio
             </Link>
 
           </nav>
