@@ -3,7 +3,6 @@ import { redirect } from "next/navigation"
 
 import {
   ArrowLeft,
-  CalendarDays,
   Filter,
   FolderOpen,
   Plus,
@@ -65,10 +64,12 @@ const MONTHS = [
 export default async function AdminProduccionesPage({
   searchParams,
 }: PageProps) {
-  const params = await searchParams
+  const params =
+    await searchParams
 
   const search =
-    params.q?.trim().toLowerCase() || ""
+    params.q?.trim().toLowerCase() ||
+    ""
 
   const selectedStatus =
     params.status || "all"
@@ -79,48 +80,67 @@ export default async function AdminProduccionesPage({
   const selectedYear =
     params.year || "all"
 
-  const supabase = await createClient()
+  const supabase =
+    await createClient()
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } =
+    await supabase.auth.getUser()
 
   if (!user) {
     redirect("/ingresar")
   }
 
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const {
+    data: roleData,
+  } =
+    await supabase
+      .from("user_roles")
+      .select("role")
+      .eq(
+        "user_id",
+        user.id
+      )
+      .maybeSingle()
 
-  if (roleData?.role !== "admin") {
+  if (
+    roleData?.role !==
+    "admin"
+  ) {
     redirect("/cuenta")
   }
 
   const {
     data: productions,
     error: productionsError,
-  } = await supabase
-    .from("productions")
-    .select(`
-      id,
-      user_id,
-      property_name,
-      property_address,
-      production_date,
-      status,
-      services,
-      total_amount,
-      created_at
-    `)
-    .order("production_date", {
-      ascending: false,
-      nullsFirst: false,
-    })
+  } =
+    await supabase
+      .from("productions")
+      .select(`
+        id,
+        user_id,
+        client_name,
+        client_email,
+        property_name,
+        property_address,
+        production_date,
+        status,
+        services,
+        total_amount,
+        created_at
+      `)
+      .order(
+        "production_date",
+        {
+          ascending: false,
+          nullsFirst: false,
+        }
+      )
 
-  if (productionsError) {
+  if (
+    productionsError
+  ) {
     console.error(
       "Error cargando producciones:",
       productionsError
@@ -130,30 +150,37 @@ export default async function AdminProduccionesPage({
   const {
     data: profiles,
     error: profilesError,
-  } = await supabase
-    .from("profiles")
-    .select(`
-      id,
-      full_name,
-      email,
-      avatar_url
-    `)
+  } =
+    await supabase
+      .from("profiles")
+      .select(`
+        id,
+        full_name,
+        email,
+        avatar_url
+      `)
 
-  if (profilesError) {
+  if (
+    profilesError
+  ) {
     console.error(
       "Error cargando perfiles:",
       profilesError
     )
   }
 
-  const profileMap = new Map(
-    (profiles || []).map((profile) => [
-      profile.id,
-      profile,
-    ])
-  )
+  const profileMap =
+    new Map(
+      (profiles || []).map(
+        (profile) => [
+          profile.id,
+          profile,
+        ]
+      )
+    )
 
-  const allRows = productions || []
+  const allRows =
+    productions || []
 
   const yearOptions = [
     ...new Set(
@@ -162,96 +189,128 @@ export default async function AdminProduccionesPage({
           (production) =>
             production.production_date
         )
-        .map((production) =>
-          new Date(
-            production.production_date!
-          )
-            .getFullYear()
-            .toString()
+        .map(
+          (production) =>
+            new Date(
+              production.production_date!
+            )
+              .getFullYear()
+              .toString()
         )
     ),
   ].sort(
     (a, b) =>
-      Number(b) - Number(a)
+      Number(b) -
+      Number(a)
   )
 
-  const rows = allRows.filter(
-    (production) => {
-      const profile =
-        profileMap.get(
+  const rows =
+    allRows.filter(
+      (production) => {
+        const profile =
           production.user_id
-        )
+            ? profileMap.get(
+                production.user_id
+              )
+            : null
 
-      const matchesSearch =
-        !search ||
-        production.property_name
-          ?.toLowerCase()
-          .includes(search) ||
-        production.property_address
-          ?.toLowerCase()
-          .includes(search) ||
-        profile?.full_name
-          ?.toLowerCase()
-          .includes(search) ||
-        profile?.email
-          ?.toLowerCase()
-          .includes(search)
+        const clientName =
+          profile?.full_name ||
+          production.client_name ||
+          ""
 
-      const matchesStatus =
-        selectedStatus === "all" ||
-        production.status ===
-          selectedStatus
+        const clientEmail =
+          profile?.email ||
+          production.client_email ||
+          ""
 
-      let matchesMonth = true
-      let matchesYear = true
+        const matchesSearch =
+          !search ||
+          production.property_name
+            ?.toLowerCase()
+            .includes(search) ||
+          production.property_address
+            ?.toLowerCase()
+            .includes(search) ||
+          clientName
+            .toLowerCase()
+            .includes(search) ||
+          clientEmail
+            .toLowerCase()
+            .includes(search)
 
-      if (
-        production.production_date
-      ) {
-        const date = new Date(
+        const matchesStatus =
+          selectedStatus ===
+            "all" ||
+          production.status ===
+            selectedStatus
+
+        let matchesMonth =
+          true
+
+        let matchesYear =
+          true
+
+        if (
           production.production_date
+        ) {
+          const date =
+            new Date(
+              production.production_date
+            )
+
+          if (
+            selectedMonth !==
+            "all"
+          ) {
+            matchesMonth =
+              date.getMonth() +
+                1 ===
+              Number(
+                selectedMonth
+              )
+          }
+
+          if (
+            selectedYear !==
+            "all"
+          ) {
+            matchesYear =
+              date
+                .getFullYear()
+                .toString() ===
+              selectedYear
+          }
+        } else {
+          if (
+            selectedMonth !==
+              "all" ||
+            selectedYear !==
+              "all"
+          ) {
+            matchesMonth =
+              false
+
+            matchesYear =
+              false
+          }
+        }
+
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesMonth &&
+          matchesYear
         )
-
-        if (
-          selectedMonth !== "all"
-        ) {
-          matchesMonth =
-            date.getMonth() + 1 ===
-            Number(selectedMonth)
-        }
-
-        if (
-          selectedYear !== "all"
-        ) {
-          matchesYear =
-            date
-              .getFullYear()
-              .toString() ===
-            selectedYear
-        }
-      } else {
-        if (
-          selectedMonth !== "all" ||
-          selectedYear !== "all"
-        ) {
-          matchesMonth = false
-          matchesYear = false
-        }
       }
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesMonth &&
-        matchesYear
-      )
-    }
-  )
+    )
 
   const formatDate = (
     date?: string | null
   ) => {
-    if (!date) return "A coordinar"
+    if (!date) {
+      return "A coordinar"
+    }
 
     return new Intl.DateTimeFormat(
       "es-AR",
@@ -260,7 +319,9 @@ export default async function AdminProduccionesPage({
         month: "2-digit",
         year: "numeric",
       }
-    ).format(new Date(date))
+    ).format(
+      new Date(date)
+    )
   }
 
   const money = (
@@ -275,14 +336,28 @@ export default async function AdminProduccionesPage({
 
     return `$ ${Number(
       value
-    ).toLocaleString("es-AR")}`
+    ).toLocaleString(
+      "es-AR"
+    )}`
   }
 
   const hasFilters =
     search ||
-    selectedStatus !== "all" ||
-    selectedMonth !== "all" ||
-    selectedYear !== "all"
+    selectedStatus !==
+      "all" ||
+    selectedMonth !==
+      "all" ||
+    selectedYear !==
+      "all"
+
+  const pendingClientsCount =
+    allRows.filter(
+      (production) =>
+        !production.user_id &&
+        Boolean(
+          production.client_email
+        )
+    ).length
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
@@ -312,6 +387,21 @@ export default async function AdminProduccionesPage({
             <p className="mt-3 text-gray-500 dark:text-gray-400">
               Gestioná propiedades, clientes y estados de entrega.
             </p>
+
+            {pendingClientsCount >
+              0 && (
+              <p className="mt-2 text-sm text-amber-600 dark:text-amber-300">
+                {
+                  pendingClientsCount
+                }{" "}
+                producción
+                {pendingClientsCount ===
+                1
+                  ? ""
+                  : "es"}{" "}
+                con cliente pendiente de registro.
+              </p>
+            )}
           </div>
 
           <Link
@@ -350,7 +440,9 @@ export default async function AdminProduccionesPage({
                 <input
                   type="text"
                   name="q"
-                  defaultValue={params.q || ""}
+                  defaultValue={
+                    params.q || ""
+                  }
                   placeholder="Cliente, email, propiedad o dirección"
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
                 />
@@ -364,7 +456,9 @@ export default async function AdminProduccionesPage({
 
               <select
                 name="status"
-                defaultValue={selectedStatus}
+                defaultValue={
+                  selectedStatus
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
                 <option value="all">
@@ -374,10 +468,17 @@ export default async function AdminProduccionesPage({
                 {Object.entries(
                   STATUS_LABELS
                 ).map(
-                  ([value, label]) => (
+                  ([
+                    value,
+                    label,
+                  ]) => (
                     <option
-                      key={value}
-                      value={value}
+                      key={
+                        value
+                      }
+                      value={
+                        value
+                      }
                     >
                       {label}
                     </option>
@@ -393,7 +494,9 @@ export default async function AdminProduccionesPage({
 
               <select
                 name="month"
-                defaultValue={selectedMonth}
+                defaultValue={
+                  selectedMonth
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
                 <option value="all">
@@ -403,10 +506,16 @@ export default async function AdminProduccionesPage({
                 {MONTHS.map(
                   (month) => (
                     <option
-                      key={month.value}
-                      value={month.value}
+                      key={
+                        month.value
+                      }
+                      value={
+                        month.value
+                      }
                     >
-                      {month.label}
+                      {
+                        month.label
+                      }
                     </option>
                   )
                 )}
@@ -420,7 +529,9 @@ export default async function AdminProduccionesPage({
 
               <select
                 name="year"
-                defaultValue={selectedYear}
+                defaultValue={
+                  selectedYear
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
                 <option value="all">
@@ -460,7 +571,9 @@ export default async function AdminProduccionesPage({
                 </strong>{" "}
                 de{" "}
                 <strong className="font-semibold text-gray-900 dark:text-white">
-                  {allRows.length}
+                  {
+                    allRows.length
+                  }
                 </strong>{" "}
                 producciones
               </p>
@@ -496,7 +609,8 @@ export default async function AdminProduccionesPage({
 
               <p className="text-sm text-gray-400">
                 {rows.length} resultado
-                {rows.length === 1
+                {rows.length ===
+                1
                   ? ""
                   : "s"}
               </p>
@@ -504,7 +618,8 @@ export default async function AdminProduccionesPage({
             </div>
           </div>
 
-          {rows.length === 0 ? (
+          {rows.length ===
+          0 ? (
             <div className="p-10 text-center">
 
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
@@ -534,15 +649,37 @@ export default async function AdminProduccionesPage({
             <div className="divide-y divide-gray-100 dark:divide-white/10">
 
               {rows.map(
-                (production) => {
+                (
+                  production
+                ) => {
                   const profile =
-                    profileMap.get(
-                      production.user_id
+                    production.user_id
+                      ? profileMap.get(
+                          production.user_id
+                        )
+                      : null
+
+                  const clientName =
+                    profile?.full_name ||
+                    production.client_name ||
+                    "Sin nombre"
+
+                  const clientEmail =
+                    profile?.email ||
+                    production.client_email ||
+                    "Sin email"
+
+                  const isPending =
+                    !production.user_id &&
+                    Boolean(
+                      production.client_email
                     )
 
                   return (
                     <div
-                      key={production.id}
+                      key={
+                        production.id
+                      }
                       className="flex flex-col gap-5 p-5 md:flex-row md:items-center md:px-6"
                     >
 
@@ -557,7 +694,13 @@ export default async function AdminProduccionesPage({
                             className="h-11 w-11 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+                          <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                              isPending
+                                ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
+                                : "bg-[#0A9396]/10 text-[#0A9396]"
+                            }`}
+                          >
                             <UserRound className="h-5 w-5" />
                           </div>
                         )}
@@ -586,14 +729,18 @@ export default async function AdminProduccionesPage({
                                 production.status}
                             </span>
 
+                            {isPending && (
+                              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                                Pendiente de registro
+                              </span>
+                            )}
+
                           </div>
 
                           <p className="mt-1 text-sm text-gray-500">
-                            {profile?.full_name ||
-                              "Sin nombre"}{" "}
+                            {clientName}{" "}
                             ·{" "}
-                            {profile?.email ||
-                              "Sin email"}
+                            {clientEmail}
                           </p>
 
                           {production.property_address && (
@@ -627,7 +774,8 @@ export default async function AdminProduccionesPage({
                           </p>
 
                           <p className="mt-1 max-w-[220px] font-medium text-gray-700 dark:text-gray-200">
-                            {production.services
+                            {production
+                              .services
                               ?.length
                               ? production.services.join(
                                   " · "
