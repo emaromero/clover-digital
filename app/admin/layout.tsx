@@ -1,7 +1,9 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+
 import {
   ArchiveRestore,
+  CircleDollarSign,
   FolderOpen,
   GraduationCap,
   Home,
@@ -17,23 +19,28 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  const supabase =
+    await createClient()
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } =
+    await supabase.auth.getUser()
 
   if (!user) {
     redirect("/ingresar")
   }
 
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const { data: roleData } =
+    await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle()
 
-  if (roleData?.role !== "admin") {
+  if (
+    roleData?.role !== "admin"
+  ) {
     redirect("/cuenta")
   }
 
@@ -70,6 +77,7 @@ export default async function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <Home className="h-4 w-4" />
+
               <span className="hidden xl:inline">
                 Inicio
               </span>
@@ -80,6 +88,7 @@ export default async function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <FolderOpen className="h-4 w-4" />
+
               <span className="hidden lg:inline">
                 Producciones
               </span>
@@ -90,8 +99,20 @@ export default async function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <Users className="h-4 w-4" />
+
               <span className="hidden lg:inline">
                 Clientes
+              </span>
+            </Link>
+
+            <Link
+              href="/admin/finanzas"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
+            >
+              <CircleDollarSign className="h-4 w-4" />
+
+              <span className="hidden lg:inline">
+                Finanzas
               </span>
             </Link>
 
@@ -100,7 +121,8 @@ export default async function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <ArchiveRestore className="h-4 w-4" />
-              <span className="hidden lg:inline">
+
+              <span className="hidden xl:inline">
                 Recuperaciones
               </span>
             </Link>
@@ -110,6 +132,7 @@ export default async function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <GraduationCap className="h-4 w-4" />
+
               <span className="hidden xl:inline">
                 Academy
               </span>
@@ -120,6 +143,7 @@ export default async function AdminLayout({
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
               <UserRound className="h-4 w-4" />
+
               <span className="hidden xl:inline">
                 Mi cuenta
               </span>
@@ -127,7 +151,7 @@ export default async function AdminLayout({
 
             <Link
               href="/"
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition hover:border-[#0A9396]/30 hover:text-[#0A9396] dark:border-white/10 dark:text-gray-300"
+              className="inline-flex shrink-0 items-center rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition hover:border-[#0A9396]/30 hover:text-[#0A9396] dark:border-white/10 dark:text-gray-300"
             >
               Ver sitio
             </Link>
