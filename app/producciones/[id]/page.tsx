@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
+import RecoveryRequestButton from "@/components/recovery-request-button"
 
 interface PageProps {
   params: Promise<{
@@ -160,6 +161,22 @@ export default async function ProductionDetailPage({
 
       return true
     })
+
+  const { data: existingRecoveryRequest } = await supabase
+    .from("recovery_requests")
+    .select("id, status")
+    .eq("production_id", production.id)
+    .eq("user_id", user.id)
+    .in("status", [
+      "pending",
+      "reviewing",
+      "approved",
+    ])
+    .order("requested_at", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle()
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219] px-4 py-10 md:py-16">
@@ -329,9 +346,11 @@ export default async function ProductionDetailPage({
                 a archivo y puede tener un costo adicional.
               </p>
 
-              <div className="mt-4 rounded-xl bg-white/60 px-4 py-3 text-sm font-medium text-amber-900 dark:bg-black/10 dark:text-amber-200">
-                Solicitud de recuperación disponible próximamente
-              </div>
+              <RecoveryRequestButton
+                productionId={production.id}
+                userId={user.id}
+                existingRequest={existingRecoveryRequest}
+              />
             </div>
           ) : availableFiles.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-gray-200 p-8 text-center dark:border-white/10">
@@ -410,12 +429,12 @@ export default async function ProductionDetailPage({
 
           {!isArchived &&
             production.available_until && (
-            <p className="mt-6 text-xs leading-5 text-gray-400">
-              Te recomendamos descargar y conservar una copia del material.
-              Clover mantiene las entregas online durante 90 días desde la
-              fecha de entrega.
-            </p>
-          )}
+              <p className="mt-6 text-xs leading-5 text-gray-400">
+                Te recomendamos descargar y conservar una copia del material.
+                Clover mantiene las entregas online durante 90 días desde la
+                fecha de entrega.
+              </p>
+            )}
         </section>
       </div>
     </main>
