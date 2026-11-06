@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+
 import {
   ArrowLeft,
   CalendarDays,
@@ -110,10 +111,12 @@ const toLocalInput = (
 ) => {
   if (!value) return ""
 
-  const date = new Date(value)
+  const date =
+    new Date(value)
 
   const offset =
-    date.getTimezoneOffset() * 60000
+    date.getTimezoneOffset() *
+    60000
 
   return new Date(
     date.getTime() - offset
@@ -134,7 +137,9 @@ const formatDate = (
       month: "2-digit",
       year: "numeric",
     }
-  ).format(new Date(value))
+  ).format(
+    new Date(value)
+  )
 }
 
 const formatDateTime = (
@@ -151,64 +156,99 @@ const formatDateTime = (
       hour: "2-digit",
       minute: "2-digit",
     }
-  ).format(new Date(value))
+  ).format(
+    new Date(value)
+  )
 }
 
-const getDefaultWeTransferExpiry = () => {
-  const now = new Date()
+const getDefaultWeTransferExpiry =
+  () => {
+    const now =
+      new Date()
 
-  now.setHours(
-    now.getHours() + 71
-  )
+    now.setHours(
+      now.getHours() + 71
+    )
 
-  now.setMinutes(
-    now.getMinutes() + 40
-  )
+    now.setMinutes(
+      now.getMinutes() + 40
+    )
 
-  const offset =
-    now.getTimezoneOffset() * 60000
+    const offset =
+      now.getTimezoneOffset() *
+      60000
 
-  return new Date(
-    now.getTime() - offset
-  )
-    .toISOString()
-    .slice(0, 16)
-}
+    return new Date(
+      now.getTime() - offset
+    )
+      .toISOString()
+      .slice(0, 16)
+  }
 
 export default function EditProductionForm({
   production,
   clients,
   initialFiles,
 }: Props) {
-  const router = useRouter()
+  const router =
+    useRouter()
 
-  const [clientId, setClientId] =
-    useState(production.user_id)
-
-  const [propertyName, setPropertyName] =
-    useState(production.property_name)
-
-  const [propertyAddress, setPropertyAddress] =
+  const [
+    clientId,
+    setClientId,
+  ] =
     useState(
-      production.property_address || ""
+      production.user_id
     )
 
-  const [productionDate, setProductionDate] =
+  const [
+    propertyName,
+    setPropertyName,
+  ] =
+    useState(
+      production.property_name
+    )
+
+  const [
+    propertyAddress,
+    setPropertyAddress,
+  ] =
+    useState(
+      production.property_address ||
+        ""
+    )
+
+  const [
+    productionDate,
+    setProductionDate,
+  ] =
     useState(
       toLocalInput(
         production.production_date
       )
     )
 
-  const [status, setStatus] =
-    useState(production.status)
-
-  const [services, setServices] =
-    useState<string[]>(
-      production.services || []
+  const [
+    status,
+    setStatus,
+  ] =
+    useState(
+      production.status
     )
 
-  const [totalAmount, setTotalAmount] =
+  const [
+    services,
+    setServices,
+  ] =
+    useState<string[]>(
+      production.services ||
+        []
+    )
+
+  const [
+    totalAmount,
+    setTotalAmount,
+  ] =
     useState(
       production.total_amount?.toString() ||
         ""
@@ -217,63 +257,113 @@ export default function EditProductionForm({
   const [
     estimatedDelivery,
     setEstimatedDelivery,
-  ] = useState(
-    toLocalInput(
-      production.estimated_delivery_at
+  ] =
+    useState(
+      toLocalInput(
+        production.estimated_delivery_at
+      )
     )
-  )
 
-  const [notes, setNotes] = useState(
-    production.notes || ""
-  )
+  const [
+    notes,
+    setNotes,
+  ] =
+    useState(
+      production.notes ||
+        ""
+    )
 
-  const [files, setFiles] =
-    useState<ProductionFile[]>(
+  const [
+    files,
+    setFiles,
+  ] =
+    useState<
+      ProductionFile[]
+    >(
       initialFiles
     )
 
-  const [fileType, setFileType] =
-    useState("full_delivery")
+  const [
+    fileType,
+    setFileType,
+  ] =
+    useState(
+      "full_delivery"
+    )
 
-  const [fileLabel, setFileLabel] =
+  const [
+    fileLabel,
+    setFileLabel,
+  ] =
     useState("")
 
-  const [fileUrl, setFileUrl] =
+  const [
+    fileUrl,
+    setFileUrl,
+  ] =
     useState("")
 
-  const [fileExpiresAt, setFileExpiresAt] =
+  const [
+    fileExpiresAt,
+    setFileExpiresAt,
+  ] =
     useState("")
 
-  const [saving, setSaving] =
+  const [
+    saving,
+    setSaving,
+  ] =
     useState(false)
 
-  const [addingFile, setAddingFile] =
+  const [
+    addingFile,
+    setAddingFile,
+  ] =
     useState(false)
 
-  const [message, setMessage] =
+  const [
+    message,
+    setMessage,
+  ] =
     useState("")
 
-  const [fileMessage, setFileMessage] =
+  const [
+    fileMessage,
+    setFileMessage,
+  ] =
     useState("")
 
   const toggleService = (
     service: string
   ) => {
-    setServices((current) =>
-      current.includes(service)
-        ? current.filter(
-            (item) => item !== service
-          )
-        : [...current, service]
+    setServices(
+      (current) =>
+        current.includes(
+          service
+        )
+          ? current.filter(
+              (item) =>
+                item !==
+                service
+            )
+          : [
+              ...current,
+              service,
+            ]
     )
   }
 
   const handleFileTypeChange = (
     nextType: string
   ) => {
-    setFileType(nextType)
+    setFileType(
+      nextType
+    )
 
-    if (nextType === "wetransfer") {
+    if (
+      nextType ===
+      "wetransfer"
+    ) {
       setFileExpiresAt(
         getDefaultWeTransferExpiry()
       )
@@ -282,281 +372,436 @@ export default function EditProductionForm({
     }
   }
 
-  const handleSubmit = async (
-    event: React.FormEvent
-  ) => {
-    event.preventDefault()
+  const handleSubmit =
+    async (
+      event: React.FormEvent
+    ) => {
+      event.preventDefault()
 
-    if (!clientId) {
-      setMessage("Elegí un cliente.")
-      return
-    }
+      if (!clientId) {
+        setMessage(
+          "Elegí un cliente."
+        )
+        return
+      }
 
-    if (!propertyName.trim()) {
+      if (
+        !propertyName.trim()
+      ) {
+        setMessage(
+          "Ingresá el nombre de la propiedad."
+        )
+        return
+      }
+
+      setSaving(true)
+      setMessage("")
+
+      const supabase =
+        createClient()
+
+      const productionDateISO =
+        productionDate
+          ? new Date(
+              productionDate
+            ).toISOString()
+          : null
+
+      const estimatedDeliveryISO =
+        estimatedDelivery
+          ? new Date(
+              estimatedDelivery
+            ).toISOString()
+          : null
+
+      let deliveredAt =
+        production.delivered_at
+
+      let availableUntil =
+        production.available_until
+
+      /*
+       * La primera vez que
+       * pasa a Entregada:
+       *
+       * - guardamos fecha de entrega
+       * - calculamos 90 días
+       */
+      if (
+        status ===
+          "delivered" &&
+        !deliveredAt
+      ) {
+        const deliveredDate =
+          new Date()
+
+        const expiryDate =
+          new Date(
+            deliveredDate
+          )
+
+        expiryDate.setDate(
+          expiryDate.getDate() +
+            90
+        )
+
+        deliveredAt =
+          deliveredDate.toISOString()
+
+        availableUntil =
+          expiryDate.toISOString()
+      }
+
+      const {
+        error,
+      } =
+        await supabase
+          .from(
+            "productions"
+          )
+          .update({
+            user_id:
+              clientId,
+
+            property_name:
+              propertyName.trim(),
+
+            property_address:
+              propertyAddress.trim() ||
+              null,
+
+            production_date:
+              productionDateISO,
+
+            status,
+
+            services,
+
+            total_amount:
+              totalAmount
+                ? Number(
+                    totalAmount
+                  )
+                : null,
+
+            estimated_delivery_at:
+              estimatedDeliveryISO,
+
+            delivered_at:
+              deliveredAt,
+
+            available_until:
+              availableUntil,
+
+            notes:
+              notes.trim() ||
+              null,
+
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            production.id
+          )
+
+      if (error) {
+        console.error(
+          error
+        )
+
+        setMessage(
+          "No pudimos guardar los cambios."
+        )
+
+        setSaving(false)
+        return
+      }
+
+      let finalMessage =
+        "Cambios guardados correctamente."
+
+      /*
+       * Si quedó Entregada,
+       * intentamos enviar el email.
+       *
+       * La API decide si:
+       * - ya se mandó
+       * - falta material
+       * - corresponde enviarlo
+       */
+      if (
+        status ===
+        "delivered"
+      ) {
+        try {
+          const response =
+            await fetch(
+              "/api/production-delivered-email",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body:
+                  JSON.stringify({
+                    productionId:
+                      production.id,
+                  }),
+              }
+            )
+
+          const data =
+            await response.json()
+
+          if (
+            response.ok &&
+            data.sent
+          ) {
+            finalMessage =
+              "Cambios guardados correctamente. Email de entrega enviado al cliente."
+          } else if (
+            response.status ===
+            409
+          ) {
+            finalMessage =
+              "Cambios guardados correctamente. El email todavía no se envió porque no hay material cargado."
+          } else if (
+            response.ok &&
+            data.skipped
+          ) {
+            finalMessage =
+              "Cambios guardados correctamente."
+          } else {
+            console.error(
+              data
+            )
+
+            finalMessage =
+              "Cambios guardados correctamente, pero no pudimos enviar el email."
+          }
+        } catch (error) {
+          console.error(
+            error
+          )
+
+          finalMessage =
+            "Cambios guardados correctamente, pero no pudimos enviar el email."
+        }
+      }
+
       setMessage(
-        "Ingresá el nombre de la propiedad."
-      )
-      return
-    }
-
-    setSaving(true)
-    setMessage("")
-
-    const supabase = createClient()
-
-    const productionDateISO =
-      productionDate
-        ? new Date(
-            productionDate
-          ).toISOString()
-        : null
-
-    const estimatedDeliveryISO =
-      estimatedDelivery
-        ? new Date(
-            estimatedDelivery
-          ).toISOString()
-        : null
-
-    let deliveredAt =
-      production.delivered_at
-
-    let availableUntil =
-      production.available_until
-
-    if (
-      status === "delivered" &&
-      !deliveredAt
-    ) {
-      const deliveredDate =
-        new Date()
-
-      const expiryDate =
-        new Date(deliveredDate)
-
-      expiryDate.setDate(
-        expiryDate.getDate() + 90
-      )
-
-      deliveredAt =
-        deliveredDate.toISOString()
-
-      availableUntil =
-        expiryDate.toISOString()
-    }
-
-    const { error } = await supabase
-      .from("productions")
-      .update({
-        user_id: clientId,
-        property_name:
-          propertyName.trim(),
-        property_address:
-          propertyAddress.trim() ||
-          null,
-        production_date:
-          productionDateISO,
-        status,
-        services,
-        total_amount: totalAmount
-          ? Number(totalAmount)
-          : null,
-        estimated_delivery_at:
-          estimatedDeliveryISO,
-        delivered_at:
-          deliveredAt,
-        available_until:
-          availableUntil,
-        notes:
-          notes.trim() || null,
-        updated_at:
-          new Date().toISOString(),
-      })
-      .eq("id", production.id)
-
-    if (error) {
-      console.error(error)
-
-      setMessage(
-        "No pudimos guardar los cambios."
+        finalMessage
       )
 
       setSaving(false)
-      return
+
+      router.refresh()
     }
 
-    setMessage(
-      "Cambios guardados correctamente."
-    )
+  const handleAddFile =
+    async (
+      event: React.FormEvent
+    ) => {
+      event.preventDefault()
 
-    setSaving(false)
+      if (
+        !fileUrl.trim()
+      ) {
+        setFileMessage(
+          "Ingresá el enlace."
+        )
+        return
+      }
 
-    router.refresh()
-  }
+      let parsedUrl: URL
 
-  const handleAddFile = async (
-    event: React.FormEvent
-  ) => {
-    event.preventDefault()
+      try {
+        parsedUrl =
+          new URL(
+            fileUrl.trim()
+          )
+      } catch {
+        setFileMessage(
+          "Ingresá un enlace válido."
+        )
+        return
+      }
 
-    if (!fileUrl.trim()) {
-      setFileMessage(
-        "Ingresá el enlace."
+      if (
+        parsedUrl.protocol !==
+          "https:" &&
+        parsedUrl.protocol !==
+          "http:"
+      ) {
+        setFileMessage(
+          "El enlace debe comenzar con http:// o https://"
+        )
+        return
+      }
+
+      if (
+        fileType ===
+          "wetransfer" &&
+        !fileExpiresAt
+      ) {
+        setFileMessage(
+          "Indicá cuándo vence el WeTransfer."
+        )
+        return
+      }
+
+      setAddingFile(true)
+      setFileMessage("")
+
+      const defaultLabel =
+        FILE_TYPES.find(
+          (item) =>
+            item.value ===
+            fileType
+        )?.label ||
+        "Material"
+
+      const expiresAtISO =
+        fileType ===
+          "wetransfer" &&
+        fileExpiresAt
+          ? new Date(
+              fileExpiresAt
+            ).toISOString()
+          : null
+
+      const supabase =
+        createClient()
+
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from(
+            "production_files"
+          )
+          .insert({
+            production_id:
+              production.id,
+
+            file_type:
+              fileType,
+
+            label:
+              fileLabel.trim() ||
+              defaultLabel,
+
+            url:
+              fileUrl.trim(),
+
+            expires_at:
+              expiresAtISO,
+          })
+          .select(`
+            id,
+            production_id,
+            label,
+            file_type,
+            url,
+            expires_at,
+            created_at
+          `)
+          .single()
+
+      if (
+        error ||
+        !data
+      ) {
+        console.error(
+          error
+        )
+
+        setFileMessage(
+          "No pudimos agregar el material."
+        )
+
+        setAddingFile(false)
+        return
+      }
+
+      setFiles(
+        (current) => [
+          ...current,
+          data,
+        ]
       )
-      return
-    }
 
-    let parsedUrl: URL
-
-    try {
-      parsedUrl = new URL(
-        fileUrl.trim()
-      )
-    } catch {
-      setFileMessage(
-        "Ingresá un enlace válido."
-      )
-      return
-    }
-
-    if (
-      parsedUrl.protocol !== "https:" &&
-      parsedUrl.protocol !== "http:"
-    ) {
-      setFileMessage(
-        "El enlace debe comenzar con http:// o https://"
-      )
-      return
-    }
-
-    if (
-      fileType === "wetransfer" &&
-      !fileExpiresAt
-    ) {
-      setFileMessage(
-        "Indicá cuándo vence el WeTransfer."
-      )
-      return
-    }
-
-    setAddingFile(true)
-    setFileMessage("")
-
-    const defaultLabel =
-      FILE_TYPES.find(
-        (item) =>
-          item.value === fileType
-      )?.label || "Material"
-
-    const expiresAtISO =
-      fileType === "wetransfer" &&
-      fileExpiresAt
-        ? new Date(
-            fileExpiresAt
-          ).toISOString()
-        : null
-
-    const supabase = createClient()
-
-    const {
-      data,
-      error,
-    } = await supabase
-      .from("production_files")
-      .insert({
-        production_id:
-          production.id,
-        file_type:
-          fileType,
-        label:
-          fileLabel.trim() ||
-          defaultLabel,
-        url:
-          fileUrl.trim(),
-        expires_at:
-          expiresAtISO,
-      })
-      .select(`
-        id,
-        production_id,
-        label,
-        file_type,
-        url,
-        expires_at,
-        created_at
-      `)
-      .single()
-
-    if (error || !data) {
-      console.error(error)
+      setFileLabel("")
+      setFileUrl("")
+      setFileExpiresAt("")
 
       setFileMessage(
-        "No pudimos agregar el material."
+        "Material agregado correctamente."
       )
 
       setAddingFile(false)
-      return
     }
 
-    setFiles(
-      (current) => [
-        ...current,
-        data,
-      ]
-    )
+  const handleDeleteFile =
+    async (
+      fileId: string
+    ) => {
+      const confirmed =
+        window.confirm(
+          "¿Querés eliminar este enlace de la producción?"
+        )
 
-    setFileLabel("")
-    setFileUrl("")
-    setFileExpiresAt("")
+      if (!confirmed) {
+        return
+      }
 
-    setFileMessage(
-      "Material agregado correctamente."
-    )
+      const supabase =
+        createClient()
 
-    setAddingFile(false)
-  }
+      const {
+        error,
+      } =
+        await supabase
+          .from(
+            "production_files"
+          )
+          .delete()
+          .eq(
+            "id",
+            fileId
+          )
 
-  const handleDeleteFile = async (
-    fileId: string
-  ) => {
-    const confirmed =
-      window.confirm(
-        "¿Querés eliminar este enlace de la producción?"
+      if (error) {
+        console.error(
+          error
+        )
+
+        setFileMessage(
+          "No pudimos eliminar el enlace."
+        )
+
+        return
+      }
+
+      setFiles(
+        (current) =>
+          current.filter(
+            (file) =>
+              file.id !==
+              fileId
+          )
       )
-
-    if (!confirmed) {
-      return
-    }
-
-    const supabase = createClient()
-
-    const { error } =
-      await supabase
-        .from("production_files")
-        .delete()
-        .eq("id", fileId)
-
-    if (error) {
-      console.error(error)
 
       setFileMessage(
-        "No pudimos eliminar el enlace."
+        "Enlace eliminado."
       )
-
-      return
     }
-
-    setFiles((current) =>
-      current.filter(
-        (file) =>
-          file.id !== fileId
-      )
-    )
-
-    setFileMessage(
-      "Enlace eliminado."
-    )
-  }
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
@@ -571,34 +816,45 @@ export default function EditProductionForm({
         </Link>
 
         <div className="mt-8">
+
           <p className="text-sm font-semibold text-[#0A9396]">
             Clover Digital
           </p>
 
           <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
-            {production.property_name}
+            {
+              production.property_name
+            }
           </h1>
 
           <p className="mt-3 text-gray-500 dark:text-gray-400">
             Editá la producción y gestioná su material de entrega.
           </p>
+
         </div>
 
         {/* DATOS PRODUCCIÓN */}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
+
           <div>
+
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Cliente asignado
             </label>
 
             <select
               value={clientId}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setClientId(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
               className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -606,19 +862,26 @@ export default function EditProductionForm({
               {clients.map(
                 (client) => (
                   <option
-                    key={client.id}
-                    value={client.id}
+                    key={
+                      client.id
+                    }
+                    value={
+                      client.id
+                    }
                   >
                     {client.full_name ||
                       "Sin nombre"}{" "}
-                    — {client.email}
+                    —{" "}
+                    {client.email}
                   </option>
                 )
               )}
             </select>
+
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Nombre de la propiedad
@@ -626,10 +889,15 @@ export default function EditProductionForm({
 
               <input
                 type="text"
-                value={propertyName}
-                onChange={(event) =>
+                value={
+                  propertyName
+                }
+                onChange={(
+                  event
+                ) =>
                   setPropertyName(
-                    event.target.value
+                    event.target
+                      .value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -643,36 +911,50 @@ export default function EditProductionForm({
 
               <input
                 type="text"
-                value={propertyAddress}
-                onChange={(event) =>
+                value={
+                  propertyAddress
+                }
+                onChange={(
+                  event
+                ) =>
                   setPropertyAddress(
-                    event.target.value
+                    event.target
+                      .value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
             </div>
+
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Fecha y hora de producción
               </label>
 
               <div className="relative mt-2">
+
                 <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
                 <input
                   type="datetime-local"
-                  value={productionDate}
-                  onChange={(event) =>
+                  value={
+                    productionDate
+                  }
+                  onChange={(
+                    event
+                  ) =>
                     setProductionDate(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
                 />
+
               </div>
             </div>
 
@@ -683,13 +965,17 @@ export default function EditProductionForm({
 
               <select
                 value={status}
-                onChange={(event) =>
+                onChange={(
+                  event
+                ) =>
                   setStatus(
-                    event.target.value
+                    event.target
+                      .value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
+
                 <option value="confirmed">
                   Confirmada
                 </option>
@@ -713,16 +999,20 @@ export default function EditProductionForm({
                 <option value="cancelled">
                   Cancelada
                 </option>
+
               </select>
             </div>
+
           </div>
 
           <div>
+
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Servicios
             </p>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
               {SERVICES.map(
                 (service) => {
                   const active =
@@ -732,7 +1022,9 @@ export default function EditProductionForm({
 
                   return (
                     <button
-                      key={service}
+                      key={
+                        service
+                      }
                       type="button"
                       onClick={() =>
                         toggleService(
@@ -750,10 +1042,12 @@ export default function EditProductionForm({
                   )
                 }
               )}
+
             </div>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Valor total
@@ -762,10 +1056,15 @@ export default function EditProductionForm({
               <input
                 type="number"
                 min="0"
-                value={totalAmount}
-                onChange={(event) =>
+                value={
+                  totalAmount
+                }
+                onChange={(
+                  event
+                ) =>
                   setTotalAmount(
-                    event.target.value
+                    event.target
+                      .value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -779,19 +1078,26 @@ export default function EditProductionForm({
 
               <input
                 type="datetime-local"
-                value={estimatedDelivery}
-                onChange={(event) =>
+                value={
+                  estimatedDelivery
+                }
+                onChange={(
+                  event
+                ) =>
                   setEstimatedDelivery(
-                    event.target.value
+                    event.target
+                      .value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
             </div>
+
           </div>
 
           {production.delivered_at && (
             <div className="grid gap-4 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-500/10 md:grid-cols-2">
+
               <div>
                 <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
                   Entregada
@@ -815,10 +1121,12 @@ export default function EditProductionForm({
                   )}
                 </p>
               </div>
+
             </div>
           )}
 
           <div>
+
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Notas internas
             </label>
@@ -826,13 +1134,17 @@ export default function EditProductionForm({
             <textarea
               rows={5}
               value={notes}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setNotes(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
               className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
+
           </div>
 
           {message && (
@@ -850,6 +1162,7 @@ export default function EditProductionForm({
           )}
 
           <div className="flex flex-col gap-3 border-t border-gray-100 pt-6 dark:border-white/10 sm:flex-row sm:justify-end">
+
             <Link
               href="/admin/producciones"
               className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
@@ -859,9 +1172,12 @@ export default function EditProductionForm({
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={
+                saving
+              }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-60"
             >
+
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -873,18 +1189,23 @@ export default function EditProductionForm({
                   Guardar cambios
                 </>
               )}
+
             </button>
           </div>
+
         </form>
 
         {/* MATERIAL */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
           <div className="flex items-start gap-4">
+
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
               <FolderOpen className="h-5 w-5" />
             </div>
 
             <div>
+
               <p className="text-sm font-semibold text-[#0A9396]">
                 Entrega
               </p>
@@ -896,116 +1217,149 @@ export default function EditProductionForm({
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Agregá los enlaces que después estarán disponibles para el cliente.
               </p>
+
             </div>
           </div>
 
           <div className="mt-6 space-y-3">
-            {files.length === 0 ? (
+
+            {files.length ===
+            0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/10">
                 Todavía no cargaste material.
               </div>
             ) : (
-              files.map((file) => {
-                const expired =
-                  file.expires_at
-                    ? new Date(
-                        file.expires_at
-                      ).getTime() <=
-                      Date.now()
-                    : false
+              files.map(
+                (file) => {
+                  const expired =
+                    file.expires_at
+                      ? new Date(
+                          file.expires_at
+                        ).getTime() <=
+                        Date.now()
+                      : false
 
-                return (
-                  <div
-                    key={file.id}
-                    className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
-                      {file.file_type.includes(
-                        "video"
-                      ) ||
-                      file.file_type ===
-                        "talking_reel" ? (
-                        <FileVideo2 className="h-5 w-5" />
-                      ) : (
-                        <Link2 className="h-5 w-5" />
-                      )}
-                    </div>
+                  return (
+                    <div
+                      key={
+                        file.id
+                      }
+                      className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
+                    >
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {file.label}
-                        </p>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
 
-                        {file.expires_at && (
-                          <span
-                            className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                              expired
-                                ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
-                                : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                            }`}
-                          >
-                            {expired
-                              ? "Vencido"
-                              : `Vence ${formatDateTime(
-                                  file.expires_at
-                                )}`}
-                          </span>
+                        {file.file_type.includes(
+                          "video"
+                        ) ||
+                        file.file_type ===
+                          "talking_reel" ? (
+                          <FileVideo2 className="h-5 w-5" />
+                        ) : (
+                          <Link2 className="h-5 w-5" />
                         )}
+
                       </div>
 
-                      <p className="mt-1 truncate text-xs text-gray-400">
-                        {file.url}
-                      </p>
-                    </div>
+                      <div className="min-w-0 flex-1">
 
-                    <div className="flex gap-2">
-                      {!expired && (
-                        <a
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                        <div className="flex flex-wrap items-center gap-2">
+
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            {
+                              file.label
+                            }
+                          </p>
+
+                          {file.expires_at && (
+                            <span
+                              className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                                expired
+                                  ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
+                                  : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                              }`}
+                            >
+                              {expired
+                                ? "Vencido"
+                                : `Vence ${formatDateTime(
+                                    file.expires_at
+                                  )}`}
+                            </span>
+                          )}
+
+                        </div>
+
+                        <p className="mt-1 truncate text-xs text-gray-400">
+                          {
+                            file.url
+                          }
+                        </p>
+
+                      </div>
+
+                      <div className="flex gap-2">
+
+                        {!expired && (
+                          <a
+                            href={
+                              file.url
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                          >
+                            Abrir
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteFile(
+                              file.id
+                            )
+                          }
+                          className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
+                          aria-label="Eliminar enlace"
                         >
-                          Abrir
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      )}
+                          <Trash2 className="h-4 w-4" />
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDeleteFile(
-                            file.id
-                          )
-                        }
-                        className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
-                        aria-label="Eliminar enlace"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })
+                  )
+                }
+              )
             )}
+
           </div>
 
           <form
-            onSubmit={handleAddFile}
+            onSubmit={
+              handleAddFile
+            }
             className="mt-6 rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03]"
           >
+
             <div className="grid gap-4 md:grid-cols-2">
+
               <div>
+
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Tipo
                 </label>
 
                 <select
-                  value={fileType}
-                  onChange={(event) =>
+                  value={
+                    fileType
+                  }
+                  onChange={(
+                    event
+                  ) =>
                     handleFileTypeChange(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   }
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
@@ -1013,36 +1367,52 @@ export default function EditProductionForm({
                   {FILE_TYPES.map(
                     (type) => (
                       <option
-                        key={type.value}
-                        value={type.value}
+                        key={
+                          type.value
+                        }
+                        value={
+                          type.value
+                        }
                       >
-                        {type.label}
+                        {
+                          type.label
+                        }
                       </option>
                     )
                   )}
                 </select>
+
               </div>
 
               <div>
+
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Nombre visible
                 </label>
 
                 <input
                   type="text"
-                  value={fileLabel}
-                  onChange={(event) =>
+                  value={
+                    fileLabel
+                  }
+                  onChange={(
+                    event
+                  ) =>
                     setFileLabel(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   }
                   placeholder="Opcional"
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                 />
+
               </div>
+
             </div>
 
             <div className="mt-4">
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Enlace
               </label>
@@ -1050,29 +1420,42 @@ export default function EditProductionForm({
               <input
                 type="url"
                 required
-                value={fileUrl}
-                onChange={(event) =>
+                value={
+                  fileUrl
+                }
+                onChange={(
+                  event
+                ) =>
                   setFileUrl(
-                    event.target.value
+                    event.target
+                      .value
                   )
                 }
                 placeholder="https://drive.google.com/..."
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
               />
+
             </div>
 
-            {fileType === "wetransfer" && (
+            {fileType ===
+              "wetransfer" && (
               <div className="mt-4">
+
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Vencimiento de WeTransfer
                 </label>
 
                 <input
                   type="datetime-local"
-                  value={fileExpiresAt}
-                  onChange={(event) =>
+                  value={
+                    fileExpiresAt
+                  }
+                  onChange={(
+                    event
+                  ) =>
                     setFileExpiresAt(
-                      event.target.value
+                      event.target
+                        .value
                     )
                   }
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
@@ -1081,20 +1464,26 @@ export default function EditProductionForm({
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   Clover propone automáticamente 71 h 40 min desde ahora. Podés corregirlo si el enlace ya fue creado antes.
                 </p>
+
               </div>
             )}
 
             {fileMessage && (
               <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                {fileMessage}
+                {
+                  fileMessage
+                }
               </p>
             )}
 
             <button
               type="submit"
-              disabled={addingFile}
+              disabled={
+                addingFile
+              }
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#001219] disabled:opacity-60"
             >
+
               {addingFile ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -1103,7 +1492,9 @@ export default function EditProductionForm({
 
               Agregar material
             </button>
+
           </form>
+
         </section>
       </div>
     </main>
