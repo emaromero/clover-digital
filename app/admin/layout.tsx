@@ -31,15 +31,21 @@ export default async function AdminLayout({
     redirect("/ingresar")
   }
 
-  const { data: roleData } =
+  const {
+    data: roleData,
+  } =
     await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq(
+        "user_id",
+        user.id
+      )
       .maybeSingle()
 
   if (
-    roleData?.role !== "admin"
+    roleData?.role !==
+    "admin"
   ) {
     redirect("/cuenta")
   }
@@ -55,11 +61,15 @@ export default async function AdminLayout({
             href="/admin"
             className="flex shrink-0 items-center gap-3"
           >
+
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+
               <LayoutDashboard className="h-5 w-5" />
+
             </div>
 
             <div className="hidden sm:block">
+
               <p className="text-sm font-bold text-gray-900 dark:text-white">
                 Clover Admin
               </p>
@@ -67,7 +77,9 @@ export default async function AdminLayout({
               <p className="text-xs text-gray-400">
                 Administración
               </p>
+
             </div>
+
           </Link>
 
           <nav className="flex items-center gap-1 overflow-x-auto">
@@ -76,77 +88,91 @@ export default async function AdminLayout({
               href="/admin"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <Home className="h-4 w-4" />
 
               <span className="hidden xl:inline">
                 Inicio
               </span>
+
             </Link>
 
             <Link
               href="/admin/producciones"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <FolderOpen className="h-4 w-4" />
 
               <span className="hidden lg:inline">
                 Producciones
               </span>
+
             </Link>
 
             <Link
               href="/admin/clientes"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <Users className="h-4 w-4" />
 
               <span className="hidden lg:inline">
                 Clientes
               </span>
+
             </Link>
 
             <Link
               href="/admin/finanzas"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <CircleDollarSign className="h-4 w-4" />
 
               <span className="hidden lg:inline">
                 Finanzas
               </span>
+
             </Link>
 
             <Link
               href="/admin/recuperaciones"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <ArchiveRestore className="h-4 w-4" />
 
               <span className="hidden xl:inline">
                 Recuperaciones
               </span>
+
             </Link>
 
             <Link
-              href="/academy"
+              href="/admin/academy"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <GraduationCap className="h-4 w-4" />
 
               <span className="hidden xl:inline">
                 Academy
               </span>
+
             </Link>
 
             <Link
               href="/cuenta"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
             >
+
               <UserRound className="h-4 w-4" />
 
               <span className="hidden xl:inline">
                 Mi cuenta
               </span>
+
             </Link>
 
             <Link
@@ -157,10 +183,13 @@ export default async function AdminLayout({
             </Link>
 
           </nav>
+
         </div>
+
       </header>
 
       {children}
+
     </div>
   )
 }
