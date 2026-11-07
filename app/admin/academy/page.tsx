@@ -13,7 +13,9 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
+
 import AcademyEnrollmentManager from "@/components/academy-enrollment-manager"
+import AcademyCourseCreator from "@/components/academy-course-creator"
 
 export default async function AdminAcademyPage() {
   const supabase =
@@ -28,7 +30,9 @@ export default async function AdminAcademyPage() {
     redirect("/ingresar")
   }
 
-  const { data: roleData } =
+  const {
+    data: roleData,
+  } =
     await supabase
       .from("user_roles")
       .select("role")
@@ -45,7 +49,9 @@ export default async function AdminAcademyPage() {
     redirect("/cuenta")
   }
 
-  const { data: profiles } =
+  const {
+    data: profiles,
+  } =
     await supabase
       .from("profiles")
       .select(`
@@ -62,14 +68,24 @@ export default async function AdminAcademyPage() {
         }
       )
 
-  const { data: courses } =
+  const {
+    data: courses,
+  } =
     await supabase
       .from("courses")
       .select(`
         id,
         title,
         slug,
-        description
+        description,
+        cover_url,
+        modules (
+          id,
+          lessons (
+            id,
+            is_published
+          )
+        )
       `)
       .order(
         "title",
@@ -297,9 +313,17 @@ export default async function AdminAcademyPage() {
       }
     ).length
 
+  const existingSlugs =
+    allCourses.map(
+      (course) =>
+        course.slug
+    )
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
+
         <Link
           href="/admin"
           className="inline-flex items-center gap-2 text-sm font-medium text-[#0A9396] hover:underline"
@@ -308,25 +332,36 @@ export default async function AdminAcademyPage() {
           Volver a administración
         </Link>
 
+        {/* HEADER */}
         <div className="mt-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+
           <div>
+
             <p className="text-sm font-semibold text-[#0A9396]">
               Clover Academy
             </p>
 
             <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
-              Alumnos y accesos
+              Administración
             </h1>
 
             <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
-              Administrá alumnos, accesos y contenido desde un solo lugar.
+              Administrá cursos, alumnos, accesos y contenido desde un solo lugar.
             </p>
+
           </div>
 
           <div className="flex flex-wrap gap-3">
+
+            <AcademyCourseCreator
+              existingSlugs={
+                existingSlugs
+              }
+            />
+
             <Link
               href="/admin/academy/contenido"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#0A9396]/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/5 dark:bg-[#06222c]"
             >
               <Settings2 className="h-4 w-4" />
               Gestionar contenido
@@ -334,16 +369,30 @@ export default async function AdminAcademyPage() {
 
             <Link
               href="/academy"
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:border-[#0A9396]/30 hover:text-[#0A9396] dark:border-white/10 dark:bg-[#06222c] dark:text-gray-300"
             >
               Ver campus
 
               <ArrowRight className="h-4 w-4" />
             </Link>
+
           </div>
+
         </div>
 
+        {/* MÉTRICAS */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+          <Metric
+            icon={
+              <GraduationCap className="h-6 w-6 text-[#0A9396]" />
+            }
+            label="Cursos"
+            value={
+              allCourses.length
+            }
+          />
+
           <Metric
             icon={
               <Users className="h-6 w-6 text-[#0A9396]" />
@@ -356,21 +405,11 @@ export default async function AdminAcademyPage() {
 
           <Metric
             icon={
-              <GraduationCap className="h-6 w-6 text-[#0A9396]" />
+              <BookOpen className="h-6 w-6 text-amber-600" />
             }
             label="Accesos activos"
             value={
               activeEnrollments.length
-            }
-          />
-
-          <Metric
-            icon={
-              <BookOpen className="h-6 w-6 text-amber-600" />
-            }
-            label="Sin curso"
-            value={
-              usersWithoutCourse
             }
           />
 
@@ -383,136 +422,338 @@ export default async function AdminAcademyPage() {
               completedStudents
             }
           />
+
         </div>
 
-        <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
-          <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
-            <h2 className="text-xl font-bold">
-              Usuarios
-            </h2>
+        {/* CURSOS */}
+        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
-            <p className="mt-1 text-sm text-gray-500">
-              Administrá el acceso y revisá el progreso sobre las clases publicadas.
-            </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+
+              <p className="text-sm font-semibold text-[#0A9396]">
+                Cursos
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                Cursos disponibles
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Creá cursos y después completá su contenido desde el editor.
+              </p>
+
+            </div>
+
+            <span className="text-sm font-semibold text-gray-500">
+              {allCourses.length}{" "}
+              {allCourses.length ===
+              1
+                ? "curso"
+                : "cursos"}
+            </span>
+
           </div>
 
-          <div className="divide-y divide-gray-100 dark:divide-white/10">
-            {students.map(
-              (student) => {
-                const enrollment =
-                  getActiveEnrollment(
-                    student.id
-                  )
+          {allCourses.length ===
+          0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-gray-200 p-8 text-center dark:border-white/10">
 
-                const studentProgress =
-                  calculateProgress(
-                    student.id,
-                    enrollment?.course_id
-                  )
+              <GraduationCap className="mx-auto h-8 w-8 text-gray-300" />
 
-                return (
-                  <article
-                    key={
-                      student.id
-                    }
-                    className="grid gap-6 p-6 md:px-8 lg:grid-cols-[1.2fr_1fr_280px] lg:items-center"
-                  >
-                    <div className="flex items-center gap-4">
-                      {student.avatar_url ? (
-                        <img
-                          src={
-                            student.avatar_url
-                          }
-                          alt=""
-                          className="h-12 w-12 rounded-full object-cover"
-                        />
+              <p className="mt-3 font-semibold text-gray-800 dark:text-gray-200">
+                Todavía no hay cursos
+              </p>
+
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+              {allCourses.map(
+                (course) => {
+                  const modules =
+                    course.modules ||
+                    []
+
+                  const lessons =
+                    modules.flatMap(
+                      (module) =>
+                        module.lessons ||
+                        []
+                    )
+
+                  const publishedLessons =
+                    lessons.filter(
+                      (lesson) =>
+                        lesson.is_published ===
+                        true
+                    ).length
+
+                  return (
+                    <article
+                      key={
+                        course.id
+                      }
+                      className="overflow-hidden rounded-2xl border border-gray-200/70 bg-gray-50/50 dark:border-white/10 dark:bg-white/[0.02]"
+                    >
+
+                      {course.cover_url ? (
+                        <div className="aspect-[16/7] bg-gray-100 dark:bg-[#001219]">
+
+                          <img
+                            src={
+                              course.cover_url
+                            }
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+
+                        </div>
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
-                          <UserRound className="h-5 w-5" />
+                        <div className="flex aspect-[16/7] items-center justify-center bg-[#0A9396]/5">
+
+                          <GraduationCap className="h-9 w-9 text-[#0A9396]/40" />
+
                         </div>
                       )}
 
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold">
-                          {student.full_name ||
-                            "Sin nombre"}
-                        </p>
+                      <div className="p-5">
 
-                        <p className="truncate text-sm text-gray-500">
-                          {
-                            student.email
-                          }
-                        </p>
-                      </div>
-                    </div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                          {course.title}
+                        </h3>
 
-                    <div>
-                      {enrollment ? (
-                        <>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-400">
-                              Progreso
-                            </span>
-
-                            <strong>
-                              {studentProgress.percentage}%
-                            </strong>
-                          </div>
-
-                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
-                            <div
-                              className="h-full bg-[#0A9396]"
-                              style={{
-                                width: `${studentProgress.percentage}%`,
-                              }}
-                            />
-                          </div>
-
-                          <p className="mt-2 text-xs text-gray-500">
-                            {studentProgress.completed} de{" "}
-                            {studentProgress.total} clases publicadas
+                        {course.description && (
+                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
+                            {
+                              course.description
+                            }
                           </p>
+                        )}
 
-                          <Link
-                            href={`/admin/alumnos/${student.id}`}
-                            className="mt-3 inline-flex text-xs font-semibold text-[#0A9396]"
-                          >
-                            Ver detalle
-                          </Link>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-400">
-                          Sin curso activo.
+                        <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+
+                          <span className="rounded-full bg-[#0A9396]/10 px-2.5 py-1 text-[#0A9396]">
+                            {modules.length}{" "}
+                            {modules.length ===
+                            1
+                              ? "módulo"
+                              : "módulos"}
+                          </span>
+
+                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-white/5 dark:text-gray-300">
+                            {lessons.length}{" "}
+                            {lessons.length ===
+                            1
+                              ? "clase"
+                              : "clases"}
+                          </span>
+
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                            {publishedLessons} publicadas
+                          </span>
+
+                        </div>
+
+                        <p className="mt-4 text-xs text-gray-400">
+                          /{course.slug}
                         </p>
-                      )}
-                    </div>
 
-                    <AcademyEnrollmentManager
-                      userId={
+                        <Link
+                          href="/admin/academy/contenido"
+                          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
+                        >
+                          Gestionar contenido
+
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+
+                      </div>
+
+                    </article>
+                  )
+                }
+              )}
+
+            </div>
+          )}
+
+        </section>
+
+        {/* ALUMNOS */}
+        <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+
+          <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+              <div>
+
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Usuarios y accesos
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Asigná cursos y revisá el progreso sobre las clases publicadas.
+                </p>
+
+              </div>
+
+              {usersWithoutCourse >
+                0 && (
+                <span className="text-xs font-semibold text-amber-600">
+                  {usersWithoutCourse} sin curso
+                </span>
+              )}
+
+            </div>
+
+          </div>
+
+          {students.length ===
+          0 ? (
+            <div className="p-10 text-center text-gray-500">
+              Todavía no hay usuarios registrados.
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-white/10">
+
+              {students.map(
+                (student) => {
+                  const enrollment =
+                    getActiveEnrollment(
+                      student.id
+                    )
+
+                  const studentProgress =
+                    calculateProgress(
+                      student.id,
+                      enrollment?.course_id
+                    )
+
+                  return (
+                    <article
+                      key={
                         student.id
                       }
-                      courses={
-                        allCourses.map(
-                          (course) => ({
-                            id:
-                              course.id,
+                      className="grid gap-6 p-6 md:px-8 lg:grid-cols-[1.2fr_1fr_280px] lg:items-center"
+                    >
 
-                            title:
-                              course.title,
-                          })
-                        )
-                      }
-                      activeEnrollment={
-                        enrollment
-                      }
-                    />
-                  </article>
-                )
-              }
-            )}
-          </div>
+                      <div className="flex items-center gap-4">
+
+                        {student.avatar_url ? (
+                          <img
+                            src={
+                              student.avatar_url
+                            }
+                            alt=""
+                            className="h-12 w-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+                            <UserRound className="h-5 w-5" />
+                          </div>
+                        )}
+
+                        <div className="min-w-0">
+
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">
+                            {student.full_name ||
+                              "Sin nombre"}
+                          </p>
+
+                          <p className="truncate text-sm text-gray-500">
+                            {student.email}
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <div>
+
+                        {enrollment ? (
+                          <>
+
+                            <div className="flex justify-between text-xs">
+
+                              <span className="text-gray-400">
+                                Progreso
+                              </span>
+
+                              <strong>
+                                {studentProgress.percentage}%
+                              </strong>
+
+                            </div>
+
+                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+
+                              <div
+                                className="h-full rounded-full bg-[#0A9396]"
+                                style={{
+                                  width: `${studentProgress.percentage}%`,
+                                }}
+                              />
+
+                            </div>
+
+                            <p className="mt-2 text-xs text-gray-500">
+                              {studentProgress.completed} de{" "}
+                              {studentProgress.total} clases publicadas
+                            </p>
+
+                            <Link
+                              href={`/admin/alumnos/${student.id}`}
+                              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#0A9396] hover:underline"
+                            >
+                              Ver detalle
+
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-400">
+                            Sin curso activo.
+                          </p>
+                        )}
+
+                      </div>
+
+                      <AcademyEnrollmentManager
+                        userId={
+                          student.id
+                        }
+                        courses={
+                          allCourses.map(
+                            (course) => ({
+                              id:
+                                course.id,
+
+                              title:
+                                course.title,
+                            })
+                          )
+                        }
+                        activeEnrollment={
+                          enrollment
+                        }
+                      />
+
+                    </article>
+                  )
+                }
+              )}
+
+            </div>
+          )}
+
         </section>
+
       </div>
+
     </main>
   )
 }
@@ -528,15 +769,17 @@ function Metric({
 }) {
   return (
     <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
       {icon}
 
       <p className="mt-4 text-sm text-gray-500">
         {label}
       </p>
 
-      <p className="mt-1 text-3xl font-bold">
+      <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
         {value}
       </p>
+
     </div>
   )
 }
