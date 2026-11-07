@@ -54,6 +54,7 @@ export default async function AdminAcademyContentPage() {
         title,
         slug,
         description,
+        cover_url,
         modules (
           id,
           course_id,
@@ -131,11 +132,15 @@ export default async function AdminAcademyContentPage() {
 
         description:
           course.description,
+
+        cover_url:
+          course.cover_url,
       })
     )
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
 
         <Link
@@ -147,6 +152,7 @@ export default async function AdminAcademyContentPage() {
         </Link>
 
         <div className="mt-8">
+
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
             <BookOpen className="h-6 w-6" />
           </div>
@@ -160,8 +166,9 @@ export default async function AdminAcademyContentPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
-            Administrá la información general, módulos, clases, videos y publicación del curso.
+            Administrá la portada, información general, módulos, clases, videos y publicación del curso.
           </p>
+
         </div>
 
         {/* INFORMACIÓN GENERAL */}
@@ -174,31 +181,36 @@ export default async function AdminAcademyContentPage() {
             </div>
 
             <div>
+
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Información general
               </h2>
 
               <p className="mt-1 text-sm text-gray-500">
-                Editá el nombre y la descripción que ven los alumnos.
+                Editá la portada, el nombre y la descripción que ven los alumnos.
               </p>
+
             </div>
 
           </div>
 
           <div className="mt-6">
+
             <AcademyCourseSettings
               courses={
                 basicCourses
               }
             />
+
           </div>
 
         </section>
 
-        {/* CONTENIDO */}
+        {/* ESTRUCTURA */}
         <div className="mt-8">
 
           <div className="mb-5">
+
             <p className="text-sm font-semibold text-[#0A9396]">
               Estructura
             </p>
@@ -210,6 +222,7 @@ export default async function AdminAcademyContentPage() {
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Prepará las clases como borrador y publicalas cuando estén listas.
             </p>
+
           </div>
 
           <AcademyContentManager
@@ -221,6 +234,7 @@ export default async function AdminAcademyContentPage() {
         </div>
 
       </div>
+
     </main>
   )
 }
