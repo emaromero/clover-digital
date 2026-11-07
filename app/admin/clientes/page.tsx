@@ -3,11 +3,11 @@ import { redirect } from "next/navigation"
 
 import {
   ArrowRight,
+  CheckCircle2,
+  Clock3,
   FolderOpen,
   GraduationCap,
   UserRound,
-  UserRoundCheck,
-  UserRoundClock,
   Users,
 } from "lucide-react"
 
@@ -47,6 +47,7 @@ export default async function AdminClientesPage() {
 
   const {
     data: profiles,
+    error: profilesError,
   } =
     await supabase
       .from("profiles")
@@ -67,6 +68,7 @@ export default async function AdminClientesPage() {
 
   const {
     data: productions,
+    error: productionsError,
   } =
     await supabase
       .from("productions")
@@ -82,6 +84,7 @@ export default async function AdminClientesPage() {
 
   const {
     data: enrollments,
+    error: enrollmentsError,
   } =
     await supabase
       .from("enrollments")
@@ -93,6 +96,7 @@ export default async function AdminClientesPage() {
 
   const {
     data: recoveryRequests,
+    error: recoveryError,
   } =
     await supabase
       .from("recovery_requests")
@@ -101,6 +105,34 @@ export default async function AdminClientesPage() {
         user_id,
         status
       `)
+
+  if (profilesError) {
+    console.error(
+      "Error cargando perfiles:",
+      profilesError
+    )
+  }
+
+  if (productionsError) {
+    console.error(
+      "Error cargando producciones:",
+      productionsError
+    )
+  }
+
+  if (enrollmentsError) {
+    console.error(
+      "Error cargando inscripciones:",
+      enrollmentsError
+    )
+  }
+
+  if (recoveryError) {
+    console.error(
+      "Error cargando recuperaciones:",
+      recoveryError
+    )
+  }
 
   const clients =
     profiles || []
@@ -115,12 +147,9 @@ export default async function AdminClientesPage() {
     recoveryRequests || []
 
   /*
-   * Clientes pendientes
+   * CLIENTES PENDIENTES
    *
-   * Agrupamos por email para que,
-   * si una persona tiene varias
-   * producciones antes de registrarse,
-   * aparezca una sola vez.
+   * Se agrupan por email.
    */
   const pendingMap =
     new Map<
@@ -132,66 +161,86 @@ export default async function AdminClientesPage() {
       }
     >()
 
-  allProductions
-    .filter(
-      (production) =>
-        !production.user_id &&
-        Boolean(
-          production.client_email
-        )
-    )
-    .forEach(
-      (production) => {
-        const email =
-          production.client_email!
-            .trim()
-            .toLowerCase()
+  for (
+    const production of
+    allProductions
+  ) {
+    if (
+      production.user_id
+    ) {
+      continue
+    }
 
-        const existing =
-          pendingMap.get(
-            email
-          )
+    const rawEmail =
+      production.client_email
 
-        if (existing) {
-          existing.productions.push(
-            production
-          )
+    if (
+      !rawEmail ||
+      typeof rawEmail !==
+        "string"
+    ) {
+      continue
+    }
 
-          if (
-            !existing.name &&
-            production.client_name
-          ) {
-            existing.name =
-              production.client_name
-          }
+    const email =
+      rawEmail
+        .trim()
+        .toLowerCase()
 
-          return
-        }
+    if (!email) {
+      continue
+    }
 
-        pendingMap.set(
-          email,
-          {
-            name:
-              production.client_name ||
-              "Sin nombre",
-            email,
-            productions: [
-              production,
-            ],
-          }
-        )
+    const existing =
+      pendingMap.get(
+        email
+      )
+
+    if (existing) {
+      existing.productions.push(
+        production
+      )
+
+      if (
+        existing.name ===
+          "Sin nombre" &&
+        production.client_name
+      ) {
+        existing.name =
+          production.client_name
+      }
+
+      continue
+    }
+
+    pendingMap.set(
+      email,
+      {
+        name:
+          production.client_name ||
+          "Sin nombre",
+
+        email,
+
+        productions: [
+          production,
+        ],
       }
     )
+  }
 
-  const pendingClients = [
-    ...pendingMap.values(),
-  ].sort(
-    (a, b) =>
-      a.name.localeCompare(
-        b.name,
-        "es"
-      )
-  )
+  const pendingClients =
+    Array.from(
+      pendingMap.values()
+    ).sort(
+      (
+        a,
+        b
+      ) =>
+        a.name.localeCompare(
+          b.name
+        )
+    )
 
   const formatDate = (
     value?: string | null
@@ -200,43 +249,94 @@ export default async function AdminClientesPage() {
       return "-"
     }
 
-    return new Intl.DateTimeFormat(
-      "es-AR",
-      {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }
-    ).format(
+    const date =
       new Date(value)
-    )
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "-"
+    }
+
+    try {
+      return new Intl.DateTimeFormat(
+        "es-AR",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }
+      ).format(date)
+    } catch {
+      return "-"
+    }
   }
 
   const getLastProduction =
     (
       items: typeof allProductions
     ) => {
-      return [...items]
-        .filter(
-          (item) =>
-            item.production_date
+      const validItems =
+        items.filter(
+          (
+            item
+          ) => {
+            if (
+              !item.production_date
+            ) {
+              return false
+            }
+
+            const date =
+              new Date(
+                item.production_date
+              )
+
+            return !Number.isNaN(
+              date.getTime()
+            )
+          }
         )
-        .sort(
-          (a, b) =>
-            new Date(
-              b.production_date!
-            ).getTime() -
-            new Date(
-              a.production_date!
-            ).getTime()
-        )[0]
-    }
+
+      validItems.sort(
+        (
+          a,
+          b
+        ) =>
+          new Date(
+            b.production_date!
+          ).getTime() -
+          new Date(
+            a.production_date!
+          ).getTime()
+      )
+
+      return validItems[0]
+  }
+
+  const totalClients =
+    clients.length +
+    pendingClients.length
+
+  const activeEnrollmentsCount =
+    allEnrollments.filter(
+      (
+        item
+      ) =>
+        item.status ===
+        "active"
+    ).length
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
 
+        {/* HEADER */}
         <div>
+
           <p className="text-sm font-semibold text-[#0A9396]">
             Clover Digital
           </p>
@@ -248,64 +348,76 @@ export default async function AdminClientesPage() {
           <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
             Consultá clientes registrados, personas pendientes de registro, producciones, Academy y recuperaciones.
           </p>
+
         </div>
 
-        {/* RESUMEN */}
+        {/* MÉTRICAS */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+
                 <Users className="h-6 w-6" />
+
               </div>
 
               <div>
+
                 <p className="text-sm text-gray-500">
                   Total clientes
                 </p>
 
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {
-                    clients.length +
-                    pendingClients.length
-                  }
+                  {totalClients}
                 </p>
+
               </div>
 
             </div>
+
           </div>
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
-                <UserRoundCheck className="h-6 w-6" />
+
+                <CheckCircle2 className="h-6 w-6" />
+
               </div>
 
               <div>
+
                 <p className="text-sm text-gray-500">
                   Registrados
                 </p>
 
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {
-                    clients.length
-                  }
+                  {clients.length}
                 </p>
+
               </div>
 
             </div>
+
           </div>
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-                <UserRoundClock className="h-6 w-6" />
+
+                <Clock3 className="h-6 w-6" />
+
               </div>
 
               <div>
+
                 <p className="text-sm text-gray-500">
                   Pendientes
                 </p>
@@ -315,19 +427,25 @@ export default async function AdminClientesPage() {
                     pendingClients.length
                   }
                 </p>
+
               </div>
 
             </div>
+
           </div>
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+
                 <FolderOpen className="h-6 w-6" />
+
               </div>
 
               <div>
+
                 <p className="text-sm text-gray-500">
                   Producciones
                 </p>
@@ -337,14 +455,16 @@ export default async function AdminClientesPage() {
                     allProductions.length
                   }
                 </p>
+
               </div>
 
             </div>
+
           </div>
 
         </div>
 
-        {/* PENDIENTES DE REGISTRO */}
+        {/* PENDIENTES */}
         {pendingClients.length >
           0 && (
           <section className="mt-8 overflow-hidden rounded-3xl border border-amber-200/80 bg-white dark:border-amber-500/20 dark:bg-[#06222c]">
@@ -354,10 +474,13 @@ export default async function AdminClientesPage() {
               <div className="flex items-start gap-4">
 
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-                  <UserRoundClock className="h-5 w-5" />
+
+                  <Clock3 className="h-5 w-5" />
+
                 </div>
 
                 <div>
+
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     Pendientes de registro
                   </h2>
@@ -365,6 +488,7 @@ export default async function AdminClientesPage() {
                   <p className="mt-1 text-sm text-gray-500">
                     Personas con producciones cargadas que todavía no crearon su cuenta.
                   </p>
+
                 </div>
 
               </div>
@@ -374,7 +498,9 @@ export default async function AdminClientesPage() {
             <div className="divide-y divide-amber-100/70 dark:divide-amber-500/10">
 
               {pendingClients.map(
-                (client) => {
+                (
+                  client
+                ) => {
                   const lastProduction =
                     getLastProduction(
                       client.productions
@@ -391,7 +517,9 @@ export default async function AdminClientesPage() {
                       <div className="flex min-w-0 flex-1 items-center gap-4">
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+
                           <UserRound className="h-5 w-5" />
+
                         </div>
 
                         <div className="min-w-0">
@@ -421,6 +549,7 @@ export default async function AdminClientesPage() {
                       </div>
 
                       <div className="md:w-[130px]">
+
                         <p className="text-xs text-gray-400">
                           Producciones
                         </p>
@@ -432,9 +561,11 @@ export default async function AdminClientesPage() {
                               .length
                           }
                         </p>
+
                       </div>
 
                       <div className="md:w-[160px]">
+
                         <p className="text-xs text-gray-400">
                           Última producción
                         </p>
@@ -445,6 +576,7 @@ export default async function AdminClientesPage() {
                               ?.production_date
                           )}
                         </p>
+
                       </div>
 
                       <div className="md:w-[200px]">
@@ -486,7 +618,7 @@ export default async function AdminClientesPage() {
           </section>
         )}
 
-        {/* CLIENTES REGISTRADOS */}
+        {/* REGISTRADOS */}
         <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
@@ -494,10 +626,13 @@ export default async function AdminClientesPage() {
             <div className="flex items-start gap-4">
 
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-                <UserRoundCheck className="h-5 w-5" />
+
+                <CheckCircle2 className="h-5 w-5" />
+
               </div>
 
               <div>
+
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Clientes registrados
                 </h2>
@@ -505,6 +640,7 @@ export default async function AdminClientesPage() {
                 <p className="mt-1 text-sm text-gray-500">
                   Personas que ya tienen una cuenta vinculada en Clover Digital.
                 </p>
+
               </div>
 
             </div>
@@ -520,17 +656,23 @@ export default async function AdminClientesPage() {
             <div className="divide-y divide-gray-100 dark:divide-white/10">
 
               {clients.map(
-                (client) => {
+                (
+                  client
+                ) => {
                   const clientProductions =
                     allProductions.filter(
-                      (item) =>
+                      (
+                        item
+                      ) =>
                         item.user_id ===
                         client.id
                     )
 
                   const activeEnrollment =
                     allEnrollments.some(
-                      (item) =>
+                      (
+                        item
+                      ) =>
                         item.user_id ===
                           client.id &&
                         item.status ===
@@ -539,7 +681,9 @@ export default async function AdminClientesPage() {
 
                   const pendingRecoveries =
                     allRecoveries.filter(
-                      (item) =>
+                      (
+                        item
+                      ) =>
                         item.user_id ===
                           client.id &&
                         (
@@ -575,7 +719,9 @@ export default async function AdminClientesPage() {
                           />
                         ) : (
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+
                             <UserRound className="h-5 w-5" />
+
                           </div>
                         )}
 
@@ -615,6 +761,7 @@ export default async function AdminClientesPage() {
                       </div>
 
                       <div className="md:w-[130px]">
+
                         <p className="text-xs text-gray-400">
                           Producciones
                         </p>
@@ -624,9 +771,11 @@ export default async function AdminClientesPage() {
                             clientProductions.length
                           }
                         </p>
+
                       </div>
 
                       <div className="md:w-[150px]">
+
                         <p className="text-xs text-gray-400">
                           Última producción
                         </p>
@@ -637,9 +786,11 @@ export default async function AdminClientesPage() {
                               ?.production_date
                           )}
                         </p>
+
                       </div>
 
                       <div className="md:w-[130px]">
+
                         <p className="text-xs text-gray-400">
                           Academy
                         </p>
@@ -655,9 +806,11 @@ export default async function AdminClientesPage() {
                             ? "Activo"
                             : "Sin curso"}
                         </p>
+
                       </div>
 
                       <div className="md:w-[130px]">
+
                         <p className="text-xs text-gray-400">
                           Recuperaciones
                         </p>
@@ -674,6 +827,7 @@ export default async function AdminClientesPage() {
                             pendingRecoveries
                           }
                         </p>
+
                       </div>
 
                       <div className="flex md:justify-end">
@@ -705,43 +859,26 @@ export default async function AdminClientesPage() {
           <div className="flex items-center gap-4">
 
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+
               <GraduationCap className="h-5 w-5" />
+
             </div>
 
             <div>
+
               <p className="font-semibold text-gray-900 dark:text-white">
                 Clover Academy
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                {
-                  allEnrollments.filter(
-                    (item) =>
-                      item.status ===
-                      "active"
-                  ).length
-                }{" "}
-                inscripción
-                {
-                  allEnrollments.filter(
-                    (item) =>
-                      item.status ===
-                      "active"
-                  ).length === 1
-                    ? ""
-                    : "es"
-                }{" "}
-                activa
-                {
-                  allEnrollments.filter(
-                    (item) =>
-                      item.status ===
-                      "active"
-                  ).length === 1
-                    ? ""
-                    : "s"
-                }.
+                {activeEnrollmentsCount}{" "}
+                {activeEnrollmentsCount ===
+                1
+                  ? "inscripción activa"
+                  : "inscripciones activas"}
+                .
               </p>
+
             </div>
 
           </div>
@@ -749,6 +886,7 @@ export default async function AdminClientesPage() {
         </div>
 
       </div>
+
     </main>
   )
 }
