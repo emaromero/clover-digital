@@ -10,56 +10,70 @@ import { createClient } from "@/lib/supabase/server"
 import AcademyContentManager from "@/components/academy-content-manager"
 
 export default async function AdminAcademyContentPage() {
-  const supabase = await createClient()
+  const supabase =
+    await createClient()
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } =
+    await supabase.auth.getUser()
 
   if (!user) {
     redirect("/ingresar")
   }
 
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const { data: roleData } =
+    await supabase
+      .from("user_roles")
+      .select("role")
+      .eq(
+        "user_id",
+        user.id
+      )
+      .maybeSingle()
 
-  if (roleData?.role !== "admin") {
+  if (
+    roleData?.role !==
+    "admin"
+  ) {
     redirect("/cuenta")
   }
 
   const {
     data: courses,
     error,
-  } = await supabase
-    .from("courses")
-    .select(`
-      id,
-      title,
-      slug,
-      description,
-      modules (
+  } =
+    await supabase
+      .from("courses")
+      .select(`
         id,
-        course_id,
         title,
+        slug,
         description,
-        position,
-        lessons (
+        modules (
           id,
-          module_id,
+          course_id,
           title,
           description,
-          video_url,
-          duration_seconds,
-          position
+          position,
+          lessons (
+            id,
+            module_id,
+            title,
+            description,
+            video_url,
+            duration_seconds,
+            position,
+            is_published
+          )
         )
+      `)
+      .order(
+        "title",
+        {
+          ascending: true,
+        }
       )
-    `)
-    .order("title", {
-      ascending: true,
-    })
 
   if (error) {
     console.error(
@@ -74,7 +88,8 @@ export default async function AdminAcademyContentPage() {
         ...course,
 
         modules: [
-          ...(course.modules || []),
+          ...(course.modules ||
+            []),
         ]
           .sort(
             (a, b) =>
@@ -86,7 +101,8 @@ export default async function AdminAcademyContentPage() {
               ...module,
 
               lessons: [
-                ...(module.lessons || []),
+                ...(module.lessons ||
+                  []),
               ].sort(
                 (a, b) =>
                   a.position -
@@ -122,13 +138,15 @@ export default async function AdminAcademyContentPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
-            Creá y editá módulos, clases, duraciones y enlaces de video desde el panel.
+            Prepará las clases como borrador y publicalas cuando estén listas para los alumnos.
           </p>
         </div>
 
         <div className="mt-8">
           <AcademyContentManager
-            courses={preparedCourses}
+            courses={
+              preparedCourses
+            }
           />
         </div>
       </div>
