@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
   CheckCircle2,
@@ -14,7 +15,25 @@ import {
 
 import { createClient } from "@/lib/supabase/server"
 
-export default async function AcademyPage() {
+interface PageProps {
+  searchParams: Promise<{
+    course?: string | string[]
+  }>
+}
+
+export default async function AcademyPage({
+  searchParams,
+}: PageProps) {
+  const params =
+    await searchParams
+
+  const requestedCourse =
+    Array.isArray(
+      params.course
+    )
+      ? params.course[0]
+      : params.course
+
   const supabase =
     await createClient()
 
@@ -28,7 +47,7 @@ export default async function AcademyPage() {
   }
 
   const {
-    data: enrollment,
+    data: enrollments,
   } =
     await supabase
       .from("enrollments")
@@ -36,6 +55,7 @@ export default async function AcademyPage() {
         id,
         status,
         course_id,
+        enrolled_at,
         courses (
           id,
           title,
@@ -52,10 +72,20 @@ export default async function AcademyPage() {
         "status",
         "active"
       )
-      .limit(1)
-      .maybeSingle()
+      .order(
+        "enrolled_at",
+        {
+          ascending: false,
+        }
+      )
 
-  if (!enrollment) {
+  const activeEnrollments =
+    enrollments || []
+
+  if (
+    activeEnrollments.length ===
+    0
+  ) {
     return (
       <main className="min-h-screen bg-[#f5fafa] px-4 py-12 dark:bg-[#001219] md:py-16">
 
@@ -76,7 +106,7 @@ export default async function AcademyPage() {
             </h1>
 
             <p className="mt-3 max-w-xl leading-7 text-gray-600 dark:text-gray-300">
-              Cuando te inscribas en un curso de Clover Academy, vas a poder acceder a tus clases, progreso y material desde acá.
+              Cuando tengas acceso a un curso de Clover Academy, vas a poder entrar a tus clases y seguir tu progreso desde acá.
             </p>
 
             <Link
@@ -94,17 +124,56 @@ export default async function AcademyPage() {
     )
   }
 
-  const course =
+  const getCourse = (
+    enrollment: any
+  ) =>
     Array.isArray(
       enrollment.courses
     )
-      ? enrollment
-          .courses[0]
+      ? enrollment.courses[0]
       : enrollment.courses
 
-  if (!course) {
-    redirect("/cuenta")
-  }
+  const courses =
+    activeEnrollments
+      .map(
+        (enrollment) => {
+          const course =
+            getCourse(
+              enrollment
+            )
+
+          if (!course) {
+            return null
+          }
+
+          return {
+            ...course,
+
+            enrollment_id:
+              enrollment.id,
+
+            enrolled_at:
+              enrollment.enrolled_at,
+          }
+        }
+      )
+      .filter(
+        Boolean
+      ) as Array<{
+        id: string
+        title: string
+        slug: string
+        description: string | null
+        cover_url: string | null
+        enrollment_id: string
+        enrolled_at: string | null
+      }>
+
+  const courseIds =
+    courses.map(
+      (course) =>
+        course.id
+    )
 
   const {
     data: modules,
@@ -113,6 +182,7 @@ export default async function AcademyPage() {
       .from("modules")
       .select(`
         id,
+        course_id,
         title,
         description,
         position,
@@ -126,9 +196,9 @@ export default async function AcademyPage() {
           is_published
         )
       `)
-      .eq(
+      .in(
         "course_id",
-        course.id
+        courseIds
       )
       .order(
         "position",
@@ -164,8 +234,15 @@ export default async function AcademyPage() {
       )
     )
 
-  const orderedModules =
+  const getModulesForCourse = (
+    courseId: string
+  ) =>
     (modules || [])
+      .filter(
+        (module) =>
+          module.course_id ===
+          courseId
+      )
       .map(
         (module) => ({
           ...module,
@@ -196,6 +273,239 @@ export default async function AcademyPage() {
           a.position -
           b.position
       )
+
+  const getCourseStats = (
+    courseId: string
+  ) => {
+    const courseModules =
+      getModulesForCourse(
+        courseId
+      )
+
+    const lessons =
+      courseModules.flatMap(
+        (module) =>
+          module.lessons
+      )
+
+    const completed =
+      lessons.filter(
+        (lesson) =>
+          progressMap.get(
+            lesson.id
+          )?.completed ===
+          true
+      ).length
+
+    const total =
+      lessons.length
+
+    const percentage =
+      total > 0
+        ? Math.round(
+            (completed /
+              total) *
+              100
+          )
+        : 0
+
+    return {
+      modules:
+        courseModules,
+
+      lessons,
+
+      completed,
+
+      total,
+
+      percentage,
+    }
+  }
+
+  const selectedCourse =
+    requestedCourse
+      ? courses.find(
+          (course) =>
+            course.id ===
+            requestedCourse
+        )
+      : null
+
+  /*
+   * BIBLIOTECA
+   */
+  if (!selectedCourse) {
+    return (
+      <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
+        <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
+
+          <div className="flex flex-wrap items-center justify-between gap-4">
+
+            <Link
+              href="/cuenta"
+              className="text-sm font-medium text-[#0A9396] hover:underline"
+            >
+              ← Mi cuenta
+            </Link>
+
+            <span className="rounded-full bg-[#0A9396]/10 px-3 py-1 text-xs font-semibold text-[#0A9396]">
+              Clover Academy
+            </span>
+
+          </div>
+
+          <div className="mt-10 max-w-3xl">
+
+            <p className="text-sm font-semibold text-[#0A9396]">
+              Tu biblioteca
+            </p>
+
+            <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
+              Mis cursos
+            </h1>
+
+            <p className="mt-3 leading-7 text-gray-600 dark:text-gray-300">
+              Accedé a tus cursos y continuá desde donde los dejaste.
+            </p>
+
+          </div>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+
+            {courses.map(
+              (course) => {
+                const stats =
+                  getCourseStats(
+                    course.id
+                  )
+
+                return (
+                  <article
+                    key={
+                      course.id
+                    }
+                    className="overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm dark:border-white/10 dark:bg-[#06222c]"
+                  >
+
+                    {course.cover_url ? (
+                      <div className="aspect-[16/8] bg-gray-100 dark:bg-[#001219]">
+
+                        <img
+                          src={
+                            course.cover_url
+                          }
+                          alt={`Portada de ${course.title}`}
+                          className="h-full w-full object-cover"
+                        />
+
+                      </div>
+                    ) : (
+                      <div className="flex aspect-[16/8] items-center justify-center bg-[#0A9396]/5">
+
+                        <GraduationCap className="h-12 w-12 text-[#0A9396]/40" />
+
+                      </div>
+                    )}
+
+                    <div className="p-6">
+
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#0A9396]">
+                        Clover Academy
+                      </p>
+
+                      <h2 className="mt-2 text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
+                        {
+                          course.title
+                        }
+                      </h2>
+
+                      {course.description && (
+                        <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                          {
+                            course.description
+                          }
+                        </p>
+                      )}
+
+                      <div className="mt-5 flex items-center justify-between gap-4">
+
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                          Progreso
+                        </p>
+
+                        <p className="text-sm font-bold text-[#0A9396]">
+                          {
+                            stats.percentage
+                          }
+                          %
+                        </p>
+
+                      </div>
+
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+
+                        <div
+                          className="h-full rounded-full bg-[#0A9396]"
+                          style={{
+                            width: `${stats.percentage}%`,
+                          }}
+                        />
+
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
+
+                        <span>
+                          {stats.completed} de{" "}
+                          {stats.total} clases
+                        </span>
+
+                        <span>
+                          {stats.modules.length}{" "}
+                          {stats.modules.length ===
+                          1
+                            ? "módulo"
+                            : "módulos"}
+                        </span>
+
+                      </div>
+
+                      <Link
+                        href={`/academy?course=${course.id}`}
+                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
+                      >
+                        {stats.percentage >
+                        0
+                          ? "Continuar curso"
+                          : "Empezar curso"}
+
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+
+                    </div>
+
+                  </article>
+                )
+              }
+            )}
+
+          </div>
+
+        </div>
+
+      </main>
+    )
+  }
+
+  /*
+   * CURSO SELECCIONADO
+   */
+  const orderedModules =
+    getModulesForCourse(
+      selectedCourse.id
+    )
 
   const allLessons =
     orderedModules.flatMap(
@@ -231,15 +541,6 @@ export default async function AcademyPage() {
         )
       : 0
 
-  const firstIncompleteLesson =
-    allLessons.find(
-      (lesson) =>
-        progressMap.get(
-          lesson.id
-        )?.completed !==
-        true
-    )
-
   const completedModules =
     orderedModules.filter(
       (module) =>
@@ -260,6 +561,55 @@ export default async function AcademyPage() {
   let previousModulesCompleted =
     true
 
+  let firstIncompleteLesson:
+    | any
+    | null =
+      null
+
+  let modulesUnlocked =
+    true
+
+  for (
+    const module of
+    orderedModules
+  ) {
+    if (!modulesUnlocked) {
+      break
+    }
+
+    const incomplete =
+      module.lessons.find(
+        (lesson) =>
+          progressMap.get(
+            lesson.id
+          )?.completed !==
+          true
+      )
+
+    if (
+      incomplete &&
+      !firstIncompleteLesson
+    ) {
+      firstIncompleteLesson =
+        incomplete
+
+      break
+    }
+
+    const completed =
+      module.lessons.every(
+        (lesson) =>
+          progressMap.get(
+            lesson.id
+          )?.completed ===
+          true
+      )
+
+    modulesUnlocked =
+      modulesUnlocked &&
+      completed
+  }
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
 
@@ -268,10 +618,11 @@ export default async function AcademyPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
 
           <Link
-            href="/cuenta"
-            className="text-sm font-medium text-[#0A9396] hover:underline"
+            href="/academy"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[#0A9396] hover:underline"
           >
-            ← Mi cuenta
+            <ArrowLeft className="h-4 w-4" />
+            Mis cursos
           </Link>
 
           <span className="rounded-full bg-[#0A9396]/10 px-3 py-1 text-xs font-semibold text-[#0A9396]">
@@ -280,12 +631,11 @@ export default async function AcademyPage() {
 
         </div>
 
-        {/* CABECERA DEL CURSO */}
         <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm dark:border-white/10 dark:bg-[#06222c]">
 
           <div
             className={
-              course.cover_url
+              selectedCourse.cover_url
                 ? "grid lg:grid-cols-[1.1fr_0.9fr]"
                 : ""
             }
@@ -298,13 +648,15 @@ export default async function AcademyPage() {
               </p>
 
               <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
-                {course.title}
+                {
+                  selectedCourse.title
+                }
               </h1>
 
-              {course.description && (
+              {selectedCourse.description && (
                 <p className="mt-4 max-w-2xl leading-7 text-gray-600 dark:text-gray-300">
                   {
-                    course.description
+                    selectedCourse.description
                   }
                 </p>
               )}
@@ -331,14 +683,14 @@ export default async function AcademyPage() {
 
             </div>
 
-            {course.cover_url && (
+            {selectedCourse.cover_url && (
               <div className="aspect-[16/9] bg-gray-100 lg:aspect-auto lg:min-h-[340px]">
 
                 <img
                   src={
-                    course.cover_url
+                    selectedCourse.cover_url
                   }
-                  alt={`Portada de ${course.title}`}
+                  alt={`Portada de ${selectedCourse.title}`}
                   className="h-full w-full object-cover"
                 />
 
@@ -349,7 +701,6 @@ export default async function AcademyPage() {
 
         </section>
 
-        {/* PROGRESO */}
         <section className="mt-6 overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="grid lg:grid-cols-[1fr_320px]">
@@ -470,7 +821,8 @@ export default async function AcademyPage() {
                   )}
 
                 </>
-              ) : totalLessons > 0 ? (
+              ) : totalLessons >
+                0 ? (
                 <>
 
                   <CheckCircle2 className="h-8 w-8 text-[#0A9396]" />
@@ -502,7 +854,6 @@ export default async function AcademyPage() {
 
         </section>
 
-        {/* MÓDULOS */}
         <section className="mt-10">
 
           <div>
@@ -778,10 +1129,6 @@ export default async function AcademyPage() {
           )}
 
         </section>
-
-        <p className="mt-10 text-center text-xs text-gray-400">
-          Campus privado · Clover Academy
-        </p>
 
       </div>
 

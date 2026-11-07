@@ -1,12 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
+
 import { useRouter } from "next/navigation"
 
 import {
   CheckCircle2,
   GraduationCap,
   Loader2,
+  Plus,
   Trash2,
 } from "lucide-react"
 
@@ -26,32 +32,50 @@ interface ActiveEnrollment {
 interface Props {
   userId: string
   courses: Course[]
-  activeEnrollment?: ActiveEnrollment | null
+  activeEnrollments: ActiveEnrollment[]
 }
 
 export default function AcademyEnrollmentManager({
   userId,
   courses,
-  activeEnrollment,
+  activeEnrollments,
 }: Props) {
   const router =
     useRouter()
+
+  const availableCourses =
+    useMemo(
+      () =>
+        courses.filter(
+          (course) =>
+            !activeEnrollments.some(
+              (enrollment) =>
+                enrollment.course_id ===
+                course.id
+            )
+        ),
+      [
+        courses,
+        activeEnrollments,
+      ]
+    )
 
   const [
     selectedCourse,
     setSelectedCourse,
   ] =
     useState(
-      activeEnrollment?.course_id ||
-        courses[0]?.id ||
+      availableCourses[0]?.id ||
         ""
     )
 
   const [
-    loading,
-    setLoading,
+    loadingKey,
+    setLoadingKey,
   ] =
-    useState(false)
+    useState<string | null>(
+      null
+    )
 
   const [
     message,
@@ -65,16 +89,39 @@ export default function AcademyEnrollmentManager({
   ] =
     useState("")
 
+  useEffect(() => {
+    const stillAvailable =
+      availableCourses.some(
+        (course) =>
+          course.id ===
+          selectedCourse
+      )
+
+    if (
+      !stillAvailable
+    ) {
+      setSelectedCourse(
+        availableCourses[0]?.id ||
+          ""
+      )
+    }
+  }, [
+    availableCourses,
+    selectedCourse,
+  ])
+
   const assignCourse =
     async () => {
       if (
-        !selectedCourse ||
-        activeEnrollment
+        !selectedCourse
       ) {
         return
       }
 
-      setLoading(true)
+      const key =
+        `assign-${selectedCourse}`
+
+      setLoadingKey(key)
       setMessage("")
       setErrorMessage("")
 
@@ -82,69 +129,137 @@ export default function AcademyEnrollmentManager({
         createClient()
 
       const {
-        error,
+        data: existingEnrollment,
+        error: existingError,
       } =
         await supabase
-          .from(
-            "enrollments"
+          .from("enrollments")
+          .select(
+            "id, status"
           )
-          .insert({
-            user_id:
-              userId,
-            course_id:
-              selectedCourse,
-            status:
-              "active",
-            enrolled_at:
-              new Date().toISOString(),
-          })
+          .eq(
+            "user_id",
+            userId
+          )
+          .eq(
+            "course_id",
+            selectedCourse
+          )
+          .maybeSingle()
 
-      if (error) {
+      if (existingError) {
         console.error(
-          "Error asignando curso:",
-          error
+          "Error buscando inscripción:",
+          existingError
         )
 
         setErrorMessage(
-          "No pudimos asignar el curso."
+          "No pudimos verificar el acceso."
         )
 
-        setLoading(
-          false
-        )
+        setLoadingKey(null)
 
         return
+      }
+
+      if (existingEnrollment) {
+        const {
+          error,
+        } =
+          await supabase
+            .from(
+              "enrollments"
+            )
+            .update({
+              status:
+                "active",
+
+              enrolled_at:
+                new Date().toISOString(),
+            })
+            .eq(
+              "id",
+              existingEnrollment.id
+            )
+
+        if (error) {
+          console.error(
+            "Error reactivando curso:",
+            error
+          )
+
+          setErrorMessage(
+            "No pudimos activar el curso."
+          )
+
+          setLoadingKey(null)
+
+          return
+        }
+      } else {
+        const {
+          error,
+        } =
+          await supabase
+            .from(
+              "enrollments"
+            )
+            .insert({
+              user_id:
+                userId,
+
+              course_id:
+                selectedCourse,
+
+              status:
+                "active",
+
+              enrolled_at:
+                new Date().toISOString(),
+            })
+
+        if (error) {
+          console.error(
+            "Error asignando curso:",
+            error
+          )
+
+          setErrorMessage(
+            "No pudimos asignar el curso."
+          )
+
+          setLoadingKey(null)
+
+          return
+        }
       }
 
       setMessage(
         "Curso asignado correctamente."
       )
 
-      setLoading(
-        false
-      )
+      setLoadingKey(null)
 
       router.refresh()
     }
 
   const removeCourse =
-    async () => {
-      if (
-        !activeEnrollment
-      ) {
-        return
-      }
-
+    async (
+      enrollment: ActiveEnrollment
+    ) => {
       const confirmed =
         window.confirm(
-          `¿Querés quitar el acceso a "${activeEnrollment.course_title}"? El progreso del alumno no se eliminará.`
+          `¿Querés quitar el acceso a "${enrollment.course_title}"? El progreso del alumno no se eliminará.`
         )
 
       if (!confirmed) {
         return
       }
 
-      setLoading(true)
+      const key =
+        `remove-${enrollment.id}`
+
+      setLoadingKey(key)
       setMessage("")
       setErrorMessage("")
 
@@ -155,13 +270,11 @@ export default function AcademyEnrollmentManager({
         error,
       } =
         await supabase
-          .from(
-            "enrollments"
-          )
+          .from("enrollments")
           .delete()
           .eq(
             "id",
-            activeEnrollment.id
+            enrollment.id
           )
 
       if (error) {
@@ -174,9 +287,7 @@ export default function AcademyEnrollmentManager({
           "No pudimos quitar el acceso."
         )
 
-        setLoading(
-          false
-        )
+        setLoadingKey(null)
 
         return
       }
@@ -185,16 +296,13 @@ export default function AcademyEnrollmentManager({
         "Acceso quitado correctamente."
       )
 
-      setLoading(
-        false
-      )
+      setLoadingKey(null)
 
       router.refresh()
     }
 
   if (
-    courses.length ===
-    0
+    courses.length === 0
   ) {
     return (
       <p className="text-sm text-gray-400">
@@ -205,57 +313,77 @@ export default function AcademyEnrollmentManager({
 
   return (
     <div>
+      {activeEnrollments.length >
+        0 && (
+        <div className="space-y-2">
 
-      {activeEnrollment ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Cursos activos
+          </p>
 
-          <div className="flex items-start gap-3">
-
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
-
-            <div className="min-w-0 flex-1">
-
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
-                Acceso activo
-              </p>
-
-              <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                {
-                  activeEnrollment.course_title
+          {activeEnrollments.map(
+            (
+              enrollment
+            ) => (
+              <div
+                key={
+                  enrollment.id
                 }
-              </p>
+                className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+              >
 
-            </div>
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
 
-          </div>
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  {
+                    enrollment.course_title
+                  }
+                </p>
 
-          <button
-            type="button"
-            disabled={
-              loading
-            }
-            onClick={
-              removeCourse
-            }
-            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:bg-transparent dark:text-red-300 dark:hover:bg-red-500/10"
-          >
+                <button
+                  type="button"
+                  disabled={
+                    loadingKey ===
+                    `remove-${enrollment.id}`
+                  }
+                  onClick={() =>
+                    removeCourse(
+                      enrollment
+                    )
+                  }
+                  title="Quitar acceso"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-100 disabled:opacity-50 dark:hover:bg-red-500/10"
+                >
 
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
+                  {loadingKey ===
+                  `remove-${enrollment.id}` ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
 
-            Quitar acceso
+                </button>
 
-          </button>
+              </div>
+            )
+          )}
 
         </div>
-      ) : (
-        <div>
+      )}
+
+      {availableCourses.length >
+      0 ? (
+        <div
+          className={
+            activeEnrollments.length >
+            0
+              ? "mt-4 border-t border-gray-100 pt-4 dark:border-white/10"
+              : ""
+          }
+        >
 
           <label className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Asignar curso
+            Agregar curso
           </label>
 
           <select
@@ -272,7 +400,7 @@ export default function AcademyEnrollmentManager({
             className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/10 dark:bg-[#001219]"
           >
 
-            {courses.map(
+            {availableCourses.map(
               (
                 course
               ) => (
@@ -296,7 +424,9 @@ export default function AcademyEnrollmentManager({
           <button
             type="button"
             disabled={
-              loading ||
+              Boolean(
+                loadingKey
+              ) ||
               !selectedCourse
             }
             onClick={
@@ -305,35 +435,47 @@ export default function AcademyEnrollmentManager({
             className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50"
           >
 
-            {loading ? (
+            {loadingKey ===
+            `assign-${selectedCourse}` ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <GraduationCap className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
             )}
 
-            Dar acceso
+            Agregar acceso
 
           </button>
+
+        </div>
+      ) : (
+        <div
+          className={
+            activeEnrollments.length >
+            0
+              ? "mt-4"
+              : ""
+          }
+        >
+
+          <div className="inline-flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs font-medium text-gray-500 dark:bg-white/5 dark:text-gray-400">
+            <GraduationCap className="h-4 w-4" />
+            Tiene acceso a todos los cursos
+          </div>
 
         </div>
       )}
 
       {message && (
         <p className="mt-3 text-xs font-medium text-emerald-600 dark:text-emerald-300">
-          {
-            message
-          }
+          {message}
         </p>
       )}
 
       {errorMessage && (
         <p className="mt-3 text-xs font-medium text-red-600 dark:text-red-400">
-          {
-            errorMessage
-          }
+          {errorMessage}
         </p>
       )}
-
     </div>
   )
 }
