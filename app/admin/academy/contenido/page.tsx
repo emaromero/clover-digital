@@ -4,10 +4,12 @@ import { redirect } from "next/navigation"
 import {
   ArrowLeft,
   BookOpen,
+  Settings2,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
 import AcademyContentManager from "@/components/academy-content-manager"
+import AcademyCourseSettings from "@/components/academy-course-settings"
 
 export default async function AdminAcademyContentPage() {
   const supabase =
@@ -22,7 +24,9 @@ export default async function AdminAcademyContentPage() {
     redirect("/ingresar")
   }
 
-  const { data: roleData } =
+  const {
+    data: roleData,
+  } =
     await supabase
       .from("user_roles")
       .select("role")
@@ -113,9 +117,27 @@ export default async function AdminAcademyContentPage() {
       })
     )
 
+  const basicCourses =
+    preparedCourses.map(
+      (course) => ({
+        id:
+          course.id,
+
+        title:
+          course.title,
+
+        slug:
+          course.slug,
+
+        description:
+          course.description,
+      })
+    )
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
       <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
+
         <Link
           href="/admin/academy"
           className="inline-flex items-center gap-2 text-sm font-medium text-[#0A9396] hover:underline"
@@ -138,17 +160,66 @@ export default async function AdminAcademyContentPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
-            Prepará las clases como borrador y publicalas cuando estén listas para los alumnos.
+            Administrá la información general, módulos, clases, videos y publicación del curso.
           </p>
         </div>
 
+        {/* INFORMACIÓN GENERAL */}
+        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+              <Settings2 className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Información general
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Editá el nombre y la descripción que ven los alumnos.
+              </p>
+            </div>
+
+          </div>
+
+          <div className="mt-6">
+            <AcademyCourseSettings
+              courses={
+                basicCourses
+              }
+            />
+          </div>
+
+        </section>
+
+        {/* CONTENIDO */}
         <div className="mt-8">
+
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-[#0A9396]">
+              Estructura
+            </p>
+
+            <h2 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              Módulos y clases
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Prepará las clases como borrador y publicalas cuando estén listas.
+            </p>
+          </div>
+
           <AcademyContentManager
             courses={
               preparedCourses
             }
           />
+
         </div>
+
       </div>
     </main>
   )
