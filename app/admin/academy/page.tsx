@@ -6,7 +6,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  Clock3,
   GraduationCap,
   Settings2,
   UserPlus,
@@ -51,6 +50,9 @@ export default async function AdminAcademyPage() {
     redirect("/cuenta")
   }
 
+  /*
+   * PERFILES
+   */
   const {
     data: profiles,
   } =
@@ -70,6 +72,9 @@ export default async function AdminAcademyPage() {
         }
       )
 
+  /*
+   * CURSOS
+   */
   const {
     data: courses,
   } =
@@ -96,6 +101,12 @@ export default async function AdminAcademyPage() {
         }
       )
 
+  /*
+   * INSCRIPCIONES
+   *
+   * Una inscripción representa acceso
+   * permanente al curso.
+   */
   const {
     data: enrollments,
   } =
@@ -119,6 +130,9 @@ export default async function AdminAcademyPage() {
         }
       )
 
+  /*
+   * PROGRESO
+   */
   const {
     data: progress,
   } =
@@ -133,6 +147,9 @@ export default async function AdminAcademyPage() {
         updated_at
       `)
 
+  /*
+   * CLASES PUBLICADAS
+   */
   const {
     data: lessons,
   } =
@@ -166,17 +183,11 @@ export default async function AdminAcademyPage() {
         true
     )
 
-  const activeEnrollments =
-    allEnrollments.filter(
-      (enrollment) =>
-        enrollment.status ===
-        "active"
-    )
-
   /*
-   * Usuario que alguna vez tuvo Academy.
+   * ALUMNO =
+   * persona con al menos un curso asignado.
    */
-  const historicalStudentIds =
+  const studentIds =
     new Set(
       allEnrollments.map(
         (enrollment) =>
@@ -184,54 +195,22 @@ export default async function AdminAcademyPage() {
       )
     )
 
-  /*
-   * Usuario que actualmente tiene
-   * al menos un acceso activo.
-   */
-  const activeStudentIds =
-    new Set(
-      activeEnrollments.map(
-        (enrollment) =>
-          enrollment.user_id
-      )
-    )
-
-  /*
-   * ALUMNOS ACTIVOS
-   */
-  const activeStudents =
+  const students =
     allProfiles.filter(
       (profile) =>
-        activeStudentIds.has(
+        studentIds.has(
           profile.id
         )
     )
 
   /*
-   * HISTORIAL
-   *
-   * Tuvieron Academy pero hoy
-   * no tienen cursos activos.
-   */
-  const historicalStudents =
-    allProfiles.filter(
-      (profile) =>
-        historicalStudentIds.has(
-          profile.id
-        ) &&
-        !activeStudentIds.has(
-          profile.id
-        )
-    )
-
-  /*
-   * Personas que nunca tuvieron
-   * ninguna inscripción.
+   * Usuarios que todavía nunca recibieron
+   * un curso.
    */
   const usersWithoutEnrollment =
     allProfiles.filter(
       (profile) =>
-        !historicalStudentIds.has(
+        !studentIds.has(
           profile.id
         )
     )
@@ -287,22 +266,11 @@ export default async function AdminAcademyPage() {
         }
       )
 
-  const getActiveEnrollments = (
-    userId: string
-  ) =>
-    getUserEnrollments(
-      userId
-    ).filter(
-      (enrollment) =>
-        enrollment.status ===
-        "active"
-    )
-
   const calculateCourseProgress = (
     userId: string,
     courseId: string
   ) => {
-    const ids =
+    const lessonIds =
       allLessons
         .filter(
           (lesson) =>
@@ -323,17 +291,16 @@ export default async function AdminAcademyPage() {
             userId &&
           item.completed ===
             true &&
-          ids.includes(
+          lessonIds.includes(
             item.lesson_id
           )
       ).length
 
-    const total =
-      ids.length
-
     return {
       completed,
-      total,
+
+      total:
+        lessonIds.length,
     }
   }
 
@@ -385,19 +352,12 @@ export default async function AdminAcademyPage() {
   }
 
   const completedStudents =
-    activeStudents.filter(
+    students.filter(
       (student) => {
         const studentEnrollments =
-          getActiveEnrollments(
+          getUserEnrollments(
             student.id
           )
-
-        if (
-          studentEnrollments.length ===
-          0
-        ) {
-          return false
-        }
 
         const result =
           calculateOverallProgress(
@@ -500,9 +460,9 @@ export default async function AdminAcademyPage() {
             icon={
               <Users className="h-6 w-6 text-[#0A9396]" />
             }
-            label="Alumnos activos"
+            label="Alumnos"
             value={
-              activeStudents.length
+              students.length
             }
           />
 
@@ -510,9 +470,9 @@ export default async function AdminAcademyPage() {
             icon={
               <BookOpen className="h-6 w-6 text-amber-600" />
             }
-            label="Accesos activos"
+            label="Accesos asignados"
             value={
-              activeEnrollments.length
+              allEnrollments.length
             }
           />
 
@@ -592,8 +552,8 @@ export default async function AdminAcademyPage() {
                       true
                   ).length
 
-                const activeStudentsCount =
-                  activeEnrollments.filter(
+                const assignedStudents =
+                  allEnrollments.filter(
                     (
                       enrollment
                     ) =>
@@ -616,7 +576,7 @@ export default async function AdminAcademyPage() {
                           src={
                             course.cover_url
                           }
-                          alt=""
+                          alt={`Portada de ${course.title}`}
                           className="h-full w-full object-cover"
                         />
 
@@ -648,7 +608,11 @@ export default async function AdminAcademyPage() {
                         </span>
 
                         <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-white/5 dark:text-gray-300">
-                          {activeStudentsCount} alumnos
+                          {assignedStudents}{" "}
+                          {assignedStudents ===
+                          1
+                            ? "alumno"
+                            : "alumnos"}
                         </span>
 
                       </div>
@@ -673,7 +637,7 @@ export default async function AdminAcademyPage() {
 
         </section>
 
-        {/* ALUMNOS ACTIVOS */}
+        {/* ALUMNOS */}
         <section className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
@@ -683,29 +647,24 @@ export default async function AdminAcademyPage() {
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Solo aparecen personas que actualmente tienen al menos un curso activo.
+              Personas que tienen al menos un curso asignado en Clover Academy.
             </p>
 
           </div>
 
-          {activeStudents.length ===
+          {students.length ===
           0 ? (
             <div className="p-8 text-center text-sm text-gray-500">
-              No hay alumnos con cursos activos.
+              Todavía no hay alumnos en Clover Academy.
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
 
-              {activeStudents.map(
+              {students.map(
                 (
                   student
                 ) => {
                   const studentEnrollments =
-                    getActiveEnrollments(
-                      student.id
-                    )
-
-                  const allStudentEnrollments =
                     getUserEnrollments(
                       student.id
                     )
@@ -724,6 +683,7 @@ export default async function AdminAcademyPage() {
                       className="grid gap-6 p-6 md:px-8 lg:grid-cols-[1.1fr_0.9fr_340px] lg:items-start"
                     >
 
+                      {/* ALUMNO */}
                       <div className="flex items-center gap-4">
 
                         {student.avatar_url ? (
@@ -761,8 +721,8 @@ export default async function AdminAcademyPage() {
 
                             {studentEnrollments.length ===
                             1
-                              ? "curso activo"
-                              : "cursos activos"}
+                              ? "curso asignado"
+                              : "cursos asignados"}
 
                           </p>
 
@@ -770,6 +730,7 @@ export default async function AdminAcademyPage() {
 
                       </div>
 
+                      {/* PROGRESO */}
                       <div>
 
                         <div className="flex justify-between text-xs">
@@ -825,146 +786,7 @@ export default async function AdminAcademyPage() {
 
                       </div>
 
-                      <AcademyEnrollmentManager
-                        userId={
-                          student.id
-                        }
-                        courses={
-                          allCourses.map(
-                            (
-                              course
-                            ) => ({
-                              id:
-                                course.id,
-
-                              title:
-                                course.title,
-                            })
-                          )
-                        }
-                        enrollments={
-                          allStudentEnrollments
-                        }
-                      />
-
-                    </article>
-                  )
-                }
-              )}
-
-            </div>
-          )}
-
-        </section>
-
-        {/* HISTORIAL */}
-        {historicalStudents.length >
-          0 && (
-          <details className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
-
-            <summary className="cursor-pointer list-none p-6 md:p-8">
-
-              <div className="flex items-center justify-between gap-4">
-
-                <div className="flex items-center gap-4">
-
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-300">
-                    <Clock3 className="h-5 w-5" />
-                  </div>
-
-                  <div>
-
-                    <h2 className="font-bold text-gray-900 dark:text-white">
-                      Historial de alumnos
-                    </h2>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                      Personas que tuvieron acceso a Academy pero actualmente no tienen cursos activos.
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <span className="text-sm font-semibold text-gray-400">
-                  {
-                    historicalStudents.length
-                  }
-                </span>
-
-              </div>
-
-            </summary>
-
-            <div className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-white/10 dark:border-white/10">
-
-              {historicalStudents.map(
-                (
-                  student
-                ) => {
-                  const studentEnrollments =
-                    getUserEnrollments(
-                      student.id
-                    )
-
-                  return (
-                    <article
-                      key={
-                        student.id
-                      }
-                      className="grid gap-6 p-6 md:px-8 lg:grid-cols-[1fr_340px] lg:items-start"
-                    >
-
-                      <div>
-
-                        <div className="flex items-center gap-4">
-
-                          {student.avatar_url ? (
-                            <img
-                              src={
-                                student.avatar_url
-                              }
-                              alt=""
-                              className="h-12 w-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-300">
-                              <UserRound className="h-5 w-5" />
-                            </div>
-                          )}
-
-                          <div className="min-w-0">
-
-                            <p className="truncate font-semibold text-gray-900 dark:text-white">
-                              {student.full_name ||
-                                "Sin nombre"}
-                            </p>
-
-                            <p className="truncate text-sm text-gray-500">
-                              {
-                                student.email
-                              }
-                            </p>
-
-                            <p className="mt-1 text-xs text-gray-400">
-                              Sin cursos activos
-                            </p>
-
-                          </div>
-
-                        </div>
-
-                        <Link
-                          href={`/admin/alumnos/${student.id}`}
-                          className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#0A9396] hover:underline"
-                        >
-                          Ver historial completo
-
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-
-                      </div>
-
+                      {/* ACCESOS */}
                       <AcademyEnrollmentManager
                         userId={
                           student.id
@@ -993,11 +815,11 @@ export default async function AdminAcademyPage() {
               )}
 
             </div>
+          )}
 
-          </details>
-        )}
+        </section>
 
-        {/* PRIMER CURSO */}
+        {/* ASIGNAR PRIMER CURSO */}
         {usersWithoutEnrollment.length >
           0 && (
           <details className="mt-8 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
@@ -1019,7 +841,7 @@ export default async function AdminAcademyPage() {
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Usuarios registrados que todavía nunca tuvieron acceso a Academy.
+                      Usuarios registrados que todavía no tienen ningún curso de Academy.
                     </p>
 
                   </div>
@@ -1079,7 +901,7 @@ export default async function AdminAcademyPage() {
                         </p>
 
                         <p className="mt-1 text-xs text-gray-400">
-                          Nunca tuvo acceso a Academy
+                          Sin cursos asignados
                         </p>
 
                       </div>
