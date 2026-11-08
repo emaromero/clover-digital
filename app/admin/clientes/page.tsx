@@ -83,6 +83,19 @@ export default async function AdminClientesPage() {
       `)
 
   const {
+    data: productionUsers,
+    error: productionUsersError,
+  } =
+    await supabase
+      .from(
+        "production_users"
+      )
+      .select(`
+        production_id,
+        user_id
+      `)
+
+  const {
     data: enrollments,
     error: enrollmentsError,
   } =
@@ -120,6 +133,13 @@ export default async function AdminClientesPage() {
     )
   }
 
+  if (productionUsersError) {
+    console.error(
+      "Error cargando participantes:",
+      productionUsersError
+    )
+  }
+
   if (enrollmentsError) {
     console.error(
       "Error cargando inscripciones:",
@@ -140,6 +160,9 @@ export default async function AdminClientesPage() {
   const allProductions =
     productions || []
 
+  const allProductionUsers =
+    productionUsers || []
+
   const allEnrollments =
     enrollments || []
 
@@ -157,8 +180,72 @@ export default async function AdminClientesPage() {
       : ""
 
   /*
-   * Emails de usuarios que ya tienen
-   * una cuenta registrada.
+   * MAPA DE PRODUCCIONES POR USUARIO
+   *
+   * production_users es ahora la fuente
+   * principal para producciones compartidas.
+   */
+  const productionIdsByUser =
+    new Map<
+      string,
+      Set<string>
+    >()
+
+  for (
+    const membership of
+    allProductionUsers
+  ) {
+    const current =
+      productionIdsByUser.get(
+        membership.user_id
+      ) ||
+      new Set<string>()
+
+    current.add(
+      membership.production_id
+    )
+
+    productionIdsByUser.set(
+      membership.user_id,
+      current
+    )
+  }
+
+  /*
+   * Compatibilidad con datos anteriores.
+   *
+   * Si una producción todavía tiene user_id
+   * pero por alguna razón no está en
+   * production_users, también la contamos.
+   */
+  for (
+    const production of
+    allProductions
+  ) {
+    if (
+      !production.user_id
+    ) {
+      continue
+    }
+
+    const current =
+      productionIdsByUser.get(
+        production.user_id
+      ) ||
+      new Set<string>()
+
+    current.add(
+      production.id
+    )
+
+    productionIdsByUser.set(
+      production.user_id,
+      current
+    )
+  }
+
+  /*
+   * Emails de usuarios registrados.
    */
   const registeredEmailMap =
     new Map(
@@ -182,11 +269,31 @@ export default async function AdminClientesPage() {
     )
 
   /*
+   * Para detectar correctamente una producción
+   * pendiente miramos si YA tiene participantes.
+   */
+  const participantCountByProduction =
+    new Map<
+      string,
+      number
+    >()
+
+  for (
+    const membership of
+    allProductionUsers
+  ) {
+    participantCountByProduction.set(
+      membership.production_id,
+      (
+        participantCountByProduction.get(
+          membership.production_id
+        ) || 0
+      ) + 1
+    )
+  }
+
+  /*
    * CLIENTES PENDIENTES
-   *
-   * Solo mostramos personas cuyo email
-   * todavía NO corresponde a una cuenta
-   * registrada.
    */
   const pendingMap =
     new Map<
@@ -202,8 +309,19 @@ export default async function AdminClientesPage() {
     const production of
     allProductions
   ) {
+    const participantCount =
+      participantCountByProduction.get(
+        production.id
+      ) || 0
+
+    /*
+     * Si ya tiene al menos un usuario
+     * vinculado, no es una producción
+     * pendiente.
+     */
     if (
-      production.user_id
+      participantCount >
+      0
     ) {
       continue
     }
@@ -218,8 +336,8 @@ export default async function AdminClientesPage() {
     }
 
     /*
-     * Si ese email ya pertenece a un perfil,
-     * NO es un cliente pendiente de registro.
+     * Si el email ya pertenece a un perfil,
+     * tampoco lo mostramos como pendiente.
      */
     if (
       registeredEmailMap.has(
@@ -352,7 +470,7 @@ export default async function AdminClientesPage() {
       )
 
       return validItems[0]
-  }
+    }
 
   const totalClients =
     clients.length +
@@ -397,9 +515,7 @@ export default async function AdminClientesPage() {
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-
                 <Users className="h-6 w-6" />
-
               </div>
 
               <div>
@@ -409,7 +525,9 @@ export default async function AdminClientesPage() {
                 </p>
 
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {totalClients}
+                  {
+                    totalClients
+                  }
                 </p>
 
               </div>
@@ -423,9 +541,7 @@ export default async function AdminClientesPage() {
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
-
                 <CheckCircle2 className="h-6 w-6" />
-
               </div>
 
               <div>
@@ -435,7 +551,9 @@ export default async function AdminClientesPage() {
                 </p>
 
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {clients.length}
+                  {
+                    clients.length
+                  }
                 </p>
 
               </div>
@@ -449,9 +567,7 @@ export default async function AdminClientesPage() {
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-
                 <Clock3 className="h-6 w-6" />
-
               </div>
 
               <div>
@@ -477,9 +593,7 @@ export default async function AdminClientesPage() {
             <div className="flex items-center gap-4">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-
                 <FolderOpen className="h-6 w-6" />
-
               </div>
 
               <div>
@@ -512,9 +626,7 @@ export default async function AdminClientesPage() {
               <div className="flex items-start gap-4">
 
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-
                   <Clock3 className="h-5 w-5" />
-
                 </div>
 
                 <div>
@@ -555,9 +667,7 @@ export default async function AdminClientesPage() {
                       <div className="flex min-w-0 flex-1 items-center gap-4">
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-
                           <UserRound className="h-5 w-5" />
-
                         </div>
 
                         <div className="min-w-0">
@@ -664,9 +774,7 @@ export default async function AdminClientesPage() {
             <div className="flex items-start gap-4">
 
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-
                 <CheckCircle2 className="h-5 w-5" />
-
               </div>
 
               <div>
@@ -702,11 +810,14 @@ export default async function AdminClientesPage() {
                       client.email
                     )
 
+                  const productionIds =
+                    productionIdsByUser.get(
+                      client.id
+                    ) ||
+                    new Set<string>()
+
                   /*
-                   * Incluimos:
-                   * 1. producciones vinculadas por user_id
-                   * 2. producciones antiguas sin user_id cuyo
-                   *    email coincide con este usuario registrado
+                   * Producciones compartidas y directas.
                    */
                   const clientProductions =
                     allProductions.filter(
@@ -714,30 +825,29 @@ export default async function AdminClientesPage() {
                         item
                       ) => {
                         if (
-                          item.user_id ===
-                          client.id
+                          productionIds.has(
+                            item.id
+                          )
                         ) {
                           return true
                         }
 
+                        /*
+                         * Compatibilidad con una producción
+                         * antigua todavía no vinculada.
+                         */
                         if (
-                          item.user_id
-                        ) {
-                          return false
-                        }
-
-                        if (
-                          !clientEmail
-                        ) {
-                          return false
-                        }
-
-                        return (
+                          !item.user_id &&
+                          clientEmail &&
                           normalizeEmail(
                             item.client_email
                           ) ===
-                          clientEmail
-                        )
+                            clientEmail
+                        ) {
+                          return true
+                        }
+
+                        return false
                       }
                     )
 
@@ -792,9 +902,7 @@ export default async function AdminClientesPage() {
                           />
                         ) : (
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
-
                             <UserRound className="h-5 w-5" />
-
                           </div>
                         )}
 
@@ -932,9 +1040,7 @@ export default async function AdminClientesPage() {
           <div className="flex items-center gap-4">
 
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-
               <GraduationCap className="h-5 w-5" />
-
             </div>
 
             <div>
@@ -944,7 +1050,9 @@ export default async function AdminClientesPage() {
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                {activeEnrollmentsCount}{" "}
+                {
+                  activeEnrollmentsCount
+                }{" "}
                 {activeEnrollmentsCount ===
                 1
                   ? "inscripción activa"

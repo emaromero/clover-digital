@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react"
@@ -27,12 +28,18 @@ interface Props {
   productionId: string
   clients: Client[]
   initialUserIds: string[]
+  initialPrimaryUserId: string | null
+  pendingClientName: string | null
+  pendingClientEmail: string | null
 }
 
 export default function ProductionParticipantsManager({
   productionId,
   clients,
   initialUserIds,
+  initialPrimaryUserId,
+  pendingClientName,
+  pendingClientEmail,
 }: Props) {
   const router =
     useRouter()
@@ -44,6 +51,12 @@ export default function ProductionParticipantsManager({
     useState<string[]>(
       initialUserIds
     )
+
+  const [
+    clientToAdd,
+    setClientToAdd,
+  ] =
+    useState("")
 
   const [
     saving,
@@ -93,14 +106,36 @@ export default function ProductionParticipantsManager({
       ]
     )
 
-  const [
-    clientToAdd,
-    setClientToAdd,
-  ] =
-    useState(
-      availableClients[0]?.id ||
-        ""
-    )
+  useEffect(
+    () => {
+      if (
+        availableClients.length ===
+        0
+      ) {
+        setClientToAdd("")
+        return
+      }
+
+      const stillAvailable =
+        availableClients.some(
+          (client) =>
+            client.id ===
+            clientToAdd
+        )
+
+      if (
+        !stillAvailable
+      ) {
+        setClientToAdd(
+          availableClients[0].id
+        )
+      }
+    },
+    [
+      availableClients,
+      clientToAdd,
+    ]
+  )
 
   const addClient =
     () => {
@@ -113,27 +148,11 @@ export default function ProductionParticipantsManager({
         return
       }
 
-      const next =
-        [
-          ...selectedUserIds,
+      setSelectedUserIds(
+        (current) => [
+          ...current,
           clientToAdd,
         ]
-
-      setSelectedUserIds(
-        next
-      )
-
-      const nextAvailable =
-        clients.find(
-          (client) =>
-            !next.includes(
-              client.id
-            )
-        )
-
-      setClientToAdd(
-        nextAvailable?.id ||
-          ""
       )
 
       setSaved(false)
@@ -147,7 +166,8 @@ export default function ProductionParticipantsManager({
         (current) =>
           current.filter(
             (id) =>
-              id !== userId
+              id !==
+              userId
           )
       )
 
@@ -163,6 +183,10 @@ export default function ProductionParticipantsManager({
       const supabase =
         createClient()
 
+      /*
+       * Primero borramos las relaciones
+       * actuales.
+       */
       const {
         error: deleteError,
       } =
@@ -190,6 +214,9 @@ export default function ProductionParticipantsManager({
         return
       }
 
+      /*
+       * Volvemos a guardar la selección.
+       */
       if (
         selectedUserIds.length >
         0
@@ -229,9 +256,11 @@ export default function ProductionParticipantsManager({
       }
 
       /*
-       * Mantenemos productions.user_id
-       * como cliente principal por
-       * compatibilidad con el sistema viejo.
+       * productions.user_id queda solamente
+       * como referencia principal legacy.
+       *
+       * Los accesos reales dependen de
+       * production_users.
        */
       const primaryUserId =
         selectedUserIds[0] ||
@@ -244,28 +273,69 @@ export default function ProductionParticipantsManager({
             primaryUserId
         )
 
+      const hadPendingClient =
+        !initialPrimaryUserId &&
+        Boolean(
+          pendingClientEmail
+        )
+
+      const updateData =
+        primaryUserId
+          ? {
+              user_id:
+                primaryUserId,
+
+              client_name:
+                primaryClient
+                  ?.full_name ||
+                null,
+
+              client_email:
+                primaryClient
+                  ?.email ||
+                null,
+
+              updated_at:
+                new Date().toISOString(),
+            }
+          : hadPendingClient
+            ? {
+                user_id:
+                  null,
+
+                client_name:
+                  pendingClientName,
+
+                client_email:
+                  pendingClientEmail,
+
+                updated_at:
+                  new Date().toISOString(),
+              }
+            : {
+                user_id:
+                  null,
+
+                client_name:
+                  null,
+
+                client_email:
+                  null,
+
+                updated_at:
+                  new Date().toISOString(),
+              }
+
       const {
         error: productionError,
       } =
         await supabase
-          .from("productions")
-          .update({
-            user_id:
-              primaryUserId,
-
-            client_name:
-              primaryClient
-                ?.full_name ||
-              null,
-
-            client_email:
-              primaryClient
-                ?.email ||
-              null,
-
-            updated_at:
-              new Date().toISOString(),
-          })
+          .from(
+            "productions"
+          )
+          .update(
+            updateData
+          )
           .eq(
             "id",
             productionId
@@ -318,23 +388,47 @@ export default function ProductionParticipantsManager({
           </h2>
 
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Todas las personas agregadas acá verán esta misma producción y los mismos archivos.
+            Todas las personas agregadas acá ven la misma producción y los mismos archivos.
           </p>
 
         </div>
 
       </div>
 
+      {pendingClientEmail &&
+        selectedUserIds.length ===
+          0 && (
+        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+            Cliente pendiente de registro
+          </p>
+
+          <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+            {pendingClientName ||
+              "Sin nombre"}{" "}
+            ·{" "}
+            {
+              pendingClientEmail
+            }
+          </p>
+
+        </div>
+      )}
+
       <div className="mt-6 space-y-3">
 
         {selectedClients.length ===
         0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 p-5 text-sm text-gray-500 dark:border-white/10">
-            Esta producción todavía no está vinculada a ningún usuario registrado.
+            Todavía no hay usuarios registrados con acceso.
           </div>
         ) : (
           selectedClients.map(
-            (client) => (
+            (
+              client,
+              index
+            ) => (
               <div
                 key={
                   client.id
@@ -352,10 +446,21 @@ export default function ProductionParticipantsManager({
 
                 <div className="min-w-0 flex-1">
 
-                  <p className="truncate font-semibold text-gray-900 dark:text-white">
-                    {client.full_name ||
-                      "Sin nombre"}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+
+                    <p className="truncate font-semibold text-gray-900 dark:text-white">
+                      {client.full_name ||
+                        "Sin nombre"}
+                    </p>
+
+                    {index ===
+                      0 && (
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-300">
+                        Principal
+                      </span>
+                    )}
+
+                  </div>
 
                   <p className="truncate text-sm text-gray-500">
                     {
@@ -410,7 +515,9 @@ export default function ProductionParticipantsManager({
             >
 
               {availableClients.map(
-                (client) => (
+                (
+                  client
+                ) => (
                   <option
                     key={
                       client.id
@@ -422,7 +529,8 @@ export default function ProductionParticipantsManager({
                     {client.full_name ||
                       "Sin nombre"}{" "}
                     —{" "}
-                    {client.email}
+                    {client.email ||
+                      "Sin email"}
                   </option>
                 )
               )}
@@ -434,7 +542,10 @@ export default function ProductionParticipantsManager({
               onClick={
                 addClient
               }
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0A9396]/30 px-4 py-3 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/5"
+              disabled={
+                !clientToAdd
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0A9396]/30 px-4 py-3 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/5 disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
 

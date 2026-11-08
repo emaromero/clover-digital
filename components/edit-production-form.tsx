@@ -22,12 +22,6 @@ import {
 
 import { createClient } from "@/lib/supabase/client"
 
-interface Client {
-  id: string
-  full_name: string | null
-  email: string | null
-}
-
 interface Production {
   id: string
   user_id: string | null
@@ -59,7 +53,6 @@ interface ProductionFile {
 
 interface Props {
   production: Production
-  clients: Client[]
   initialFiles: ProductionFile[]
 }
 
@@ -142,7 +135,9 @@ const formatDate = (
       month: "2-digit",
       year: "numeric",
     }
-  ).format(new Date(value))
+  ).format(
+    new Date(value)
+  )
 }
 
 const formatDateTime = (
@@ -159,7 +154,9 @@ const formatDateTime = (
       hour: "2-digit",
       minute: "2-digit",
     }
-  ).format(new Date(value))
+  ).format(
+    new Date(value)
+  )
 }
 
 const getDefaultWeTransferExpiry =
@@ -188,20 +185,10 @@ const getDefaultWeTransferExpiry =
 
 export default function EditProductionForm({
   production,
-  clients,
   initialFiles,
 }: Props) {
   const router =
     useRouter()
-
-  const [
-    clientId,
-    setClientId,
-  ] =
-    useState(
-      production.user_id ||
-        ""
-    )
 
   const [
     propertyName,
@@ -343,6 +330,10 @@ export default function EditProductionForm({
       string | null
     >(null)
 
+  /*
+   * Si no existe user_id pero sí email,
+   * todavía es un cliente pendiente.
+   */
   const isPendingClient =
     !production.user_id &&
     Boolean(
@@ -404,7 +395,8 @@ export default function EditProductionForm({
         setTimeout(() => {
           setCopiedFileId(
             (current) =>
-              current === fileId
+              current ===
+              fileId
                 ? null
                 : current
           )
@@ -433,6 +425,7 @@ export default function EditProductionForm({
         setMessage(
           "Ingresá el nombre de la propiedad."
         )
+
         return
       }
 
@@ -454,14 +447,6 @@ export default function EditProductionForm({
           ? new Date(
               estimatedDelivery
             ).toISOString()
-          : null
-
-      const selectedClient =
-        clientId
-          ? clients.find(
-              (client) =>
-                client.id === clientId
-            )
           : null
 
       let deliveredAt =
@@ -503,18 +488,6 @@ export default function EditProductionForm({
             "productions"
           )
           .update({
-            user_id:
-              clientId ||
-              null,
-
-            client_name:
-              selectedClient?.full_name ||
-              production.client_name,
-
-            client_email:
-              selectedClient?.email ||
-              production.client_email,
-
             property_name:
               propertyName.trim(),
 
@@ -567,6 +540,7 @@ export default function EditProductionForm({
         )
 
         setSaving(false)
+
         return
       }
 
@@ -591,6 +565,7 @@ export default function EditProductionForm({
         setFileMessage(
           "Ingresá el enlace."
         )
+
         return
       }
 
@@ -605,6 +580,7 @@ export default function EditProductionForm({
         setFileMessage(
           "Ingresá un enlace válido."
         )
+
         return
       }
 
@@ -617,6 +593,7 @@ export default function EditProductionForm({
         setFileMessage(
           "El enlace debe comenzar con http:// o https://"
         )
+
         return
       }
 
@@ -628,6 +605,7 @@ export default function EditProductionForm({
         setFileMessage(
           "Indicá cuándo vence el WeTransfer."
         )
+
         return
       }
 
@@ -703,6 +681,7 @@ export default function EditProductionForm({
         )
 
         setAddingFile(false)
+
         return
       }
 
@@ -769,7 +748,8 @@ export default function EditProductionForm({
         (current) =>
           current.filter(
             (file) =>
-              file.id !== fileId
+              file.id !==
+              fileId
           )
       )
 
@@ -780,6 +760,7 @@ export default function EditProductionForm({
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-5xl px-4 py-10 md:py-16">
 
         <Link
@@ -787,21 +768,26 @@ export default function EditProductionForm({
           className="inline-flex items-center gap-2 text-sm text-[#0A9396] hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
+
           Volver a producciones
         </Link>
 
         <div className="mt-8">
+
           <p className="text-sm font-semibold text-[#0A9396]">
             Clover Digital
           </p>
 
           <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
-            {production.property_name}
+            {
+              production.property_name
+            }
           </h1>
 
           <p className="mt-3 text-gray-500 dark:text-gray-400">
-            Editá la producción y gestioná su material de entrega.
+            Editá la producción, gestioná su material y administrá los accesos desde la sección de clientes.
           </p>
+
         </div>
 
         <form
@@ -811,78 +797,49 @@ export default function EditProductionForm({
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Cliente
-            </label>
+          {/* CLIENTE PENDIENTE */}
+          {isPendingClient && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
 
-            {isPendingClient ? (
-              <div className="mt-2 rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
-                <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4">
 
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                    <UserRound className="h-5 w-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                  <UserRound className="h-5 w-5" />
+                </div>
+
+                <div className="min-w-0">
+
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {production.client_name ||
+                      "Cliente sin cuenta"}
+                  </p>
+
+                  <p className="mt-1 break-all text-sm text-gray-600 dark:text-gray-300">
+                    {
+                      production.client_email
+                    }
+                  </p>
+
+                  <div className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    Pendiente de registro
                   </div>
 
-                  <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {production.client_name ||
-                        "Cliente sin cuenta"}
-                    </p>
-
-                    <p className="mt-1 break-all text-sm text-gray-600 dark:text-gray-300">
-                      {production.client_email}
-                    </p>
-
-                    <div className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                      Pendiente de registro
-                    </div>
-
-                    <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                      Cuando esta persona se registre en Clover Digital con este mismo email, la producción se vinculará automáticamente a su cuenta.
-                    </p>
-                  </div>
+                  <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                    Cuando esta persona se registre con este email, la producción se vinculará automáticamente a su cuenta.
+                  </p>
 
                 </div>
+
               </div>
-            ) : (
-              <select
-                value={
-                  clientId
-                }
-                onChange={(
-                  event
-                ) =>
-                  setClientId(
-                    event.target.value
-                  )
-                }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
-              >
-                <option value="">
-                  Sin cliente vinculado
-                </option>
 
-                {clients.map(
-                  (client) => (
-                    <option
-                      key={client.id}
-                      value={client.id}
-                    >
-                      {client.full_name ||
-                        "Sin nombre"}{" "}
-                      —{" "}
-                      {client.email}
-                    </option>
-                  )
-                )}
-              </select>
-            )}
-          </div>
+            </div>
+          )}
 
+          {/* PROPIEDAD */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Nombre de la propiedad
               </label>
@@ -901,9 +858,11 @@ export default function EditProductionForm({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
+
             </div>
 
             <div>
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Dirección completa
               </label>
@@ -922,18 +881,22 @@ export default function EditProductionForm({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
+
             </div>
 
           </div>
 
+          {/* FECHA / ESTADO */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Fecha y hora de producción
               </label>
 
               <div className="relative mt-2">
+
                 <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
                 <input
@@ -950,10 +913,13 @@ export default function EditProductionForm({
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
                 />
+
               </div>
+
             </div>
 
             <div>
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Estado
               </label>
@@ -971,30 +937,40 @@ export default function EditProductionForm({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
+
                 <option value="confirmed">
                   Confirmada
                 </option>
+
                 <option value="completed">
                   Realizada
                 </option>
+
                 <option value="editing">
                   En edición
                 </option>
+
                 <option value="delivered">
                   Entregada
                 </option>
+
                 <option value="archived">
                   Archivada
                 </option>
+
                 <option value="cancelled">
                   Cancelada
                 </option>
+
               </select>
+
             </div>
 
           </div>
 
+          {/* SERVICIOS */}
           <div>
+
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Servicios
             </p>
@@ -1002,7 +978,9 @@ export default function EditProductionForm({
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
               {SERVICES.map(
-                (service) => {
+                (
+                  service
+                ) => {
                   const active =
                     services.includes(
                       service
@@ -1010,7 +988,9 @@ export default function EditProductionForm({
 
                   return (
                     <button
-                      key={service}
+                      key={
+                        service
+                      }
                       type="button"
                       onClick={() =>
                         toggleService(
@@ -1023,18 +1003,23 @@ export default function EditProductionForm({
                           : "border-gray-200 text-gray-600 hover:border-[#0A9396]/40 dark:border-white/10 dark:text-gray-300"
                       }`}
                     >
-                      {service}
+                      {
+                        service
+                      }
                     </button>
                   )
                 }
               )}
 
             </div>
+
           </div>
 
+          {/* VALOR / ENTREGA */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Valor total
               </label>
@@ -1054,9 +1039,11 @@ export default function EditProductionForm({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
+
             </div>
 
             <div>
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Entrega estimada
               </label>
@@ -1075,13 +1062,16 @@ export default function EditProductionForm({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
+
             </div>
 
           </div>
 
           {production.delivered_at && (
             <div className="grid gap-4 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-500/10 md:grid-cols-2">
+
               <div>
+
                 <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
                   Entregada
                 </p>
@@ -1091,9 +1081,11 @@ export default function EditProductionForm({
                     production.delivered_at
                   )}
                 </p>
+
               </div>
 
               <div>
+
                 <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
                   Material disponible hasta
                 </p>
@@ -1103,18 +1095,24 @@ export default function EditProductionForm({
                     production.available_until
                   )}
                 </p>
+
               </div>
+
             </div>
           )}
 
+          {/* NOTAS */}
           <div>
+
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Notas internas
             </label>
 
             <textarea
               rows={5}
-              value={notes}
+              value={
+                notes
+              }
               onChange={(
                 event
               ) =>
@@ -1124,6 +1122,7 @@ export default function EditProductionForm({
               }
               className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
+
           </div>
 
           {message && (
@@ -1136,7 +1135,9 @@ export default function EditProductionForm({
                   : "text-red-600 dark:text-red-400"
               }`}
             >
-              {message}
+              {
+                message
+              }
             </p>
           )}
 
@@ -1156,23 +1157,28 @@ export default function EditProductionForm({
               }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-60"
             >
+
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
+
                   Guardando...
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4" />
+
                   Guardar cambios
                 </>
               )}
+
             </button>
 
           </div>
 
         </form>
 
+        {/* MATERIAL */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
           <div className="flex items-start gap-4">
@@ -1182,6 +1188,7 @@ export default function EditProductionForm({
             </div>
 
             <div>
+
               <p className="text-sm font-semibold text-[#0A9396]">
                 Entrega
               </p>
@@ -1191,21 +1198,25 @@ export default function EditProductionForm({
               </h2>
 
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Agregá los enlaces que después estarán disponibles para el cliente.
+                Agregá los enlaces que después estarán disponibles para todos los clientes con acceso.
               </p>
+
             </div>
 
           </div>
 
           <div className="mt-6 space-y-3">
 
-            {files.length === 0 ? (
+            {files.length ===
+            0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/10">
                 Todavía no cargaste material.
               </div>
             ) : (
               files.map(
-                (file) => {
+                (
+                  file
+                ) => {
                   const expired =
                     file.expires_at
                       ? new Date(
@@ -1220,11 +1231,14 @@ export default function EditProductionForm({
 
                   return (
                     <div
-                      key={file.id}
+                      key={
+                        file.id
+                      }
                       className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
                     >
 
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+
                         {file.file_type.includes(
                           "video"
                         ) ||
@@ -1234,6 +1248,7 @@ export default function EditProductionForm({
                         ) : (
                           <Link2 className="h-5 w-5" />
                         )}
+
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -1241,7 +1256,9 @@ export default function EditProductionForm({
                         <div className="flex flex-wrap items-center gap-2">
 
                           <p className="font-semibold text-gray-900 dark:text-white">
-                            {file.label}
+                            {
+                              file.label
+                            }
                           </p>
 
                           {file.expires_at && (
@@ -1263,7 +1280,9 @@ export default function EditProductionForm({
                         </div>
 
                         <p className="mt-1 truncate text-xs text-gray-400">
-                          {file.url}
+                          {
+                            file.url
+                          }
                         </p>
 
                       </div>
@@ -1272,12 +1291,15 @@ export default function EditProductionForm({
 
                         {!expired && (
                           <a
-                            href={file.url}
+                            href={
+                              file.url
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                           >
                             Abrir
+
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         )}
@@ -1295,19 +1317,22 @@ export default function EditProductionForm({
                               ? "border-[#0A9396]/30 bg-[#0A9396]/10 text-[#0A9396]"
                               : "border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                           }`}
-                          aria-label="Copiar enlace"
                         >
+
                           {copied ? (
                             <>
                               Copiado
+
                               <Check className="h-4 w-4" />
                             </>
                           ) : (
                             <>
                               Copiar
+
                               <Copy className="h-4 w-4" />
                             </>
                           )}
+
                         </button>
 
                         <button
@@ -1318,12 +1343,12 @@ export default function EditProductionForm({
                             )
                           }
                           className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
-                          aria-label="Eliminar enlace"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
 
                       </div>
+
                     </div>
                   )
                 }
@@ -1332,6 +1357,7 @@ export default function EditProductionForm({
 
           </div>
 
+          {/* AGREGAR MATERIAL */}
           <form
             onSubmit={
               handleAddFile
@@ -1342,6 +1368,7 @@ export default function EditProductionForm({
             <div className="grid gap-4 md:grid-cols-2">
 
               <div>
+
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Tipo
                 </label>
@@ -1359,27 +1386,41 @@ export default function EditProductionForm({
                   }
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                 >
+
                   {FILE_TYPES.map(
-                    (type) => (
+                    (
+                      type
+                    ) => (
                       <option
-                        key={type.value}
-                        value={type.value}
+                        key={
+                          type.value
+                        }
+                        value={
+                          type.value
+                        }
                       >
-                        {type.label}
+                        {
+                          type.label
+                        }
                       </option>
                     )
                   )}
+
                 </select>
+
               </div>
 
               <div>
+
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   Nombre visible
                 </label>
 
                 <input
                   type="text"
-                  value={fileLabel}
+                  value={
+                    fileLabel
+                  }
                   onChange={(
                     event
                   ) =>
@@ -1390,6 +1431,7 @@ export default function EditProductionForm({
                   placeholder="Opcional"
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                 />
+
               </div>
 
             </div>
@@ -1403,7 +1445,9 @@ export default function EditProductionForm({
               <input
                 type="url"
                 required
-                value={fileUrl}
+                value={
+                  fileUrl
+                }
                 onChange={(
                   event
                 ) =>
@@ -1427,7 +1471,9 @@ export default function EditProductionForm({
 
                 <input
                   type="datetime-local"
-                  value={fileExpiresAt}
+                  value={
+                    fileExpiresAt
+                  }
                   onChange={(
                     event
                   ) =>
@@ -1447,7 +1493,9 @@ export default function EditProductionForm({
 
             {fileMessage && (
               <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                {fileMessage}
+                {
+                  fileMessage
+                }
               </p>
             )}
 
@@ -1458,6 +1506,7 @@ export default function EditProductionForm({
               }
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#001219] disabled:opacity-60"
             >
+
               {addingFile ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -1470,7 +1519,9 @@ export default function EditProductionForm({
           </form>
 
         </section>
+
       </div>
+
     </main>
   )
 }

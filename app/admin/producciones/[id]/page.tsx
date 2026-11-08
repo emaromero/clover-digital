@@ -125,14 +125,15 @@ export default async function AdminProductionPage({
 
   const participantIds =
     participantRows?.map(
-      (row) =>
+      (
+        row
+      ) =>
         row.user_id
     ) || []
 
   /*
    * Compatibilidad con producciones
-   * antiguas por si alguna todavía no
-   * estuviera en production_users.
+   * antiguas.
    */
   if (
     production.user_id &&
@@ -144,6 +145,24 @@ export default async function AdminProductionPage({
       production.user_id
     )
   }
+
+  /*
+   * Dejamos primero al cliente principal
+   * cuando existe.
+   */
+  const orderedParticipantIds =
+    production.user_id
+      ? [
+          production.user_id,
+          ...participantIds.filter(
+            (
+              userId
+            ) =>
+              userId !==
+              production.user_id
+          ),
+        ]
+      : participantIds
 
   const {
     data: files,
@@ -205,9 +224,6 @@ export default async function AdminProductionPage({
         production={
           production
         }
-        clients={
-          clients
-        }
         initialFiles={
           files || []
         }
@@ -223,7 +239,16 @@ export default async function AdminProductionPage({
             clients
           }
           initialUserIds={
-            participantIds
+            orderedParticipantIds
+          }
+          initialPrimaryUserId={
+            production.user_id
+          }
+          pendingClientName={
+            production.client_name
+          }
+          pendingClientEmail={
+            production.client_email
           }
         />
 
