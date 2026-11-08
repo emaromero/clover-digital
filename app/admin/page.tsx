@@ -112,6 +112,7 @@ export default async function AdminPage() {
       .from("lessons")
       .select(`
         id,
+        is_published,
         module_id,
         modules (
           course_id
@@ -150,7 +151,7 @@ export default async function AdminPage() {
         paid_at
       `)
 
-  const students =
+  const allProfiles =
     profiles || []
 
   const allEnrollments =
@@ -160,7 +161,11 @@ export default async function AdminPage() {
     progress || []
 
   const allLessons =
-    lessons || []
+    (lessons || []).filter(
+      (lesson) =>
+        lesson.is_published ===
+        true
+    )
 
   const allProductions =
     productions || []
@@ -171,20 +176,61 @@ export default async function AdminPage() {
   const allPayments =
     payments || []
 
+  /*
+   * Un alumno es alguien que tiene
+   * o tuvo al menos una inscripción.
+   *
+   * Un usuario registrado que solamente
+   * tiene producciones NO es alumno.
+   */
+  const studentIds =
+    new Set(
+      allEnrollments.map(
+        (enrollment) =>
+          enrollment.user_id
+      )
+    )
+
+  const students =
+    allProfiles.filter(
+      (profile) =>
+        studentIds.has(
+          profile.id
+        )
+    )
+
   const totalUsers =
+    allProfiles.length
+
+  const totalStudents =
     students.length
 
-  const activeEnrollments =
+  const activeEnrollmentRows =
     allEnrollments.filter(
       (item) =>
         item.status ===
         "active"
-    ).length
+    )
+
+  const activeEnrollments =
+    activeEnrollmentRows.length
+
+  const publishedLessonIds =
+    new Set(
+      allLessons.map(
+        (lesson) =>
+          lesson.id
+      )
+    )
 
   const completedProgress =
     allProgress.filter(
       (item) =>
-        item.completed
+        item.completed ===
+          true &&
+        publishedLessonIds.has(
+          item.lesson_id
+        )
     ).length
 
   const totalProductions =
@@ -274,7 +320,7 @@ export default async function AdminPage() {
     return lesson.modules
   }
 
-  const calculateProgress = (
+  const calculateCourseProgress = (
     userId: string,
     courseId: string
   ) => {
@@ -302,7 +348,10 @@ export default async function AdminPage() {
       courseLessonIds.length ===
       0
     ) {
-      return 0
+      return {
+        completed: 0,
+        total: 0,
+      }
     }
 
     const completed =
@@ -317,11 +366,50 @@ export default async function AdminPage() {
           )
       ).length
 
-    return Math.round(
-      (completed /
-        courseLessonIds.length) *
-        100
+    return {
+      completed,
+      total:
+        courseLessonIds.length,
+    }
+  }
+
+  const calculateOverallProgress = (
+    userId: string,
+    userEnrollments: Array<{
+      course_id: string
+    }>
+  ) => {
+    let completed = 0
+    let total = 0
+
+    userEnrollments.forEach(
+      (enrollment) => {
+        const result =
+          calculateCourseProgress(
+            userId,
+            enrollment.course_id
+          )
+
+        completed +=
+          result.completed
+
+        total +=
+          result.total
+      }
     )
+
+    return {
+      completed,
+      total,
+      percentage:
+        total > 0
+          ? Math.round(
+              (completed /
+                total) *
+                100
+            )
+          : 0,
+    }
   }
 
   const getLastActivity = (
@@ -333,7 +421,10 @@ export default async function AdminPage() {
           (item) =>
             item.user_id ===
               userId &&
-            item.updated_at
+            item.updated_at &&
+            publishedLessonIds.has(
+              item.lesson_id
+            )
         )
         .sort(
           (a, b) =>
@@ -377,12 +468,14 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
 
         {/* HEADER */}
         <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
 
           <div>
+
             <p className="text-sm font-semibold text-[#0A9396]">
               Clover Digital
             </p>
@@ -395,6 +488,7 @@ export default async function AdminPage() {
               Gestioná clientes, producciones, finanzas,
               recuperaciones y Clover Academy desde un solo lugar.
             </p>
+
           </div>
 
           <Link
@@ -414,9 +508,11 @@ export default async function AdminPage() {
             href="/admin/producciones"
             className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
           >
+
             <div className="flex items-start justify-between gap-4">
 
               <div>
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
                   <FolderOpen className="h-6 w-6" />
                 </div>
@@ -434,6 +530,7 @@ export default async function AdminPage() {
 
                   <span className="text-gray-500">
                     Total:{" "}
+
                     <strong className="text-gray-900 dark:text-white">
                       {
                         totalProductions
@@ -443,6 +540,7 @@ export default async function AdminPage() {
 
                   <span className="text-gray-500">
                     Activas:{" "}
+
                     <strong className="text-gray-900 dark:text-white">
                       {
                         activeProductions
@@ -451,11 +549,13 @@ export default async function AdminPage() {
                   </span>
 
                 </div>
+
               </div>
 
               <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
 
             </div>
+
           </Link>
 
           {/* CLIENTES */}
@@ -463,9 +563,11 @@ export default async function AdminPage() {
             href="/admin/clientes"
             className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
           >
+
             <div className="flex items-start justify-between gap-4">
 
               <div>
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
                   <Users className="h-6 w-6" />
                 </div>
@@ -481,15 +583,20 @@ export default async function AdminPage() {
 
                 <div className="mt-5 text-sm text-gray-500">
                   Registrados:{" "}
+
                   <strong className="text-gray-900 dark:text-white">
-                    {totalUsers}
+                    {
+                      totalUsers
+                    }
                   </strong>
                 </div>
+
               </div>
 
               <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
 
             </div>
+
           </Link>
 
           {/* FINANZAS */}
@@ -497,9 +604,11 @@ export default async function AdminPage() {
             href="/admin/finanzas"
             className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
           >
+
             <div className="flex items-start justify-between gap-4">
 
               <div>
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
                   <CircleDollarSign className="h-6 w-6" />
                 </div>
@@ -517,6 +626,7 @@ export default async function AdminPage() {
 
                   <span className="text-gray-500">
                     Cobrado:{" "}
+
                     <strong className="text-emerald-600">
                       {formatCurrency(
                         totalCollected
@@ -526,6 +636,7 @@ export default async function AdminPage() {
 
                   <span className="text-gray-500">
                     Pendiente:{" "}
+
                     <strong className="text-amber-600">
                       {formatCurrency(
                         totalPending
@@ -534,11 +645,13 @@ export default async function AdminPage() {
                   </span>
 
                 </div>
+
               </div>
 
               <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
 
             </div>
+
           </Link>
 
           {/* RECUPERACIONES */}
@@ -546,9 +659,11 @@ export default async function AdminPage() {
             href="/admin/recuperaciones"
             className="group rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 hover:shadow-sm dark:border-white/10 dark:bg-[#06222c]"
           >
+
             <div className="flex items-start justify-between gap-4">
 
               <div>
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
                   <ArchiveRestore className="h-6 w-6" />
                 </div>
@@ -563,8 +678,10 @@ export default async function AdminPage() {
                 </p>
 
                 <div className="mt-5">
+
                   <span className="text-sm text-gray-500">
                     Pendientes:{" "}
+
                     <strong
                       className={
                         pendingRecoveries >
@@ -578,12 +695,15 @@ export default async function AdminPage() {
                       }
                     </strong>
                   </span>
+
                 </div>
+
               </div>
 
               <ArrowRight className="mt-1 h-5 w-5 text-[#0A9396] transition group-hover:translate-x-1" />
 
             </div>
+
           </Link>
 
         </div>
@@ -600,6 +720,7 @@ export default async function AdminPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 
               <div>
+
                 <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
                   Resumen de cursos
                 </h2>
@@ -607,17 +728,20 @@ export default async function AdminPage() {
                 <p className="mt-1 text-sm text-gray-500">
                   Seguimiento de alumnos y progreso.
                 </p>
+
               </div>
 
               <Link
-                href="/academy"
+                href="/admin/academy"
                 className="inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline"
               >
                 Ver Academy
+
                 <ArrowRight className="h-4 w-4" />
               </Link>
 
             </div>
+
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -631,16 +755,21 @@ export default async function AdminPage() {
                 </div>
 
                 <div>
+
                   <p className="text-sm text-gray-500">
-                    Usuarios
+                    Alumnos
                   </p>
 
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {totalUsers}
+                    {
+                      totalStudents
+                    }
                   </p>
+
                 </div>
 
               </div>
+
             </div>
 
             <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
@@ -652,6 +781,7 @@ export default async function AdminPage() {
                 </div>
 
                 <div>
+
                   <p className="text-sm text-gray-500">
                     Inscripciones activas
                   </p>
@@ -661,9 +791,11 @@ export default async function AdminPage() {
                       activeEnrollments
                     }
                   </p>
+
                 </div>
 
               </div>
+
             </div>
 
             <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
@@ -675,6 +807,7 @@ export default async function AdminPage() {
                 </div>
 
                 <div>
+
                   <p className="text-sm text-gray-500">
                     Clases completadas
                   </p>
@@ -684,12 +817,15 @@ export default async function AdminPage() {
                       completedProgress
                     }
                   </p>
+
                 </div>
 
               </div>
+
             </div>
 
           </div>
+
         </div>
 
         {/* ALUMNOS */}
@@ -700,6 +836,7 @@ export default async function AdminPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 
               <div>
+
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
                   Alumnos
                 </h2>
@@ -707,6 +844,7 @@ export default async function AdminPage() {
                 <p className="mt-1 text-sm text-gray-500">
                   Seguimiento general de Clover Academy.
                 </p>
+
               </div>
 
               <GraduationCap className="h-6 w-6 text-[#0A9396]" />
@@ -718,37 +856,46 @@ export default async function AdminPage() {
           {students.length ===
           0 ? (
             <div className="p-8 text-center text-gray-500">
-              Todavía no hay usuarios registrados.
+              Todavía no hay alumnos registrados en Clover Academy.
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
 
               {students.map(
                 (student) => {
-                  const enrollment =
-                    allEnrollments.find(
+                  const studentEnrollments =
+                    activeEnrollmentRows.filter(
                       (item) =>
                         item.user_id ===
-                          student.id &&
-                        item.status ===
-                          "active"
+                        student.id
                     )
 
-                  const course =
-                    enrollment
-                      ? getCourse(
-                          enrollment
-                        )
-                      : null
+                  const studentProgress =
+                    calculateOverallProgress(
+                      student.id,
+                      studentEnrollments
+                    )
 
-                  const percentage =
-                    enrollment &&
-                    course
-                      ? calculateProgress(
-                          student.id,
-                          course.id
-                        )
-                      : 0
+                  const courseTitles =
+                    studentEnrollments
+                      .map(
+                        (enrollment) =>
+                          getCourse(
+                            enrollment
+                          )?.title
+                      )
+                      .filter(
+                        Boolean
+                      )
+
+                  const courseLabel =
+                    courseTitles.length ===
+                    0
+                      ? "Sin cursos activos"
+                      : courseTitles.length ===
+                          1
+                        ? courseTitles[0]
+                        : `${courseTitles.length} cursos activos`
 
                   const lastActivity =
                     getLastActivity(
@@ -776,7 +923,9 @@ export default async function AdminPage() {
                           />
                         ) : (
                           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+
                             <UserRound className="h-5 w-5" />
+
                           </div>
                         )}
 
@@ -794,6 +943,7 @@ export default async function AdminPage() {
                           </p>
 
                         </div>
+
                       </div>
 
                       {/* CURSO */}
@@ -804,8 +954,9 @@ export default async function AdminPage() {
                         </p>
 
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {course?.title ||
-                            "Sin inscripción"}
+                          {
+                            courseLabel
+                          }
                         </p>
 
                       </div>
@@ -821,7 +972,7 @@ export default async function AdminPage() {
 
                           <span className="font-semibold text-gray-700 dark:text-gray-200">
                             {
-                              percentage
+                              studentProgress.percentage
                             }
                             %
                           </span>
@@ -833,11 +984,12 @@ export default async function AdminPage() {
                           <div
                             className="h-full rounded-full bg-[#0A9396]"
                             style={{
-                              width: `${percentage}%`,
+                              width: `${studentProgress.percentage}%`,
                             }}
                           />
 
                         </div>
+
                       </div>
 
                       {/* ACTIVIDAD */}
@@ -905,6 +1057,7 @@ export default async function AdminPage() {
               className="hidden items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline sm:inline-flex"
             >
               Ver Finanzas
+
               <ArrowRight className="h-4 w-4" />
             </Link>
 
@@ -913,6 +1066,7 @@ export default async function AdminPage() {
         </div>
 
       </div>
+
     </main>
   )
 }
