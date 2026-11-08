@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Loader2,
   Plus,
+  Power,
   PowerOff,
 } from "lucide-react"
 
@@ -23,51 +24,40 @@ interface Course {
   title: string
 }
 
-interface ActiveEnrollment {
+interface Enrollment {
   id: string
   course_id: string
   course_title: string
+  status: string
 }
 
 interface Props {
   userId: string
   courses: Course[]
-  activeEnrollments: ActiveEnrollment[]
+  enrollments: Enrollment[]
 }
 
 export default function AcademyEnrollmentManager({
   userId,
   courses,
-  activeEnrollments,
+  enrollments,
 }: Props) {
   const router =
     useRouter()
 
-  const availableCourses =
-    useMemo(
-      () =>
-        courses.filter(
-          (course) =>
-            !activeEnrollments.some(
-              (enrollment) =>
-                enrollment.course_id ===
-                course.id
-            )
-        ),
-      [
-        courses,
-        activeEnrollments,
-      ]
+  const [
+    localEnrollments,
+    setLocalEnrollments,
+  ] =
+    useState<Enrollment[]>(
+      enrollments
     )
 
   const [
     selectedCourse,
     setSelectedCourse,
   ] =
-    useState(
-      availableCourses[0]?.id ||
-        ""
-    )
+    useState("")
 
   const [
     loadingKey,
@@ -89,32 +79,107 @@ export default function AcademyEnrollmentManager({
   ] =
     useState("")
 
-  useEffect(() => {
-    const stillAvailable =
-      availableCourses.some(
-        (course) =>
-          course.id ===
-          selectedCourse
+  useEffect(
+    () => {
+      setLocalEnrollments(
+        enrollments
       )
+    },
+    [
+      enrollments,
+    ]
+  )
 
-    if (
-      !stillAvailable
-    ) {
-      setSelectedCourse(
-        availableCourses[0]?.id ||
-          ""
-      )
-    }
-  }, [
-    availableCourses,
-    selectedCourse,
-  ])
+  const activeEnrollments =
+    useMemo(
+      () =>
+        localEnrollments.filter(
+          (enrollment) =>
+            enrollment.status ===
+            "active"
+        ),
+      [
+        localEnrollments,
+      ]
+    )
+
+  const inactiveEnrollments =
+    useMemo(
+      () =>
+        localEnrollments.filter(
+          (enrollment) =>
+            enrollment.status !==
+            "active"
+        ),
+      [
+        localEnrollments,
+      ]
+    )
+
+  /*
+   * Solo aparecen para "agregar"
+   * los cursos que nunca tuvo.
+   *
+   * Los cursos inactivos se muestran
+   * aparte con botón Reactivar.
+   */
+  const availableCourses =
+    useMemo(
+      () =>
+        courses.filter(
+          (course) =>
+            !localEnrollments.some(
+              (enrollment) =>
+                enrollment.course_id ===
+                course.id
+            )
+        ),
+      [
+        courses,
+        localEnrollments,
+      ]
+    )
+
+  useEffect(
+    () => {
+      const stillAvailable =
+        availableCourses.some(
+          (course) =>
+            course.id ===
+            selectedCourse
+        )
+
+      if (
+        !stillAvailable
+      ) {
+        setSelectedCourse(
+          availableCourses[0]?.id ||
+            ""
+        )
+      }
+    },
+    [
+      availableCourses,
+      selectedCourse,
+    ]
+  )
 
   const assignCourse =
     async () => {
       if (
         !selectedCourse
       ) {
+        return
+      }
+
+      const selected =
+        courses.find(
+          (course) =>
+            course.id ===
+            selectedCourse
+        )
+
+      if (!selected) {
         return
       }
 
@@ -129,32 +194,42 @@ export default function AcademyEnrollmentManager({
         createClient()
 
       const {
-        data: existingEnrollment,
-        error: existingError,
+        data,
+        error,
       } =
         await supabase
-          .from("enrollments")
-          .select(
-            "id, status"
+          .from(
+            "enrollments"
           )
-          .eq(
-            "user_id",
-            userId
-          )
-          .eq(
-            "course_id",
-            selectedCourse
-          )
-          .maybeSingle()
+          .insert({
+            user_id:
+              userId,
 
-      if (existingError) {
+            course_id:
+              selectedCourse,
+
+            status:
+              "active",
+
+            enrolled_at:
+              new Date().toISOString(),
+          })
+          .select(
+            "id, course_id, status"
+          )
+          .single()
+
+      if (
+        error ||
+        !data
+      ) {
         console.error(
-          "Error buscando inscripción:",
-          existingError
+          "Error asignando curso:",
+          error
         )
 
         setErrorMessage(
-          "No pudimos verificar el acceso."
+          "No pudimos asignar el curso."
         )
 
         setLoadingKey(null)
@@ -162,85 +237,30 @@ export default function AcademyEnrollmentManager({
         return
       }
 
-      if (existingEnrollment) {
-        const {
-          error,
-        } =
-          await supabase
-            .from(
-              "enrollments"
-            )
-            .update({
-              status:
-                "active",
+      setLocalEnrollments(
+        (
+          current
+        ) => [
+          ...current,
+          {
+            id:
+              data.id,
 
-              enrolled_at:
-                new Date().toISOString(),
-            })
-            .eq(
-              "id",
-              existingEnrollment.id
-            )
+            course_id:
+              data.course_id,
 
-        if (error) {
-          console.error(
-            "Error reactivando curso:",
-            error
-          )
+            course_title:
+              selected.title,
 
-          setErrorMessage(
-            "No pudimos activar el curso."
-          )
+            status:
+              data.status,
+          },
+        ]
+      )
 
-          setLoadingKey(null)
-
-          return
-        }
-
-        setMessage(
-          "Curso reactivado correctamente."
-        )
-      } else {
-        const {
-          error,
-        } =
-          await supabase
-            .from(
-              "enrollments"
-            )
-            .insert({
-              user_id:
-                userId,
-
-              course_id:
-                selectedCourse,
-
-              status:
-                "active",
-
-              enrolled_at:
-                new Date().toISOString(),
-            })
-
-        if (error) {
-          console.error(
-            "Error asignando curso:",
-            error
-          )
-
-          setErrorMessage(
-            "No pudimos asignar el curso."
-          )
-
-          setLoadingKey(null)
-
-          return
-        }
-
-        setMessage(
-          "Curso asignado correctamente."
-        )
-      }
+      setMessage(
+        "Curso asignado correctamente."
+      )
 
       setLoadingKey(null)
 
@@ -249,16 +269,14 @@ export default function AcademyEnrollmentManager({
 
   const removeCourse =
     async (
-      enrollment: ActiveEnrollment
+      enrollment: Enrollment
     ) => {
       const confirmed =
         window.confirm(
-          `¿Querés quitar el acceso a "${enrollment.course_title}"? El alumno dejará de poder entrar al curso, pero su progreso y su historial se conservarán.`
+          `¿Querés quitar el acceso a "${enrollment.course_title}"? El alumno dejará de poder entrar, pero su progreso y su historial se conservarán.`
         )
 
-      if (
-        !confirmed
-      ) {
+      if (!confirmed) {
         return
       }
 
@@ -303,6 +321,24 @@ export default function AcademyEnrollmentManager({
         return
       }
 
+      setLocalEnrollments(
+        (
+          current
+        ) =>
+          current.map(
+            (item) =>
+              item.id ===
+              enrollment.id
+                ? {
+                    ...item,
+
+                    status:
+                      "inactive",
+                  }
+                : item
+          )
+      )
+
       setMessage(
         "Acceso quitado. El historial y el progreso se conservaron."
       )
@@ -312,8 +348,84 @@ export default function AcademyEnrollmentManager({
       router.refresh()
     }
 
+  const reactivateCourse =
+    async (
+      enrollment: Enrollment
+    ) => {
+      const key =
+        `reactivate-${enrollment.id}`
+
+      setLoadingKey(key)
+      setMessage("")
+      setErrorMessage("")
+
+      const supabase =
+        createClient()
+
+      const {
+        error,
+      } =
+        await supabase
+          .from(
+            "enrollments"
+          )
+          .update({
+            status:
+              "active",
+
+            enrolled_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            enrollment.id
+          )
+
+      if (error) {
+        console.error(
+          "Error reactivando curso:",
+          error
+        )
+
+        setErrorMessage(
+          "No pudimos reactivar el curso."
+        )
+
+        setLoadingKey(null)
+
+        return
+      }
+
+      setLocalEnrollments(
+        (
+          current
+        ) =>
+          current.map(
+            (item) =>
+              item.id ===
+              enrollment.id
+                ? {
+                    ...item,
+
+                    status:
+                      "active",
+                  }
+                : item
+          )
+      )
+
+      setMessage(
+        "Acceso reactivado correctamente."
+      )
+
+      setLoadingKey(null)
+
+      router.refresh()
+    }
+
   if (
-    courses.length === 0
+    courses.length ===
+    0
   ) {
     return (
       <p className="text-sm text-gray-400">
@@ -325,6 +437,7 @@ export default function AcademyEnrollmentManager({
   return (
     <div>
 
+      {/* ACTIVOS */}
       {activeEnrollments.length >
         0 && (
         <div className="space-y-2">
@@ -355,8 +468,9 @@ export default function AcademyEnrollmentManager({
                 <button
                   type="button"
                   disabled={
-                    loadingKey ===
-                    `remove-${enrollment.id}`
+                    Boolean(
+                      loadingKey
+                    )
                   }
                   onClick={() =>
                     removeCourse(
@@ -384,11 +498,96 @@ export default function AcademyEnrollmentManager({
         </div>
       )}
 
+      {/* INACTIVOS */}
+      {inactiveEnrollments.length >
+        0 && (
+        <div
+          className={
+            activeEnrollments.length >
+            0
+              ? "mt-4 border-t border-gray-100 pt-4 dark:border-white/10"
+              : ""
+          }
+        >
+
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Historial
+          </p>
+
+          <div className="mt-2 space-y-2">
+
+            {inactiveEnrollments.map(
+              (
+                enrollment
+              ) => (
+                <div
+                  key={
+                    enrollment.id
+                  }
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-white/10 dark:bg-white/[0.03]"
+                >
+
+                  <div className="flex items-center gap-3">
+
+                    <PowerOff className="h-4 w-4 shrink-0 text-gray-400" />
+
+                    <div className="min-w-0 flex-1">
+
+                      <p className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        {
+                          enrollment.course_title
+                        }
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        Acceso retirado
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={
+                      Boolean(
+                        loadingKey
+                      )
+                    }
+                    onClick={() =>
+                      reactivateCourse(
+                        enrollment
+                      )
+                    }
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#0A9396]/30 bg-white px-3 py-2 text-xs font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/5 disabled:opacity-50 dark:bg-[#001219]"
+                  >
+
+                    {loadingKey ===
+                    `reactivate-${enrollment.id}` ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Power className="h-3.5 w-3.5" />
+                    )}
+
+                    Reactivar acceso
+
+                  </button>
+
+                </div>
+              )
+            )}
+
+          </div>
+
+        </div>
+      )}
+
+      {/* NUEVO CURSO */}
       {availableCourses.length >
       0 ? (
         <div
           className={
-            activeEnrollments.length >
+            localEnrollments.length >
             0
               ? "mt-4 border-t border-gray-100 pt-4 dark:border-white/10"
               : ""
@@ -461,32 +660,33 @@ export default function AcademyEnrollmentManager({
 
         </div>
       ) : (
-        <div
-          className={
-            activeEnrollments.length >
-            0
-              ? "mt-4"
-              : ""
-          }
-        >
+        activeEnrollments.length ===
+          courses.length && (
+          <div className="mt-4">
 
-          <div className="inline-flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs font-medium text-gray-500 dark:bg-white/5 dark:text-gray-400">
-            <GraduationCap className="h-4 w-4" />
-            Tiene acceso a todos los cursos
+            <div className="inline-flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs font-medium text-gray-500 dark:bg-white/5 dark:text-gray-400">
+              <GraduationCap className="h-4 w-4" />
+
+              Tiene acceso a todos los cursos
+            </div>
+
           </div>
-
-        </div>
+        )
       )}
 
       {message && (
         <p className="mt-3 text-xs font-medium text-emerald-600 dark:text-emerald-300">
-          {message}
+          {
+            message
+          }
         </p>
       )}
 
       {errorMessage && (
         <p className="mt-3 text-xs font-medium text-red-600 dark:text-red-400">
-          {errorMessage}
+          {
+            errorMessage
+          }
         </p>
       )}
 
