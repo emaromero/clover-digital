@@ -13,7 +13,7 @@ import {
   GraduationCap,
   Loader2,
   Plus,
-  Trash2,
+  PowerOff,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -196,6 +196,10 @@ export default function AcademyEnrollmentManager({
 
           return
         }
+
+        setMessage(
+          "Curso reactivado correctamente."
+        )
       } else {
         const {
           error,
@@ -232,11 +236,11 @@ export default function AcademyEnrollmentManager({
 
           return
         }
-      }
 
-      setMessage(
-        "Curso asignado correctamente."
-      )
+        setMessage(
+          "Curso asignado correctamente."
+        )
+      }
 
       setLoadingKey(null)
 
@@ -249,10 +253,12 @@ export default function AcademyEnrollmentManager({
     ) => {
       const confirmed =
         window.confirm(
-          `¿Querés quitar el acceso a "${enrollment.course_title}"? El progreso del alumno no se eliminará.`
+          `¿Querés quitar el acceso a "${enrollment.course_title}"? El alumno dejará de poder entrar al curso, pero su progreso y su historial se conservarán.`
         )
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return
       }
 
@@ -270,8 +276,13 @@ export default function AcademyEnrollmentManager({
         error,
       } =
         await supabase
-          .from("enrollments")
-          .delete()
+          .from(
+            "enrollments"
+          )
+          .update({
+            status:
+              "inactive",
+          })
           .eq(
             "id",
             enrollment.id
@@ -293,7 +304,7 @@ export default function AcademyEnrollmentManager({
       }
 
       setMessage(
-        "Acceso quitado correctamente."
+        "Acceso quitado. El historial y el progreso se conservaron."
       )
 
       setLoadingKey(null)
@@ -313,6 +324,7 @@ export default function AcademyEnrollmentManager({
 
   return (
     <div>
+
       {activeEnrollments.length >
         0 && (
         <div className="space-y-2">
@@ -352,14 +364,15 @@ export default function AcademyEnrollmentManager({
                     )
                   }
                   title="Quitar acceso"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-100 disabled:opacity-50 dark:hover:bg-red-500/10"
+                  aria-label={`Quitar acceso a ${enrollment.course_title}`}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-amber-600 transition hover:bg-amber-100 disabled:opacity-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
                 >
 
                   {loadingKey ===
                   `remove-${enrollment.id}` ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Trash2 className="h-4 w-4" />
+                    <PowerOff className="h-4 w-4" />
                   )}
 
                 </button>
@@ -476,6 +489,7 @@ export default function AcademyEnrollmentManager({
           {errorMessage}
         </p>
       )}
+
     </div>
   )
 }
