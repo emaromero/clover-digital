@@ -8,6 +8,7 @@ import {
   Plus,
   Search,
   UserRound,
+  Users,
   X,
 } from "lucide-react"
 
@@ -34,14 +35,19 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_CLASSES: Record<string, string> = {
   confirmed:
     "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
+
   completed:
     "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300",
+
   editing:
     "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+
   delivered:
     "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+
   archived:
     "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300",
+
   cancelled:
     "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300",
 }
@@ -68,17 +74,22 @@ export default async function AdminProduccionesPage({
     await searchParams
 
   const search =
-    params.q?.trim().toLowerCase() ||
+    params.q
+      ?.trim()
+      .toLowerCase() ||
     ""
 
   const selectedStatus =
-    params.status || "all"
+    params.status ||
+    "all"
 
   const selectedMonth =
-    params.month || "all"
+    params.month ||
+    "all"
 
   const selectedYear =
-    params.year || "all"
+    params.year ||
+    "all"
 
   const supabase =
     await createClient()
@@ -113,7 +124,8 @@ export default async function AdminProduccionesPage({
 
   const {
     data: productions,
-    error: productionsError,
+    error:
+      productionsError,
   } =
     await supabase
       .from("productions")
@@ -149,7 +161,8 @@ export default async function AdminProduccionesPage({
 
   const {
     data: profiles,
-    error: profilesError,
+    error:
+      profilesError,
   } =
     await supabase
       .from("profiles")
@@ -169,15 +182,84 @@ export default async function AdminProduccionesPage({
     )
   }
 
+  const {
+    data:
+      productionUsers,
+    error:
+      productionUsersError,
+  } =
+    await supabase
+      .from(
+        "production_users"
+      )
+      .select(`
+        production_id,
+        user_id
+      `)
+
+  if (
+    productionUsersError
+  ) {
+    console.error(
+      "Error cargando participantes:",
+      productionUsersError
+    )
+  }
+
+  const allProfiles =
+    profiles || []
+
   const profileMap =
     new Map(
-      (profiles || []).map(
+      allProfiles.map(
         (profile) => [
           profile.id,
           profile,
         ]
       )
     )
+
+  const participantMap =
+    new Map<
+      string,
+      string[]
+    >()
+
+  for (
+    const row of
+    productionUsers || []
+  ) {
+    const current =
+      participantMap.get(
+        row.production_id
+      ) || []
+
+    current.push(
+      row.user_id
+    )
+
+    participantMap.set(
+      row.production_id,
+      current
+    )
+  }
+
+  const getParticipants =
+    (
+      productionId: string
+    ) => {
+      const ids =
+        participantMap.get(
+          productionId
+        ) || []
+
+      return ids
+        .map(
+          (id) =>
+            profileMap.get(id)
+        )
+        .filter(Boolean)
+    }
 
   const allRows =
     productions || []
@@ -207,22 +289,37 @@ export default async function AdminProduccionesPage({
   const rows =
     allRows.filter(
       (production) => {
-        const profile =
-          production.user_id
-            ? profileMap.get(
-                production.user_id
-              )
-            : null
+        const participants =
+          getParticipants(
+            production.id
+          )
 
-        const clientName =
-          profile?.full_name ||
-          production.client_name ||
-          ""
+        const participantText =
+          participants
+            .map(
+              (participant) =>
+                `${
+                  participant
+                    ?.full_name ||
+                  ""
+                } ${
+                  participant
+                    ?.email ||
+                  ""
+                }`
+            )
+            .join(" ")
+            .toLowerCase()
 
-        const clientEmail =
-          profile?.email ||
-          production.client_email ||
-          ""
+        const legacyClientText =
+          `${
+            production.client_name ||
+            ""
+          } ${
+            production.client_email ||
+            ""
+          }`
+            .toLowerCase()
 
         const matchesSearch =
           !search ||
@@ -232,12 +329,12 @@ export default async function AdminProduccionesPage({
           production.property_address
             ?.toLowerCase()
             .includes(search) ||
-          clientName
-            .toLowerCase()
-            .includes(search) ||
-          clientEmail
-            .toLowerCase()
-            .includes(search)
+          participantText.includes(
+            search
+          ) ||
+          legacyClientText.includes(
+            search
+          )
 
         const matchesStatus =
           selectedStatus ===
@@ -281,19 +378,17 @@ export default async function AdminProduccionesPage({
                 .toString() ===
               selectedYear
           }
-        } else {
-          if (
-            selectedMonth !==
-              "all" ||
-            selectedYear !==
-              "all"
-          ) {
-            matchesMonth =
-              false
+        } else if (
+          selectedMonth !==
+            "all" ||
+          selectedYear !==
+            "all"
+        ) {
+          matchesMonth =
+            false
 
-            matchesYear =
-              false
-          }
+          matchesYear =
+            false
         }
 
         return (
@@ -352,30 +447,44 @@ export default async function AdminProduccionesPage({
 
   const pendingClientsCount =
     allRows.filter(
-      (production) =>
-        !production.user_id &&
-        Boolean(
-          production.client_email
+      (production) => {
+        const participants =
+          getParticipants(
+            production.id
+          )
+
+        return (
+          participants.length ===
+            0 &&
+          Boolean(
+            production.client_email
+          )
         )
+      }
     ).length
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-7xl px-4 py-10 md:py-16">
 
         <div className="mb-8">
+
           <Link
             href="/admin"
             className="inline-flex items-center gap-2 text-sm text-[#0A9396] hover:underline"
           >
             <ArrowLeft className="h-4 w-4" />
+
             Volver a administración
           </Link>
+
         </div>
 
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
 
           <div>
+
             <p className="text-sm font-semibold text-[#0A9396]">
               Clover Digital
             </p>
@@ -391,17 +500,22 @@ export default async function AdminProduccionesPage({
             {pendingClientsCount >
               0 && (
               <p className="mt-2 text-sm text-amber-600 dark:text-amber-300">
+
                 {
                   pendingClientsCount
                 }{" "}
+
                 producción
                 {pendingClientsCount ===
                 1
                   ? ""
                   : "es"}{" "}
+
                 con cliente pendiente de registro.
+
               </p>
             )}
+
           </div>
 
           <Link
@@ -409,6 +523,7 @@ export default async function AdminProduccionesPage({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
           >
             <Plus className="h-4 w-4" />
+
             Nueva producción
           </Link>
 
@@ -419,37 +534,46 @@ export default async function AdminProduccionesPage({
           method="GET"
           className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]"
         >
+
           <div className="flex items-center gap-2">
+
             <Filter className="h-5 w-5 text-[#0A9396]" />
 
             <h2 className="font-semibold text-gray-900 dark:text-white">
               Buscar y filtrar
             </h2>
+
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
 
             <div>
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Buscar
               </label>
 
               <div className="relative mt-2">
+
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
                 <input
                   type="text"
                   name="q"
                   defaultValue={
-                    params.q || ""
+                    params.q ||
+                    ""
                   }
                   placeholder="Cliente, email, propiedad o dirección"
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
                 />
+
               </div>
+
             </div>
 
             <div>
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Estado
               </label>
@@ -461,6 +585,7 @@ export default async function AdminProduccionesPage({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
+
                 <option value="all">
                   Todos
                 </option>
@@ -480,14 +605,19 @@ export default async function AdminProduccionesPage({
                         value
                       }
                     >
-                      {label}
+                      {
+                        label
+                      }
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
             <div>
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Mes
               </label>
@@ -499,6 +629,7 @@ export default async function AdminProduccionesPage({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
+
                 <option value="all">
                   Todos
                 </option>
@@ -519,10 +650,13 @@ export default async function AdminProduccionesPage({
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
             <div>
+
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Año
               </label>
@@ -534,6 +668,7 @@ export default async function AdminProduccionesPage({
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
+
                 <option value="all">
                   Todos
                 </option>
@@ -541,14 +676,22 @@ export default async function AdminProduccionesPage({
                 {yearOptions.map(
                   (year) => (
                     <option
-                      key={year}
-                      value={year}
+                      key={
+                        year
+                      }
+                      value={
+                        year
+                      }
                     >
-                      {year}
+                      {
+                        year
+                      }
                     </option>
                   )
                 )}
+
               </select>
+
             </div>
 
             <button
@@ -556,6 +699,7 @@ export default async function AdminProduccionesPage({
               className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
             >
               <Search className="h-4 w-4" />
+
               Buscar
             </button>
 
@@ -565,17 +709,25 @@ export default async function AdminProduccionesPage({
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-white/10">
 
               <p className="text-sm text-gray-500">
+
                 Mostrando{" "}
+
                 <strong className="font-semibold text-gray-900 dark:text-white">
-                  {rows.length}
+                  {
+                    rows.length
+                  }
                 </strong>{" "}
+
                 de{" "}
+
                 <strong className="font-semibold text-gray-900 dark:text-white">
                   {
                     allRows.length
                   }
                 </strong>{" "}
+
                 producciones
+
               </p>
 
               <Link
@@ -583,11 +735,13 @@ export default async function AdminProduccionesPage({
                 className="inline-flex items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
               >
                 <X className="h-4 w-4" />
+
                 Limpiar filtros
               </Link>
 
             </div>
           )}
+
         </form>
 
         {/* LISTADO */}
@@ -608,14 +762,21 @@ export default async function AdminProduccionesPage({
               </div>
 
               <p className="text-sm text-gray-400">
-                {rows.length} resultado
+
+                {
+                  rows.length
+                }{" "}
+
+                resultado
                 {rows.length ===
                 1
                   ? ""
                   : "s"}
+
               </p>
 
             </div>
+
           </div>
 
           {rows.length ===
@@ -640,6 +801,7 @@ export default async function AdminProduccionesPage({
                   className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
                 >
                   <X className="h-4 w-4" />
+
                   Ver todas
                 </Link>
               )}
@@ -652,25 +814,17 @@ export default async function AdminProduccionesPage({
                 (
                   production
                 ) => {
-                  const profile =
-                    production.user_id
-                      ? profileMap.get(
-                          production.user_id
-                        )
-                      : null
+                  const participants =
+                    getParticipants(
+                      production.id
+                    )
 
-                  const clientName =
-                    profile?.full_name ||
-                    production.client_name ||
-                    "Sin nombre"
-
-                  const clientEmail =
-                    profile?.email ||
-                    production.client_email ||
-                    "Sin email"
+                  const firstParticipant =
+                    participants[0]
 
                   const isPending =
-                    !production.user_id &&
+                    participants.length ===
+                      0 &&
                     Boolean(
                       production.client_email
                     )
@@ -685,10 +839,11 @@ export default async function AdminProduccionesPage({
 
                       <div className="flex min-w-0 flex-1 items-center gap-4">
 
-                        {profile?.avatar_url ? (
+                        {firstParticipant
+                          ?.avatar_url ? (
                           <img
                             src={
-                              profile.avatar_url
+                              firstParticipant.avatar_url
                             }
                             alt=""
                             className="h-11 w-11 rounded-full object-cover"
@@ -701,11 +856,18 @@ export default async function AdminProduccionesPage({
                                 : "bg-[#0A9396]/10 text-[#0A9396]"
                             }`}
                           >
-                            <UserRound className="h-5 w-5" />
+
+                            {participants.length >
+                            1 ? (
+                              <Users className="h-5 w-5" />
+                            ) : (
+                              <UserRound className="h-5 w-5" />
+                            )}
+
                           </div>
                         )}
 
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
 
                           <div className="flex flex-wrap items-center gap-2">
 
@@ -729,6 +891,16 @@ export default async function AdminProduccionesPage({
                                 production.status}
                             </span>
 
+                            {participants.length >
+                              1 && (
+                              <span className="rounded-full bg-[#0A9396]/10 px-2.5 py-1 text-xs font-semibold text-[#0A9396]">
+                                {
+                                  participants.length
+                                }{" "}
+                                clientes
+                              </span>
+                            )}
+
                             {isPending && (
                               <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                                 Pendiente de registro
@@ -737,11 +909,45 @@ export default async function AdminProduccionesPage({
 
                           </div>
 
-                          <p className="mt-1 text-sm text-gray-500">
-                            {clientName}{" "}
-                            ·{" "}
-                            {clientEmail}
-                          </p>
+                          {participants.length >
+                          0 ? (
+                            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-sm text-gray-500">
+
+                              {participants.map(
+                                (
+                                  participant,
+                                  index
+                                ) => (
+                                  <span
+                                    key={
+                                      participant?.id
+                                    }
+                                  >
+                                    {participant
+                                      ?.full_name ||
+                                      participant
+                                        ?.email ||
+                                      "Cliente"}
+
+                                    {index <
+                                    participants.length -
+                                      1
+                                      ? " ·"
+                                      : ""}
+                                  </span>
+                                )
+                              )}
+
+                            </div>
+                          ) : (
+                            <p className="mt-1 text-sm text-gray-500">
+                              {production.client_name ||
+                                "Sin nombre"}{" "}
+                              ·{" "}
+                              {production.client_email ||
+                                "Sin email"}
+                            </p>
+                          )}
 
                           {production.property_address && (
                             <p className="mt-1 text-xs text-gray-400">
@@ -752,11 +958,13 @@ export default async function AdminProduccionesPage({
                           )}
 
                         </div>
+
                       </div>
 
                       <div className="flex flex-wrap gap-5 text-sm text-gray-500 md:w-[42%]">
 
                         <div>
+
                           <p className="text-xs text-gray-400">
                             Fecha
                           </p>
@@ -766,9 +974,11 @@ export default async function AdminProduccionesPage({
                               production.production_date
                             )}
                           </p>
+
                         </div>
 
                         <div>
+
                           <p className="text-xs text-gray-400">
                             Servicios
                           </p>
@@ -782,9 +992,11 @@ export default async function AdminProduccionesPage({
                                 )
                               : "Sin servicios"}
                           </p>
+
                         </div>
 
                         <div>
+
                           <p className="text-xs text-gray-400">
                             Total
                           </p>
@@ -794,6 +1006,7 @@ export default async function AdminProduccionesPage({
                               production.total_amount
                             )}
                           </p>
+
                         </div>
 
                       </div>
@@ -816,8 +1029,11 @@ export default async function AdminProduccionesPage({
 
             </div>
           )}
+
         </div>
+
       </div>
+
     </main>
   )
 }

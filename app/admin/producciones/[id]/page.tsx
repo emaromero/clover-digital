@@ -1,8 +1,13 @@
-import { notFound, redirect } from "next/navigation"
+import {
+  notFound,
+  redirect,
+} from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+
 import EditProductionForm from "@/components/edit-production-form"
 import ProductionFinancePanel from "@/components/production-finance-panel"
+import ProductionParticipantsManager from "@/components/production-participants-manager"
 
 interface PageProps {
   params: Promise<{
@@ -100,6 +105,46 @@ export default async function AdminProductionPage({
         }
       )
 
+  const clients =
+    profiles || []
+
+  const {
+    data: participantRows,
+  } =
+    await supabase
+      .from(
+        "production_users"
+      )
+      .select(
+        "user_id"
+      )
+      .eq(
+        "production_id",
+        production.id
+      )
+
+  const participantIds =
+    participantRows?.map(
+      (row) =>
+        row.user_id
+    ) || []
+
+  /*
+   * Compatibilidad con producciones
+   * antiguas por si alguna todavía no
+   * estuviera en production_users.
+   */
+  if (
+    production.user_id &&
+    !participantIds.includes(
+      production.user_id
+    )
+  ) {
+    participantIds.unshift(
+      production.user_id
+    )
+  }
+
   const {
     data: files,
   } =
@@ -118,7 +163,7 @@ export default async function AdminProductionPage({
       `)
       .eq(
         "production_id",
-        id
+        production.id
       )
       .order(
         "created_at",
@@ -138,14 +183,14 @@ export default async function AdminProductionPage({
         id,
         production_id,
         amount,
-        payment_method,
         paid_at,
+        payment_method,
         notes,
         created_at
       `)
       .eq(
         "production_id",
-        id
+        production.id
       )
       .order(
         "paid_at",
@@ -161,14 +206,31 @@ export default async function AdminProductionPage({
           production
         }
         clients={
-          profiles || []
+          clients
         }
         initialFiles={
           files || []
         }
       />
 
-      <div className="mx-auto -mt-8 max-w-5xl px-4 pb-16">
+      <div className="mx-auto -mt-8 max-w-5xl px-4 pb-8">
+
+        <ProductionParticipantsManager
+          productionId={
+            production.id
+          }
+          clients={
+            clients
+          }
+          initialUserIds={
+            participantIds
+          }
+        />
+
+      </div>
+
+      <div className="mx-auto max-w-5xl px-4 pb-16">
+
         <ProductionFinancePanel
           productionId={
             production.id
@@ -176,19 +238,20 @@ export default async function AdminProductionPage({
           totalAmount={
             production.total_amount
           }
+          invoiceStatus={
+            production.invoice_status
+          }
+          invoiceNumber={
+            production.invoice_number
+          }
+          invoiceDate={
+            production.invoice_date
+          }
           initialPayments={
             payments || []
           }
-          initialInvoiceStatus={
-            production.invoice_status
-          }
-          initialInvoiceNumber={
-            production.invoice_number
-          }
-          initialInvoiceDate={
-            production.invoice_date
-          }
         />
+
       </div>
     </>
   )

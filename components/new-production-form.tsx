@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   CalendarDays,
+  Check,
   Loader2,
   Mail,
   Save,
   UserCheck,
   UserPlus,
+  Users,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -54,10 +56,12 @@ export default function NewProductionForm({
     )
 
   const [
-    clientId,
-    setClientId,
+    selectedClientIds,
+    setSelectedClientIds,
   ] =
-    useState("")
+    useState<string[]>(
+      []
+    )
 
   const [
     pendingClientName,
@@ -135,6 +139,26 @@ export default function NewProductionForm({
   ] =
     useState("")
 
+  const toggleClient = (
+    clientId: string
+  ) => {
+    setSelectedClientIds(
+      (current) =>
+        current.includes(
+          clientId
+        )
+          ? current.filter(
+              (id) =>
+                id !==
+                clientId
+            )
+          : [
+              ...current,
+              clientId,
+            ]
+    )
+  }
+
   const toggleService = (
     service: string
   ) => {
@@ -163,17 +187,16 @@ export default function NewProductionForm({
 
       setMessage("")
 
-      /*
-       * Validaciones cliente
-       */
       if (
         clientMode ===
           "registered" &&
-        !clientId
+        selectedClientIds.length ===
+          0
       ) {
         setMessage(
-          "Elegí un cliente registrado."
+          "Elegí al menos un cliente registrado."
         )
+
         return
       }
 
@@ -187,6 +210,7 @@ export default function NewProductionForm({
           setMessage(
             "Ingresá el nombre del cliente."
           )
+
           return
         }
 
@@ -196,6 +220,7 @@ export default function NewProductionForm({
           setMessage(
             "Ingresá el email del cliente."
           )
+
           return
         }
 
@@ -208,6 +233,7 @@ export default function NewProductionForm({
           setMessage(
             "Ingresá un email válido."
           )
+
           return
         }
       }
@@ -218,6 +244,7 @@ export default function NewProductionForm({
         setMessage(
           "Ingresá el nombre de la propiedad."
         )
+
         return
       }
 
@@ -240,12 +267,6 @@ export default function NewProductionForm({
             ).toISOString()
           : null
 
-      /*
-       * Si es cliente registrado,
-       * recuperamos también nombre
-       * y email para guardarlos como
-       * copia dentro de la producción.
-       */
       let finalUserId:
         | string
         | null = null
@@ -258,28 +279,35 @@ export default function NewProductionForm({
         | string
         | null = null
 
+      /*
+       * El primer cliente seleccionado
+       * queda como cliente principal
+       * en productions.user_id para
+       * mantener compatibilidad.
+       *
+       * Todos los clientes seleccionados
+       * se guardan luego en production_users.
+       */
       if (
         clientMode ===
         "registered"
       ) {
-        const selectedClient =
+        finalUserId =
+          selectedClientIds[0]
+
+        const primaryClient =
           clients.find(
             (client) =>
               client.id ===
-              clientId
+              finalUserId
           )
 
-        finalUserId =
-          clientId
-
         finalClientName =
-          selectedClient
-            ?.full_name ||
+          primaryClient?.full_name ||
           null
 
         finalClientEmail =
-          selectedClient
-            ?.email ||
+          primaryClient?.email ||
           null
       } else {
         finalUserId =
@@ -295,11 +323,6 @@ export default function NewProductionForm({
             .toLowerCase()
       }
 
-      /*
-       * Si se crea directamente
-       * como entregada, calculamos
-       * fecha de entrega + 90 días.
-       */
       let deliveredAt:
         | string
         | null = null
@@ -333,8 +356,10 @@ export default function NewProductionForm({
       }
 
       const {
-        data,
-        error,
+        data:
+          createdProduction,
+        error:
+          productionError,
       } =
         await supabase
           .from(
@@ -391,11 +416,11 @@ export default function NewProductionForm({
           .single()
 
       if (
-        error ||
-        !data
+        productionError ||
+        !createdProduction
       ) {
         console.error(
-          error
+          productionError
         )
 
         setMessage(
@@ -403,16 +428,66 @@ export default function NewProductionForm({
         )
 
         setLoading(false)
+
         return
       }
 
       /*
-       * Entramos directamente
-       * a la producción creada
-       * para cargar el material.
+       * Si hay varios clientes registrados,
+       * todos reciben acceso a la producción.
        */
+      if (
+        clientMode ===
+          "registered" &&
+        selectedClientIds.length >
+          0
+      ) {
+        const membershipRows =
+          selectedClientIds.map(
+            (userId) => ({
+              production_id:
+                createdProduction.id,
+
+              user_id:
+                userId,
+            })
+          )
+
+        const {
+          error:
+            membershipError,
+        } =
+          await supabase
+            .from(
+              "production_users"
+            )
+            .upsert(
+              membershipRows,
+              {
+                onConflict:
+                  "production_id,user_id",
+              }
+            )
+
+        if (
+          membershipError
+        ) {
+          console.error(
+            membershipError
+          )
+
+          setMessage(
+            "La producción se creó, pero no pudimos vincular a todos los clientes."
+          )
+
+          setLoading(false)
+
+          return
+        }
+      }
+
       router.push(
-        `/admin/producciones/${data.id}`
+        `/admin/producciones/${createdProduction.id}`
       )
 
       router.refresh()
@@ -420,6 +495,7 @@ export default function NewProductionForm({
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-4xl px-4 py-10 md:py-16">
 
         <Link
@@ -442,7 +518,7 @@ export default function NewProductionForm({
           </h1>
 
           <p className="mt-3 text-gray-500 dark:text-gray-400">
-            Creá una producción para un cliente registrado o cargá sus datos aunque todavía no tenga cuenta.
+            Creá una producción para uno o varios clientes registrados, o cargá un cliente que todavía no tenga cuenta.
           </p>
 
         </div>
@@ -486,17 +562,19 @@ export default function NewProductionForm({
                       : "bg-gray-100 text-gray-500 dark:bg-white/10"
                   }`}
                 >
-                  <UserCheck className="h-5 w-5" />
+                  <Users className="h-5 w-5" />
                 </div>
 
                 <div>
+
                   <p className="font-semibold text-gray-900 dark:text-white">
                     Cliente registrado
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                    Ya tiene una cuenta en Clover Digital.
+                    Podés seleccionar uno o varios usuarios.
                   </p>
+
                 </div>
 
               </button>
@@ -528,6 +606,7 @@ export default function NewProductionForm({
                 </div>
 
                 <div>
+
                   <p className="font-semibold text-gray-900 dark:text-white">
                     Cliente sin cuenta
                   </p>
@@ -535,64 +614,119 @@ export default function NewProductionForm({
                   <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
                     Todavía no se registró en Clover Digital.
                   </p>
+
                 </div>
 
               </button>
 
             </div>
+
           </div>
 
-          {/* CLIENTE REGISTRADO */}
+          {/* CLIENTES REGISTRADOS */}
           {clientMode ===
             "registered" && (
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Cliente registrado
-              </label>
+              <div className="flex items-center justify-between gap-4">
 
-              <select
-                value={
-                  clientId
-                }
-                onChange={(
-                  event
-                ) =>
-                  setClientId(
-                    event.target
-                      .value
-                  )
-                }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
-              >
-                <option value="">
-                  Elegir cliente
-                </option>
+                <div>
 
-                {clients.map(
-                  (client) => (
-                    <option
-                      key={
-                        client.id
-                      }
-                      value={
-                        client.id
-                      }
-                    >
-                      {client.full_name ||
-                        "Sin nombre"}{" "}
-                      —{" "}
-                      {client.email}
-                    </option>
-                  )
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Clientes con acceso
+                  </label>
+
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Todos verán la misma producción y los mismos archivos.
+                  </p>
+
+                </div>
+
+                {selectedClientIds.length >
+                  0 && (
+                  <span className="rounded-full bg-[#0A9396]/10 px-3 py-1 text-xs font-semibold text-[#0A9396]">
+                    {
+                      selectedClientIds.length
+                    }{" "}
+                    {selectedClientIds.length ===
+                    1
+                      ? "cliente"
+                      : "clientes"}
+                  </span>
                 )}
 
-              </select>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+                {clients.map(
+                  (
+                    client
+                  ) => {
+                    const selected =
+                      selectedClientIds.includes(
+                        client.id
+                      )
+
+                    return (
+                      <button
+                        key={
+                          client.id
+                        }
+                        type="button"
+                        onClick={() =>
+                          toggleClient(
+                            client.id
+                          )
+                        }
+                        className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                          selected
+                            ? "border-[#0A9396] bg-[#0A9396]/10"
+                            : "border-gray-200 hover:border-[#0A9396]/40 dark:border-white/10"
+                        }`}
+                      >
+
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                            selected
+                              ? "bg-[#0A9396] text-white"
+                              : "bg-gray-100 text-gray-500 dark:bg-white/10"
+                          }`}
+                        >
+                          {selected ? (
+                            <Check className="h-5 w-5" />
+                          ) : (
+                            <UserCheck className="h-5 w-5" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">
+                            {client.full_name ||
+                              "Sin nombre"}
+                          </p>
+
+                          <p className="mt-1 truncate text-xs text-gray-500">
+                            {
+                              client.email ||
+                              "Sin email"
+                            }
+                          </p>
+
+                        </div>
+
+                      </button>
+                    )
+                  }
+                )}
+
+              </div>
 
             </div>
           )}
 
-          {/* CLIENTE PENDIENTE */}
+          {/* CLIENTE SIN CUENTA */}
           {clientMode ===
             "pending" && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
@@ -610,7 +744,7 @@ export default function NewProductionForm({
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-amber-800/70 dark:text-amber-200/70">
-                    Podés cargar todas sus producciones ahora. Cuando se registre en Clover Digital con este mismo email, se vincularán automáticamente a su cuenta.
+                    Cuando se registre con este email, la producción se vinculará automáticamente a su cuenta.
                   </p>
 
                 </div>
@@ -634,8 +768,7 @@ export default function NewProductionForm({
                       event
                     ) =>
                       setPendingClientName(
-                        event.target
-                          .value
+                        event.target.value
                       )
                     }
                     placeholder="Ej. Mariana Kuhn"
@@ -659,8 +792,7 @@ export default function NewProductionForm({
                       event
                     ) =>
                       setPendingClientEmail(
-                        event.target
-                          .value
+                        event.target.value
                       )
                     }
                     placeholder="cliente@email.com"
@@ -694,8 +826,7 @@ export default function NewProductionForm({
                   event
                 ) =>
                   setPropertyName(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -719,8 +850,7 @@ export default function NewProductionForm({
                   event
                 ) =>
                   setPropertyAddress(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -752,8 +882,7 @@ export default function NewProductionForm({
                     event
                   ) =>
                     setProductionDate(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -777,8 +906,7 @@ export default function NewProductionForm({
                   event
                 ) =>
                   setStatus(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -824,7 +952,9 @@ export default function NewProductionForm({
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
               {SERVICES.map(
-                (service) => {
+                (
+                  service
+                ) => {
                   const active =
                     services.includes(
                       service
@@ -847,16 +977,19 @@ export default function NewProductionForm({
                           : "border-gray-200 text-gray-600 hover:border-[#0A9396]/40 dark:border-white/10 dark:text-gray-300"
                       }`}
                     >
-                      {service}
+                      {
+                        service
+                      }
                     </button>
                   )
                 }
               )}
 
             </div>
+
           </div>
 
-          {/* PRECIO / ENTREGA */}
+          {/* VALOR / ENTREGA */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
@@ -868,8 +1001,6 @@ export default function NewProductionForm({
               <input
                 type="number"
                 min="0"
-                step="1"
-                placeholder="90000"
                 value={
                   totalAmount
                 }
@@ -877,10 +1008,10 @@ export default function NewProductionForm({
                   event
                 ) =>
                   setTotalAmount(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
+                placeholder="90000"
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
 
@@ -901,8 +1032,7 @@ export default function NewProductionForm({
                   event
                 ) =>
                   setEstimatedDelivery(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
                 className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
@@ -920,7 +1050,7 @@ export default function NewProductionForm({
             </label>
 
             <textarea
-              rows={4}
+              rows={5}
               value={
                 notes
               }
@@ -928,19 +1058,20 @@ export default function NewProductionForm({
                 event
               ) =>
                 setNotes(
-                  event.target
-                    .value
+                  event.target.value
                 )
               }
-              placeholder="Observaciones de la producción..."
+              placeholder="Notas internas de la producción..."
               className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
 
           </div>
 
           {message && (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {message}
+            <p className="text-sm font-medium text-red-600 dark:text-red-400">
+              {
+                message
+              }
             </p>
           )}
 
@@ -964,11 +1095,13 @@ export default function NewProductionForm({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
+
                   Creando...
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4" />
+
                   Crear producción
                 </>
               )}
@@ -980,6 +1113,7 @@ export default function NewProductionForm({
         </form>
 
       </div>
+
     </main>
   )
 }

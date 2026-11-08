@@ -130,14 +130,10 @@ export default async function ProductionDetailPage({
         created_at
       `)
       .eq(
-        "id",
-        id
-      )
-      .eq(
-        "user_id",
-        user.id
-      )
-      .maybeSingle()
+  "id",
+  id
+)
+.maybeSingle()
 
   if (!production) {
     notFound()

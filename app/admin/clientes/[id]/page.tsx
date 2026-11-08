@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Banknote,
-  CalendarDays,
   CircleDollarSign,
   FolderOpen,
   GraduationCap,
@@ -21,6 +20,7 @@ import {
 } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+import ClientTaxIdEditor from "@/components/client-tax-id-editor"
 
 interface PageProps {
   params: Promise<{
@@ -126,43 +126,108 @@ export default async function AdminClientDetailPage({
   }
 
   const {
-    data: productions,
+    data: taxData,
   } =
     await supabase
-      .from("productions")
-      .select(`
-        id,
-        property_name,
-        property_address,
-        production_date,
-        status,
-        services,
-        total_amount,
-        invoice_status,
-        invoice_number,
-        delivered_at,
-        created_at
-      `)
+      .from(
+        "client_tax_data"
+      )
+      .select(
+        "tax_id"
+      )
       .eq(
         "user_id",
         id
       )
-      .order(
-        "production_date",
-        {
-          ascending: false,
-          nullsFirst: false,
-        }
+      .maybeSingle()
+
+  /*
+   * PRODUCCIONES DEL CLIENTE
+   * Incluye las compartidas.
+   */
+  const {
+    data: memberships,
+  } =
+    await supabase
+      .from(
+        "production_users"
+      )
+      .select(
+        "production_id"
+      )
+      .eq(
+        "user_id",
+        id
       )
 
-  const allProductions =
-    productions || []
-
   const productionIds =
-    allProductions.map(
-      (production) =>
-        production.id
-    )
+    [
+      ...new Set(
+        (
+          memberships ||
+          []
+        ).map(
+          (membership) =>
+            membership.production_id
+        )
+      ),
+    ]
+
+  let allProductions:
+    {
+      id: string
+      property_name: string
+      property_address: string | null
+      production_date: string | null
+      status: string
+      services: string[]
+      total_amount: number | null
+      invoice_status: string | null
+      invoice_number: string | null
+      delivered_at: string | null
+      created_at: string
+    }[] = []
+
+  if (
+    productionIds.length >
+    0
+  ) {
+    const {
+      data:
+        productions,
+    } =
+      await supabase
+        .from(
+          "productions"
+        )
+        .select(`
+          id,
+          property_name,
+          property_address,
+          production_date,
+          status,
+          services,
+          total_amount,
+          invoice_status,
+          invoice_number,
+          delivered_at,
+          created_at
+        `)
+        .in(
+          "id",
+          productionIds
+        )
+        .order(
+          "production_date",
+          {
+            ascending: false,
+            nullsFirst: false,
+          }
+        )
+
+    allProductions =
+      productions || []
+  }
 
   let payments:
     {
@@ -178,7 +243,8 @@ export default async function AdminClientDetailPage({
     0
   ) {
     const {
-      data: paymentData,
+      data:
+        paymentData,
     } =
       await supabase
         .from(
@@ -376,6 +442,7 @@ export default async function AdminClientDetailPage({
 
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
 
         <Link
@@ -383,10 +450,11 @@ export default async function AdminClientDetailPage({
           className="inline-flex items-center gap-2 text-sm font-medium text-[#0A9396] hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
+
           Volver a clientes
         </Link>
 
-        {/* CABECERA CLIENTE */}
+        {/* CABECERA */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
@@ -432,6 +500,7 @@ export default async function AdminClientDetailPage({
                     className="inline-flex items-center gap-2 hover:text-[#0A9396]"
                   >
                     <Mail className="h-4 w-4" />
+
                     {
                       profile.email
                     }
@@ -444,6 +513,7 @@ export default async function AdminClientDetailPage({
                     className="inline-flex items-center gap-2 hover:text-[#0A9396]"
                   >
                     <Phone className="h-4 w-4" />
+
                     {
                       profile.phone
                     }
@@ -451,16 +521,21 @@ export default async function AdminClientDetailPage({
                 )}
 
               </div>
+
             </div>
 
             <div className="text-sm text-gray-400">
+
               Registrado el{" "}
+
               {formatDate(
                 profile.created_at
               )}
+
             </div>
 
           </div>
+
         </section>
 
         {/* MÉTRICAS */}
@@ -539,6 +614,21 @@ export default async function AdminClientDetailPage({
 
         </div>
 
+        {/* CUIT / DNI */}
+        <div className="mt-6">
+
+          <ClientTaxIdEditor
+            userId={
+              profile.id
+            }
+            initialTaxId={
+              taxData?.tax_id ||
+              null
+            }
+          />
+
+        </div>
+
         {/* ALERTAS */}
         {(pendingInvoices >
           0 ||
@@ -552,26 +642,33 @@ export default async function AdminClientDetailPage({
                 href="/admin/finanzas"
                 className="rounded-3xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10"
               >
+
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                   Facturación pendiente
                 </p>
 
                 <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+
                   {
                     pendingInvoices
                   }{" "}
+
                   producción
                   {pendingInvoices ===
                   1
                     ? ""
                     : "es"}{" "}
+
                   pendiente
                   {pendingInvoices ===
                   1
                     ? ""
                     : "s"}{" "}
+
                   de facturar.
+
                 </p>
+
               </Link>
             )}
 
@@ -581,22 +678,29 @@ export default async function AdminClientDetailPage({
                 href="/admin/recuperaciones"
                 className="rounded-3xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10"
               >
+
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                   Recuperaciones pendientes
                 </p>
 
                 <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+
                   Hay{" "}
+
                   {
                     pendingRecoveries
                   }{" "}
+
                   solicitud
                   {pendingRecoveries ===
                   1
                     ? ""
                     : "es"}{" "}
+
                   para revisar.
+
                 </p>
+
               </Link>
             )}
 
@@ -613,7 +717,7 @@ export default async function AdminClientDetailPage({
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Historial completo y situación de cobro de cada propiedad.
+              Incluye producciones propias y compartidas con este cliente.
             </p>
 
           </div>
@@ -674,12 +778,10 @@ export default async function AdminClientDetailPage({
                               STATUS_CLASSES.archived
                             }`}
                           >
-                            {
-                              STATUS_LABELS[
-                                production.status
-                              ] ||
+                            {STATUS_LABELS[
                               production.status
-                            }
+                            ] ||
+                              production.status}
                           </span>
 
                         </div>
@@ -827,7 +929,8 @@ export default async function AdminClientDetailPage({
                     Array.isArray(
                       enrollment.courses
                     )
-                      ? enrollment.courses[0]
+                      ? enrollment
+                          .courses[0]
                       : enrollment.courses
 
                   return (
@@ -844,17 +947,23 @@ export default async function AdminClientDetailPage({
                       </p>
 
                       <p className="mt-1 text-sm text-gray-500">
+
                         Estado:{" "}
+
                         {
                           enrollment.status
                         }
+
                       </p>
 
                       <p className="mt-1 text-xs text-gray-400">
+
                         Inscripción:{" "}
+
                         {formatDate(
                           enrollment.enrolled_at
                         )}
+
                       </p>
 
                     </div>
@@ -916,15 +1025,19 @@ export default async function AdminClientDetailPage({
                       <div className="flex-1">
 
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          {production?.property_name ||
+                          {production
+                            ?.property_name ||
                             "Producción"}
                         </p>
 
                         <p className="mt-1 text-sm text-gray-500">
+
                           Solicitada el{" "}
+
                           {formatDate(
                             recovery.requested_at
                           )}
+
                         </p>
 
                       </div>
@@ -959,7 +1072,7 @@ export default async function AdminClientDetailPage({
 
         </section>
 
-        {/* ACCESO FINANZAS */}
+        {/* FINANZAS */}
         <Link
           href="/admin/finanzas"
           className="mt-6 flex items-center justify-between rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 dark:border-white/10 dark:bg-[#06222c]"
@@ -990,6 +1103,7 @@ export default async function AdminClientDetailPage({
         </Link>
 
       </div>
+
     </main>
   )
 }

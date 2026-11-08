@@ -107,42 +107,89 @@ export default async function CuentaPage() {
     profile?.avatar_url ||
     metadataAvatar
 
-  /*
+   /*
    * PRODUCCIONES
+   *
+   * Ahora el acceso depende de
+   * production_users, permitiendo
+   * producciones compartidas.
    */
   const {
-    data: productions,
+    data: productionMemberships,
   } =
     await supabase
-      .from("productions")
-      .select(`
-        id,
-        property_name,
-        property_address,
-        production_date,
-        status,
-        services,
-        total_amount,
-        estimated_delivery_at,
-        delivered_at,
-        available_until,
-        created_at
-      `)
+      .from(
+        "production_users"
+      )
+      .select(
+        "production_id"
+      )
       .eq(
         "user_id",
         user.id
       )
-      .order(
-        "production_date",
-        {
-          ascending: false,
-          nullsFirst: false,
-        }
-      )
+
+  const productionIds =
+    productionMemberships?.map(
+      (item) =>
+        item.production_id
+    ) || []
+
+  let productions:
+    {
+      id: string
+      property_name: string
+      property_address: string | null
+      production_date: string | null
+      status: string
+      services: string[]
+      total_amount: number | null
+      estimated_delivery_at: string | null
+      delivered_at: string | null
+      available_until: string | null
+      created_at: string
+    }[] = []
+
+  if (
+    productionIds.length >
+    0
+  ) {
+    const {
+      data,
+    } =
+      await supabase
+        .from("productions")
+        .select(`
+          id,
+          property_name,
+          property_address,
+          production_date,
+          status,
+          services,
+          total_amount,
+          estimated_delivery_at,
+          delivered_at,
+          available_until,
+          created_at
+        `)
+        .in(
+          "id",
+          productionIds
+        )
+        .order(
+          "production_date",
+          {
+            ascending: false,
+            nullsFirst: false,
+          }
+        )
+
+    productions =
+      data || []
+  }
 
   const allProductions =
-    productions || []
-
+    productions
   const now =
     Date.now()
 
