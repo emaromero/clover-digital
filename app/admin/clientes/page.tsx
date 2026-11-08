@@ -146,10 +146,47 @@ export default async function AdminClientesPage() {
   const allRecoveries =
     recoveryRequests || []
 
+  const normalizeEmail = (
+    email?: string | null
+  ) =>
+    typeof email ===
+    "string"
+      ? email
+          .trim()
+          .toLowerCase()
+      : ""
+
+  /*
+   * Emails de usuarios que ya tienen
+   * una cuenta registrada.
+   */
+  const registeredEmailMap =
+    new Map(
+      clients
+        .filter(
+          (client) =>
+            Boolean(
+              normalizeEmail(
+                client.email
+              )
+            )
+        )
+        .map(
+          (client) => [
+            normalizeEmail(
+              client.email
+            ),
+            client.id,
+          ]
+        )
+    )
+
   /*
    * CLIENTES PENDIENTES
    *
-   * Se agrupan por email.
+   * Solo mostramos personas cuyo email
+   * todavía NO corresponde a una cuenta
+   * registrada.
    */
   const pendingMap =
     new Map<
@@ -171,23 +208,24 @@ export default async function AdminClientesPage() {
       continue
     }
 
-    const rawEmail =
-      production.client_email
+    const email =
+      normalizeEmail(
+        production.client_email
+      )
 
-    if (
-      !rawEmail ||
-      typeof rawEmail !==
-        "string"
-    ) {
+    if (!email) {
       continue
     }
 
-    const email =
-      rawEmail
-        .trim()
-        .toLowerCase()
-
-    if (!email) {
+    /*
+     * Si ese email ya pertenece a un perfil,
+     * NO es un cliente pendiente de registro.
+     */
+    if (
+      registeredEmailMap.has(
+        email
+      )
+    ) {
       continue
     }
 
@@ -659,13 +697,48 @@ export default async function AdminClientesPage() {
                 (
                   client
                 ) => {
+                  const clientEmail =
+                    normalizeEmail(
+                      client.email
+                    )
+
+                  /*
+                   * Incluimos:
+                   * 1. producciones vinculadas por user_id
+                   * 2. producciones antiguas sin user_id cuyo
+                   *    email coincide con este usuario registrado
+                   */
                   const clientProductions =
                     allProductions.filter(
                       (
                         item
-                      ) =>
-                        item.user_id ===
-                        client.id
+                      ) => {
+                        if (
+                          item.user_id ===
+                          client.id
+                        ) {
+                          return true
+                        }
+
+                        if (
+                          item.user_id
+                        ) {
+                          return false
+                        }
+
+                        if (
+                          !clientEmail
+                        ) {
+                          return false
+                        }
+
+                        return (
+                          normalizeEmail(
+                            item.client_email
+                          ) ===
+                          clientEmail
+                        )
+                      }
                     )
 
                   const activeEnrollment =
