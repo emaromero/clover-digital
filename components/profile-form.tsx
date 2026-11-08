@@ -1,7 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import {
+  useState,
+} from "react"
+
+import {
+  CheckCircle2,
+  Loader2,
+} from "lucide-react"
+
 import { useRouter } from "next/navigation"
+
 import { createClient } from "@/lib/supabase/client"
 
 interface ProfileFormProps {
@@ -19,197 +28,246 @@ export default function ProfileForm({
   initialAvatar,
   initialPhone,
 }: ProfileFormProps) {
-  const router = useRouter()
-  const supabase = createClient()
+  const router =
+    useRouter()
 
-  const [fullName, setFullName] = useState(initialName)
-  const [phone, setPhone] = useState(initialPhone)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState("")
+  const [
+    fullName,
+    setFullName,
+  ] =
+    useState(
+      initialName
+    )
 
-  const handleSave = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const [
+    phone,
+    setPhone,
+  ] =
+    useState(
+      initialPhone
+    )
 
-    setSaving(true)
-    setMessage("")
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false)
 
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        full_name: fullName,
-        email,
-        avatar_url: initialAvatar,
-        phone,
-        updated_at: new Date().toISOString(),
-      })
+  const [
+    success,
+    setSuccess,
+  ] =
+    useState(false)
 
-    if (error) {
-      setMessage("No se pudo guardar el perfil.")
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] =
+    useState("")
+
+  const handleSave =
+    async (
+      event: React.FormEvent
+    ) => {
+      event.preventDefault()
+
+      if (
+        !fullName.trim()
+      ) {
+        setErrorMessage(
+          "Ingresá tu nombre y apellido."
+        )
+
+        return
+      }
+
+      setSaving(true)
+      setSuccess(false)
+      setErrorMessage("")
+
+      const supabase =
+        createClient()
+
+      const {
+        error,
+      } =
+        await supabase
+          .from("profiles")
+          .upsert({
+            id:
+              userId,
+
+            full_name:
+              fullName.trim(),
+
+            email,
+
+            avatar_url:
+              initialAvatar,
+
+            phone:
+              phone.trim() ||
+              null,
+
+            updated_at:
+              new Date().toISOString(),
+          })
+
+      if (error) {
+        console.error(
+          "Error guardando perfil:",
+          error
+        )
+
+        setErrorMessage(
+          "No pudimos guardar los cambios."
+        )
+
+        setSaving(false)
+
+        return
+      }
+
       setSaving(false)
-      return
+      setSuccess(true)
+
+      router.refresh()
+
+      window.setTimeout(
+        () => {
+          setSuccess(false)
+        },
+        2000
+      )
     }
 
-    setMessage("Perfil guardado correctamente.")
-    setSaving(false)
-    router.refresh()
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
-  }
-
   return (
-    <div className="mt-8 border-t border-gray-200 dark:border-white/10 pt-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-        Tus datos
-      </h2>
+    <form
+      onSubmit={
+        handleSave
+      }
+      className="mt-8 space-y-5"
+    >
 
-      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-        Completá tu perfil para usar Clover Academy.
-      </p>
+      <div>
 
-      <form onSubmit={handleSave} className="mt-6 space-y-4">
-        <div>
-          <label
-            htmlFor="fullName"
-            className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
-          >
-            Nombre y apellido
-          </label>
+        <label
+          htmlFor="fullName"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
+          Nombre y apellido
+        </label>
 
-          <input
-            id="fullName"
-            type="text"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-            className="
-              w-full
-              rounded-xl
-              border
-              border-gray-300
-              dark:border-white/15
-              bg-white
-              dark:bg-[#001219]
-              px-4
-              py-3
-              outline-none
-              focus:ring-2
-              focus:ring-[#0A9396]
-            "
-          />
+        <input
+          id="fullName"
+          type="text"
+          value={
+            fullName
+          }
+          onChange={(
+            event
+          ) =>
+            setFullName(
+              event.target.value
+            )
+          }
+          autoComplete="name"
+          className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-[#0A9396] focus:ring-2 focus:ring-[#0A9396]/20 dark:border-white/15 dark:bg-[#001219]"
+        />
+
+      </div>
+
+      <div>
+
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
+          Email
+        </label>
+
+        <input
+          id="email"
+          type="email"
+          value={
+            email
+          }
+          disabled
+          className="mt-2 w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+        />
+
+        <p className="mt-2 text-xs text-gray-400">
+          El email de acceso no se puede modificar desde acá.
+        </p>
+
+      </div>
+
+      <div>
+
+        <label
+          htmlFor="phone"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
+          Teléfono
+        </label>
+
+        <input
+          id="phone"
+          type="tel"
+          value={
+            phone
+          }
+          onChange={(
+            event
+          ) =>
+            setPhone(
+              event.target.value
+            )
+          }
+          placeholder="+54 9 11 ..."
+          autoComplete="tel"
+          className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-[#0A9396] focus:ring-2 focus:ring-[#0A9396]/20 dark:border-white/15 dark:bg-[#001219]"
+        />
+
+      </div>
+
+      {errorMessage && (
+        <p className="text-sm font-medium text-red-600 dark:text-red-400">
+          {
+            errorMessage
+          }
+        </p>
+      )}
+
+      {success && (
+        <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-300">
+
+          <CheckCircle2 className="h-4 w-4" />
+
+          Cambios guardados correctamente.
+
         </div>
+      )}
 
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
-          >
-            Email
-          </label>
+      <button
+        type="submit"
+        disabled={
+          saving ||
+          !fullName.trim()
+        }
+        className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50"
+      >
 
-          <input
-            id="email"
-            type="email"
-            value={email}
-            disabled
-            className="
-              w-full
-              rounded-xl
-              border
-              border-gray-200
-              dark:border-white/10
-              bg-gray-100
-              dark:bg-white/5
-              px-4
-              py-3
-              text-gray-500
-              cursor-not-allowed
-            "
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="phone"
-            className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
-          >
-            Teléfono
-          </label>
-
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            placeholder="+54 9 11 ..."
-            autoComplete="tel"
-            className="
-              w-full
-              rounded-xl
-              border
-              border-gray-300
-              dark:border-white/15
-              bg-white
-              dark:bg-[#001219]
-              px-4
-              py-3
-              outline-none
-              focus:ring-2
-              focus:ring-[#0A9396]
-            "
-          />
-        </div>
-
-        {message && (
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {message}
-          </p>
+        {saving && (
+          <Loader2 className="h-4 w-4 animate-spin" />
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="
-              rounded-xl
-              bg-[#0e5c6e]
-              hover:bg-[#001219]
-              text-white
-              font-medium
-              px-5
-              py-3
-              transition-colors
-              disabled:opacity-60
-            "
-          >
-            {saving ? "Guardando..." : "Guardar cambios"}
-          </button>
+        {saving
+          ? "Guardando..."
+          : "Guardar cambios"}
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="
-              rounded-xl
-              border
-              border-gray-300
-              dark:border-white/15
-              px-5
-              py-3
-              font-medium
-              text-gray-700
-              dark:text-gray-200
-              hover:bg-gray-50
-              dark:hover:bg-white/5
-              transition-colors
-            "
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </form>
-    </div>
+      </button>
+
+    </form>
   )
 }
