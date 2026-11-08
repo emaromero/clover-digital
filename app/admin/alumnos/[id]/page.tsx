@@ -1,4 +1,5 @@
 import Link from "next/link"
+
 import {
   notFound,
   redirect,
@@ -84,6 +85,16 @@ export default async function AdminAlumnoPage({
     notFound()
   }
 
+  /*
+   * INSCRIPCIONES
+   *
+   * Importante:
+   * ya no filtramos solamente las activas.
+   *
+   * Así conservamos y mostramos todo el
+   * historial del alumno, incluso cursos
+   * cuyo acceso fue retirado.
+   */
   const {
     data: enrollments,
   } =
@@ -107,10 +118,6 @@ export default async function AdminAlumnoPage({
         "user_id",
         id
       )
-      .eq(
-        "status",
-        "active"
-      )
       .order(
         "enrolled_at",
         {
@@ -118,7 +125,7 @@ export default async function AdminAlumnoPage({
         }
       )
 
-  const activeEnrollments =
+  const allEnrollments =
     enrollments || []
 
   const getCourse = (
@@ -131,7 +138,7 @@ export default async function AdminAlumnoPage({
       : enrollment.courses
 
   const courses =
-    activeEnrollments
+    allEnrollments
       .map(
         (enrollment) => {
           const course =
@@ -172,16 +179,38 @@ export default async function AdminAlumnoPage({
         }
       }>
 
-  const courseIds =
-    courses.map(
+  const activeCourses =
+    courses.filter(
       (item) =>
-        item.course.id
+        item.status ===
+        "active"
     )
 
+  const inactiveCourses =
+    courses.filter(
+      (item) =>
+        item.status !==
+        "active"
+    )
+
+  const courseIds =
+    [
+      ...new Set(
+        courses.map(
+          (item) =>
+            item.course.id
+        )
+      ),
+    ]
+
+  /*
+   * MÓDULOS Y CLASES
+   */
   const {
     data: modules,
   } =
-    courseIds.length > 0
+    courseIds.length >
+    0
       ? await supabase
           .from("modules")
           .select(`
@@ -208,8 +237,16 @@ export default async function AdminAlumnoPage({
               ascending: true,
             }
           )
-      : { data: [] }
+      : {
+          data: [],
+        }
 
+  /*
+   * PROGRESO
+   *
+   * Se conserva aunque el curso quede
+   * inactivo.
+   */
   const {
     data: progress,
   } =
@@ -308,8 +345,10 @@ export default async function AdminAlumnoPage({
     const percentage =
       total > 0
         ? Math.round(
-            (completed /
-              total) *
+            (
+              completed /
+              total
+            ) *
               100
           )
         : 0
@@ -331,7 +370,8 @@ export default async function AdminAlumnoPage({
         )
 
     const lastActivityTimestamp =
-      activityDates.length > 0
+      activityDates.length >
+      0
         ? Math.max(
             ...activityDates
           )
@@ -372,7 +412,60 @@ export default async function AdminAlumnoPage({
       })
     )
 
-  const overallCompleted =
+  const activeCourseStats =
+    courseStats.filter(
+      (item) =>
+        item.status ===
+        "active"
+    )
+
+  /*
+   * PROGRESO GENERAL ACTIVO
+   *
+   * La métrica principal se calcula solo
+   * sobre cursos a los que actualmente
+   * tiene acceso.
+   *
+   * El historial conserva su propio progreso
+   * individual debajo.
+   */
+  const activeCompleted =
+    activeCourseStats.reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        item.stats.completed,
+      0
+    )
+
+  const activeLessons =
+    activeCourseStats.reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        item.stats.total,
+      0
+    )
+
+  const activePercentage =
+    activeLessons > 0
+      ? Math.round(
+          (
+            activeCompleted /
+            activeLessons
+          ) *
+            100
+        )
+      : 0
+
+  /*
+   * PROGRESO HISTÓRICO TOTAL
+   */
+  const historicalCompleted =
     courseStats.reduce(
       (
         total,
@@ -383,7 +476,7 @@ export default async function AdminAlumnoPage({
       0
     )
 
-  const overallLessons =
+  const historicalLessons =
     courseStats.reduce(
       (
         total,
@@ -394,15 +487,9 @@ export default async function AdminAlumnoPage({
       0
     )
 
-  const overallPercentage =
-    overallLessons > 0
-      ? Math.round(
-          (overallCompleted /
-            overallLessons) *
-            100
-        )
-      : 0
-
+  /*
+   * ÚLTIMA ACTIVIDAD
+   */
   const allActivityDates =
     (progress || [])
       .filter(
@@ -434,23 +521,32 @@ export default async function AdminAlumnoPage({
   const daysWithoutActivity =
     lastActivity
       ? Math.floor(
-          (Date.now() -
-            lastActivity.getTime()) /
-            (1000 *
+          (
+            Date.now() -
+            lastActivity.getTime()
+          ) /
+            (
+              1000 *
               60 *
               60 *
-              24)
+              24
+            )
         )
       : null
 
   const inactive =
-    courses.length > 0 &&
+    activeCourses.length >
+      0 &&
     daysWithoutActivity !==
       null &&
     daysWithoutActivity >=
       10 &&
-    overallPercentage < 100
+    activePercentage <
+      100
 
+  /*
+   * FORMATEADORES
+   */
   const formatDate = (
     date?:
       | string
@@ -488,7 +584,8 @@ export default async function AdminAlumnoPage({
       )
 
     const remainingSeconds =
-      seconds % 60
+      seconds %
+      60
 
     return `${minutes}:${remainingSeconds
       .toString()
@@ -498,8 +595,29 @@ export default async function AdminAlumnoPage({
       )}`
   }
 
+  const getStatusLabel = (
+    status: string
+  ) => {
+    if (
+      status ===
+      "active"
+    ) {
+      return "Activo"
+    }
+
+    if (
+      status ===
+      "inactive"
+    ) {
+      return "Acceso retirado"
+    }
+
+    return status
+  }
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
+
       <div className="mx-auto max-w-6xl px-4 py-10 md:py-16">
 
         <Link
@@ -507,9 +625,11 @@ export default async function AdminAlumnoPage({
           className="inline-flex items-center gap-2 text-sm font-medium text-[#0A9396] hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
+
           Volver a Academy
         </Link>
 
+        {/* ALUMNO */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -543,14 +663,20 @@ export default async function AdminAlumnoPage({
 
                 <div className="mt-3 flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400">
 
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    {student.email}
-                  </div>
+                  {student.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+
+                      {
+                        student.email
+                      }
+                    </div>
+                  )}
 
                   {student.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
+
                       {
                         student.phone
                       }
@@ -568,12 +694,17 @@ export default async function AdminAlumnoPage({
               {courses.length ===
               0 ? (
                 <span className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400">
+                  Sin historial Academy
+                </span>
+              ) : activeCourses.length ===
+                0 ? (
+                <span className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400">
                   Sin cursos activos
                 </span>
-              ) : overallPercentage ===
+              ) : activePercentage ===
                 100 ? (
                 <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                  Todos los cursos completados
+                  Cursos activos completados
                 </span>
               ) : inactive ? (
                 <span className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
@@ -585,11 +716,24 @@ export default async function AdminAlumnoPage({
                 </span>
               ) : (
                 <span className="rounded-full bg-[#0A9396]/10 px-4 py-2 text-sm font-semibold text-[#0A9396]">
-                  {courses.length}{" "}
-                  {courses.length ===
+                  {activeCourses.length}{" "}
+                  {activeCourses.length ===
                   1
                     ? "curso activo"
                     : "cursos activos"}
+                </span>
+              )}
+
+              {inactiveCourses.length >
+                0 && (
+                <span className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400">
+                  {
+                    inactiveCourses.length
+                  }{" "}
+                  {inactiveCourses.length ===
+                  1
+                    ? "curso histórico"
+                    : "cursos históricos"}
                 </span>
               )}
 
@@ -606,41 +750,46 @@ export default async function AdminAlumnoPage({
             <GraduationCap className="h-8 w-8 text-[#0A9396]" />
 
             <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
-              Sin cursos activos
+              Sin historial en Academy
             </h2>
 
             <p className="mt-2 text-gray-500 dark:text-gray-400">
-              Este usuario todavía no tiene acceso a ningún curso de Clover Academy.
+              Este usuario todavía nunca tuvo acceso a un curso de Clover Academy.
             </p>
 
           </section>
         ) : (
           <>
-            <section className="mt-6 grid gap-4 md:grid-cols-4">
+
+            {/* MÉTRICAS */}
+            <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
 
               <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
 
                 <p className="text-sm text-gray-500">
-                  Progreso general
+                  Progreso activo
                 </p>
 
                 <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-                  {
-                    overallPercentage
-                  }
-                  %
+                  {activeCourses.length >
+                  0
+                    ? `${activePercentage}%`
+                    : "-"}
                 </p>
 
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+                {activeCourses.length >
+                  0 && (
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
 
-                  <div
-                    className="h-full rounded-full bg-[#0A9396]"
-                    style={{
-                      width: `${overallPercentage}%`,
-                    }}
-                  />
+                    <div
+                      className="h-full rounded-full bg-[#0A9396]"
+                      style={{
+                        width: `${activePercentage}%`,
+                      }}
+                    />
 
-                </div>
+                  </div>
+                )}
 
               </div>
 
@@ -652,8 +801,26 @@ export default async function AdminAlumnoPage({
 
                 <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
                   {
+                    activeCourses.length
+                  }
+                </p>
+
+              </div>
+
+              <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c]">
+
+                <p className="text-sm text-gray-500">
+                  Historial
+                </p>
+
+                <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                  {
                     courses.length
                   }
+                </p>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  cursos totales
                 </p>
 
               </div>
@@ -665,8 +832,8 @@ export default async function AdminAlumnoPage({
                 </p>
 
                 <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-                  {overallCompleted}/
-                  {overallLessons}
+                  {historicalCompleted}/
+                  {historicalLessons}
                 </p>
 
                 <p className="mt-2 text-sm text-gray-500">
@@ -705,6 +872,7 @@ export default async function AdminAlumnoPage({
 
             </section>
 
+            {/* CURSOS */}
             <div className="mt-8 space-y-8">
 
               {courseStats.map(
@@ -719,9 +887,15 @@ export default async function AdminAlumnoPage({
                     key={
                       enrollment_id
                     }
-                    className="overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]"
+                    className={`overflow-hidden rounded-3xl border bg-white dark:bg-[#06222c] ${
+                      status ===
+                      "active"
+                        ? "border-gray-200/70 dark:border-white/10"
+                        : "border-gray-200/50 opacity-90 dark:border-white/5"
+                    }`}
                   >
 
+                    {/* CABECERA CURSO */}
                     <div
                       className={
                         course.cover_url
@@ -732,9 +906,26 @@ export default async function AdminAlumnoPage({
 
                       <div className="p-6 md:p-8">
 
-                        <p className="text-xs font-semibold uppercase tracking-wider text-[#0A9396]">
-                          Curso
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+
+                          <p className="text-xs font-semibold uppercase tracking-wider text-[#0A9396]">
+                            Curso
+                          </p>
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              status ===
+                              "active"
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                : "bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400"
+                            }`}
+                          >
+                            {getStatusLabel(
+                              status
+                            )}
+                          </span>
+
+                        </div>
 
                         <h2 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
                           {
@@ -760,8 +951,11 @@ export default async function AdminAlumnoPage({
                           </span>
 
                           <span>
-                            Estado:{" "}
-                            {status}
+                            Progreso:{" "}
+                            {
+                              stats.percentage
+                            }
+                            %
                           </span>
 
                         </div>
@@ -775,7 +969,7 @@ export default async function AdminAlumnoPage({
                             src={
                               course.cover_url
                             }
-                            alt=""
+                            alt={`Portada de ${course.title}`}
                             className="h-full w-full object-cover"
                           />
 
@@ -784,6 +978,7 @@ export default async function AdminAlumnoPage({
 
                     </div>
 
+                    {/* MÉTRICAS CURSO */}
                     <div className="grid gap-4 border-b border-gray-100 p-6 dark:border-white/10 md:grid-cols-3 md:p-8">
 
                       <div>
@@ -850,13 +1045,14 @@ export default async function AdminAlumnoPage({
 
                     </div>
 
+                    {/* MÓDULOS */}
                     {stats.modules.length ===
                     0 ? (
                       <div className="p-8 text-center text-sm text-gray-500">
                         Este curso todavía no tiene clases publicadas.
                       </div>
                     ) : (
-                      <div className="space-y-0">
+                      <div>
 
                         {stats.modules.map(
                           (
@@ -880,8 +1076,10 @@ export default async function AdminAlumnoPage({
                               moduleLessons.length >
                               0
                                 ? Math.round(
-                                    (moduleCompleted /
-                                      moduleLessons.length) *
+                                    (
+                                      moduleCompleted /
+                                      moduleLessons.length
+                                    ) *
                                       100
                                   )
                                 : 0
@@ -956,6 +1154,7 @@ export default async function AdminAlumnoPage({
 
                                 </div>
 
+                                {/* CLASES */}
                                 <div className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-white/10 dark:border-white/10">
 
                                   {moduleLessons.map(
@@ -999,13 +1198,15 @@ export default async function AdminAlumnoPage({
 
                                             <div className="mt-1 flex flex-wrap gap-4 text-xs text-gray-400">
 
-                                              {lessonProgress?.last_position_seconds >
+                                              {lessonProgress
+                                                ?.last_position_seconds >
                                                 0 && (
                                                 <span className="flex items-center gap-1">
 
                                                   <Clock3 className="h-3.5 w-3.5" />
 
                                                   Visto hasta{" "}
+
                                                   {formatTime(
                                                     lessonProgress.last_position_seconds
                                                   )}
@@ -1016,10 +1217,13 @@ export default async function AdminAlumnoPage({
                                               {completed &&
                                                 lessonProgress?.completed_at && (
                                                 <span>
+
                                                   Completada{" "}
+
                                                   {formatDate(
                                                     lessonProgress.completed_at
                                                   )}
+
                                                 </span>
                                               )}
 
@@ -1059,6 +1263,7 @@ export default async function AdminAlumnoPage({
               )}
 
             </div>
+
           </>
         )}
 
@@ -1067,6 +1272,7 @@ export default async function AdminAlumnoPage({
         </p>
 
       </div>
+
     </main>
   )
 }
