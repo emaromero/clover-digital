@@ -17,23 +17,12 @@ import { createClient } from "@/lib/supabase/server"
 import LogoutButton from "@/components/logout-button"
 
 const STATUS_LABELS: Record<string, string> = {
-  confirmed:
-    "Confirmada",
-
-  completed:
-    "Realizada",
-
-  editing:
-    "En edición",
-
-  delivered:
-    "Entregada",
-
-  archived:
-    "Archivada",
-
-  cancelled:
-    "Cancelada",
+  confirmed: "Confirmada",
+  completed: "Realizada",
+  editing: "En edición",
+  delivered: "Entregada",
+  archived: "Archivada",
+  cancelled: "Cancelada",
 }
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -79,9 +68,6 @@ export default async function CuentaPage() {
     user.user_metadata?.picture ||
     null
 
-  /*
-   * PERFIL
-   */
   const {
     data: profile,
   } =
@@ -107,12 +93,8 @@ export default async function CuentaPage() {
     profile?.avatar_url ||
     metadataAvatar
 
-   /*
+  /*
    * PRODUCCIONES
-   *
-   * Ahora el acceso depende de
-   * production_users, permitiendo
-   * producciones compartidas.
    */
   const {
     data: productionMemberships,
@@ -190,6 +172,7 @@ export default async function CuentaPage() {
 
   const allProductions =
     productions
+
   const now =
     Date.now()
 
@@ -295,8 +278,7 @@ export default async function CuentaPage() {
       )
 
   const activeEnrollments =
-    enrollments ||
-    []
+    enrollments || []
 
   /*
    * ADMIN
@@ -327,14 +309,9 @@ export default async function CuentaPage() {
     return new Intl.DateTimeFormat(
       "es-AR",
       {
-        day:
-          "2-digit",
-
-        month:
-          "2-digit",
-
-        year:
-          "numeric",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       }
     ).format(
       new Date(date)
@@ -355,20 +332,20 @@ export default async function CuentaPage() {
     archived?: boolean
   }) => {
     return (
-      <div className="flex flex-col gap-5 p-5 md:flex-row md:items-center md:px-6">
+      <div className="flex flex-col gap-4 p-4 sm:p-5 md:flex-row md:items-center md:gap-5 md:px-6">
 
         <div className="min-w-0 flex-1">
 
           <div className="flex flex-wrap items-center gap-2">
 
-            <h4 className="font-semibold text-gray-900 dark:text-white">
+            <h4 className="text-[15px] font-semibold text-gray-900 dark:text-white sm:text-base">
               {
                 production.property_name
               }
             </h4>
 
             <span
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold sm:text-xs ${
                 STATUS_CLASSES[
                   production.status
                 ] ||
@@ -390,22 +367,14 @@ export default async function CuentaPage() {
           </div>
 
           {production.property_address && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 hidden text-sm text-gray-500 dark:text-gray-400 sm:block">
               {
                 production.property_address
               }
             </p>
           )}
 
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-400">
-
-            <span>
-              Producción:{" "}
-
-              {formatDate(
-                production.production_date
-              )}
-            </span>
+          <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-400 sm:mt-3 sm:gap-x-5">
 
             {production.services
               ?.length >
@@ -419,12 +388,18 @@ export default async function CuentaPage() {
               </span>
             )}
 
+            <span>
+              {formatDate(
+                production.production_date
+              )}
+            </span>
+
           </div>
 
           {production.status ===
             "confirmed" &&
             production.estimated_delivery_at && (
-              <p className="mt-3 text-xs text-blue-600 dark:text-blue-300">
+              <p className="mt-2 text-xs text-blue-600 dark:text-blue-300 sm:mt-3">
 
                 Entrega estimada:{" "}
 
@@ -440,7 +415,7 @@ export default async function CuentaPage() {
             production.status ===
               "editing") &&
             production.estimated_delivery_at && (
-              <p className="mt-3 text-xs text-amber-600 dark:text-amber-300">
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-300 sm:mt-3">
 
                 Entrega estimada:{" "}
 
@@ -455,9 +430,9 @@ export default async function CuentaPage() {
             "delivered" &&
             !archived &&
             production.available_until && (
-              <p className="mt-3 text-xs font-medium text-emerald-600 dark:text-emerald-300">
+              <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-300 sm:mt-3">
 
-                Material disponible hasta el{" "}
+                Disponible hasta el{" "}
 
                 {formatDate(
                   production.available_until
@@ -469,7 +444,7 @@ export default async function CuentaPage() {
           {archived &&
             production.status !==
               "cancelled" && (
-              <p className="mt-3 text-xs text-gray-400">
+              <p className="mt-2 text-xs text-gray-400 sm:mt-3">
                 El período de disponibilidad online finalizó.
               </p>
             )}
@@ -494,16 +469,16 @@ export default async function CuentaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5fafa] px-4 py-10 dark:bg-[#001219] md:py-16">
+    <main className="min-h-screen bg-[#f5fafa] px-4 py-6 dark:bg-[#001219] sm:py-10 md:py-16">
 
       <div className="mx-auto max-w-6xl">
 
         {/* CABECERA */}
-        <section className="rounded-3xl border border-gray-200/70 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#06222c] md:p-8">
+        <section className="rounded-3xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#06222c] sm:p-6 md:p-8">
 
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
 
-            <div className="flex items-center gap-5">
+            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
 
               {profileAvatar ? (
                 <img
@@ -513,30 +488,30 @@ export default async function CuentaPage() {
                   alt={
                     profileName
                   }
-                  className="h-16 w-16 rounded-full object-cover"
+                  className="h-14 w-14 shrink-0 rounded-full object-cover sm:h-16 sm:w-16"
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0A9396]/15 text-2xl font-bold text-[#0A9396]">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/15 text-xl font-bold text-[#0A9396] sm:h-16 sm:w-16 sm:text-2xl">
                   {profileName
                     .charAt(0)
                     .toUpperCase()}
                 </div>
               )}
 
-              <div>
+              <div className="min-w-0">
 
-                <p className="text-sm font-semibold text-[#0A9396]">
+                <p className="text-xs font-semibold text-[#0A9396] sm:text-sm">
                   Portal Clover
                 </p>
 
-                <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+                <h1 className="mt-0.5 truncate text-2xl font-bold text-gray-900 dark:text-white sm:mt-1 sm:text-3xl md:text-4xl">
                   Hola,{" "}
                   {
                     firstName
                   }
                 </h1>
 
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
                   {
                     user.email
                   }
@@ -546,12 +521,12 @@ export default async function CuentaPage() {
 
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
 
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#0A9396]/20 bg-[#0A9396]/10 px-4 py-2.5 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/15"
+                  className="col-span-2 inline-flex items-center justify-center gap-2 rounded-xl border border-[#0A9396]/20 bg-[#0A9396]/10 px-3 py-2.5 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/15 sm:col-span-1 sm:px-4"
                 >
                   <ShieldCheck className="h-4 w-4" />
 
@@ -561,7 +536,7 @@ export default async function CuentaPage() {
 
               <Link
                 href="/cuenta/perfil"
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 sm:px-4"
               >
                 <UserRound className="h-4 w-4" />
 
@@ -570,7 +545,7 @@ export default async function CuentaPage() {
 
               <Link
                 href="/"
-                className="inline-flex items-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-3 py-2.5 text-center text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 sm:px-4"
               >
                 Volver a Clover Digital
               </Link>
@@ -584,12 +559,12 @@ export default async function CuentaPage() {
         {/* PRODUCCIONES */}
         <section
           id="producciones"
-          className="mt-8"
+          className="mt-6 sm:mt-8"
         >
 
           <div>
 
-            <p className="text-sm font-semibold text-[#0A9396]">
+            <p className="text-xs font-semibold text-[#0A9396] sm:text-sm">
               Clover Digital
             </p>
 
@@ -598,25 +573,25 @@ export default async function CuentaPage() {
             </h2>
 
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Consultá el estado, tus entregas y el historial de tus propiedades.
+              Consultá tus trabajos, entregas e historial.
             </p>
 
           </div>
 
           {/* RESUMEN */}
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4 lg:grid-cols-4">
 
-            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+            <div className="rounded-2xl border border-gray-200/70 bg-white p-4 dark:border-white/10 dark:bg-[#06222c] sm:rounded-3xl sm:p-5">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
-                <FolderOpen className="h-5 w-5" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396] sm:h-10 sm:w-10">
+                <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
 
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-3 text-xs text-gray-500 sm:mt-4 sm:text-sm">
                 Producciones
               </p>
 
-              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white sm:mt-1 sm:text-3xl">
                 {
                   totalProductions
                 }
@@ -624,17 +599,17 @@ export default async function CuentaPage() {
 
             </div>
 
-            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+            <div className="rounded-2xl border border-gray-200/70 bg-white p-4 dark:border-white/10 dark:bg-[#06222c] sm:rounded-3xl sm:p-5">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-                <Clock3 className="h-5 w-5" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300 sm:h-10 sm:w-10">
+                <Clock3 className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
 
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-3 text-xs text-gray-500 sm:mt-4 sm:text-sm">
                 En curso
               </p>
 
-              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white sm:mt-1 sm:text-3xl">
                 {
                   activeProductions.length
                 }
@@ -642,17 +617,17 @@ export default async function CuentaPage() {
 
             </div>
 
-            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+            <div className="rounded-2xl border border-gray-200/70 bg-white p-4 dark:border-white/10 dark:bg-[#06222c] sm:rounded-3xl sm:p-5">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
-                <CheckCircle2 className="h-5 w-5" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300 sm:h-10 sm:w-10">
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
 
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-3 text-xs text-gray-500 sm:mt-4 sm:text-sm">
                 Disponibles
               </p>
 
-              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white sm:mt-1 sm:text-3xl">
                 {
                   deliveredProductions.length
                 }
@@ -660,17 +635,17 @@ export default async function CuentaPage() {
 
             </div>
 
-            <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c]">
+            <div className="rounded-2xl border border-gray-200/70 bg-white p-4 dark:border-white/10 dark:bg-[#06222c] sm:rounded-3xl sm:p-5">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300">
-                <Archive className="h-5 w-5" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 sm:h-10 sm:w-10">
+                <Archive className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
 
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-3 text-xs text-gray-500 sm:mt-4 sm:text-sm">
                 Historial
               </p>
 
-              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white sm:mt-1 sm:text-3xl">
                 {
                   archivedProductions.length
                 }
@@ -682,10 +657,10 @@ export default async function CuentaPage() {
 
           {totalProductions ===
           0 ? (
-            <div className="mt-5 rounded-3xl border border-gray-200/70 bg-white p-10 text-center dark:border-white/10 dark:bg-[#06222c]">
+            <div className="mt-4 rounded-3xl border border-gray-200/70 bg-white p-7 text-center dark:border-white/10 dark:bg-[#06222c] sm:mt-5 sm:p-10">
 
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-                <FolderOpen className="h-6 w-6" />
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396] sm:h-14 sm:w-14">
+                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
 
               <h3 className="mt-4 font-semibold text-gray-900 dark:text-white">
@@ -703,14 +678,14 @@ export default async function CuentaPage() {
               {/* EN CURSO */}
               {activeProductions.length >
                 0 && (
-                <section className="mt-5 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+                <section className="mt-4 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c] sm:mt-5">
 
-                  <div className="border-b border-gray-100 p-6 dark:border-white/10">
+                  <div className="border-b border-gray-100 p-4 dark:border-white/10 sm:p-6">
 
                     <div className="flex items-start gap-3">
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
-                        <Clock3 className="h-5 w-5" />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300 sm:h-10 sm:w-10">
+                        <Clock3 className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
 
                       <div>
@@ -719,8 +694,8 @@ export default async function CuentaPage() {
                           En curso
                         </h3>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          Producciones confirmadas, realizadas o que se encuentran en edición.
+                        <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                          Producciones confirmadas, realizadas o en edición.
                         </p>
 
                       </div>
@@ -754,14 +729,14 @@ export default async function CuentaPage() {
               {/* ENTREGADAS */}
               {deliveredProductions.length >
                 0 && (
-                <section className="mt-5 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+                <section className="mt-4 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c] sm:mt-5">
 
-                  <div className="border-b border-gray-100 p-6 dark:border-white/10">
+                  <div className="border-b border-gray-100 p-4 dark:border-white/10 sm:p-6">
 
                     <div className="flex items-start gap-3">
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
-                        <CheckCircle2 className="h-5 w-5" />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300 sm:h-10 sm:w-10">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
 
                       <div>
@@ -770,8 +745,8 @@ export default async function CuentaPage() {
                           Entregadas
                         </h3>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          Material disponible actualmente para consultar y descargar.
+                        <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                          Material disponible para consultar y descargar.
                         </p>
 
                       </div>
@@ -805,14 +780,14 @@ export default async function CuentaPage() {
               {/* HISTORIAL */}
               {archivedProductions.length >
                 0 && (
-                <section className="mt-5 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
+                <section className="mt-4 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c] sm:mt-5">
 
-                  <div className="border-b border-gray-100 p-6 dark:border-white/10">
+                  <div className="border-b border-gray-100 p-4 dark:border-white/10 sm:p-6">
 
                     <div className="flex items-start gap-3">
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300">
-                        <Archive className="h-5 w-5" />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 sm:h-10 sm:w-10">
+                        <Archive className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
 
                       <div>
@@ -821,8 +796,8 @@ export default async function CuentaPage() {
                           Archivadas e historial
                         </h3>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          Entregas cuyo período online finalizó y producciones canceladas.
+                        <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                          Entregas vencidas y producciones canceladas.
                         </p>
 
                       </div>
@@ -862,31 +837,31 @@ export default async function CuentaPage() {
         </section>
 
         {/* ACADEMY */}
-        <section className="mt-8">
+        <section className="mt-6 sm:mt-8">
 
-          <div className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+          <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:p-6 md:p-8">
 
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-6">
 
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3 sm:gap-4">
 
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-                  <GraduationCap className="h-6 w-6" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396] sm:h-12 sm:w-12 sm:rounded-2xl">
+                  <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
 
                 <div>
 
-                  <p className="text-sm font-semibold text-[#0A9396]">
+                  <p className="text-xs font-semibold text-[#0A9396] sm:text-sm">
                     Clover Academy
                   </p>
 
-                  <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="mt-1 text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
                     Tus cursos
                   </h2>
 
                   {activeEnrollments.length >
                   0 ? (
-                    <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-1.5 max-w-2xl text-xs text-gray-500 dark:text-gray-400 sm:mt-2 sm:text-sm">
 
                       Tenés{" "}
 
@@ -904,7 +879,7 @@ export default async function CuentaPage() {
 
                     </p>
                   ) : (
-                    <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-1.5 max-w-2xl text-xs leading-5 text-gray-500 dark:text-gray-400 sm:mt-2 sm:text-sm">
                       Cuando tengas acceso a un curso de Clover Academy, vas a poder entrar desde acá.
                     </p>
                   )}
@@ -917,7 +892,7 @@ export default async function CuentaPage() {
                 0 && (
                 <Link
                   href="/academy"
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
+                  className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#001219] sm:w-auto sm:py-3"
                 >
                   Ir a Academy
 
@@ -932,7 +907,7 @@ export default async function CuentaPage() {
         </section>
 
         {/* CIERRE */}
-        <div className="mt-10 flex flex-col items-center gap-4 border-t border-gray-200/70 pt-8 dark:border-white/10">
+        <div className="mt-8 flex flex-col items-center gap-3 border-t border-gray-200/70 pt-6 dark:border-white/10 sm:mt-10 sm:gap-4 sm:pt-8">
 
           <LogoutButton />
 
