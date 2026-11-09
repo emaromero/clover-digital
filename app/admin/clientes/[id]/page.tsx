@@ -554,9 +554,9 @@ export default async function AdminClientDetailPage({
         {/* CLIENTE */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 
-            <div className="flex min-w-0 flex-1 items-center gap-5">
+            <div className="flex min-w-0 flex-1 items-start gap-5">
 
               {profile.avatar_url ? (
                 <img
@@ -572,7 +572,7 @@ export default async function AdminClientDetailPage({
                 </div>
               )}
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
 
                 <div className="flex flex-wrap items-center gap-2">
 
@@ -591,12 +591,12 @@ export default async function AdminClientDetailPage({
                     "Sin nombre"}
                 </h1>
 
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
 
                   {profile.email && (
                     <a
                       href={`mailto:${profile.email}`}
-                      className="flex w-fit items-center gap-2 text-sm text-gray-500 transition hover:text-[#0A9396]"
+                      className="inline-flex items-center gap-2 text-sm text-gray-500 transition hover:text-[#0A9396]"
                     >
                       <Mail className="h-4 w-4" />
 
@@ -630,11 +630,88 @@ export default async function AdminClientDetailPage({
 
                 </div>
 
+                {/* DATOS DEL CLIENTE */}
+                <div className="mt-6 grid gap-4 border-t border-gray-100 pt-5 dark:border-white/10 sm:grid-cols-2 xl:grid-cols-3">
+
+                  <div>
+
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+
+                      <Building2 className="h-3.5 w-3.5 text-[#0A9396]" />
+
+                      Oficina / inmobiliaria
+
+                    </div>
+
+                    <p className="mt-1.5 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                      {officeName ||
+                        "Sin oficina"}
+                    </p>
+
+                  </div>
+
+                  <div>
+
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+
+                      <IdCard className="h-3.5 w-3.5 text-[#0A9396]" />
+
+                      CUIT / CUIL / DNI
+
+                    </div>
+
+                    <p className="mt-1.5 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                      {taxData?.tax_id ||
+                        "Sin cargar"}
+                    </p>
+
+                  </div>
+
+                  <div>
+
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+
+                      <Tag className="h-3.5 w-3.5 text-[#0A9396]" />
+
+                      Tags
+
+                    </div>
+
+                    {clientTags.length >
+                    0 ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+
+                        {clientTags.map(
+                          (tag) => (
+                            <span
+                              key={
+                                tag.id
+                              }
+                              className="rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:border-white/10 dark:text-gray-300"
+                            >
+                              {
+                                tag.name
+                              }
+                            </span>
+                          )
+                        )}
+
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-sm font-medium text-gray-400">
+                        Sin tags
+                      </p>
+                    )}
+
+                  </div>
+
+                </div>
+
               </div>
 
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center lg:flex-col lg:items-end">
 
               <div className="flex items-center gap-2 text-sm text-gray-400">
 
@@ -739,7 +816,7 @@ export default async function AdminClientDetailPage({
 
         </div>
 
-        {/* PRODUCCIONES PRIMERO */}
+        {/* PRODUCCIONES */}
         <section className="mt-6 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
@@ -921,112 +998,6 @@ export default async function AdminClientDetailPage({
 
             </div>
           )}
-
-        </section>
-
-        {/* INFORMACIÓN DEL CLIENTE */}
-        <section className="mt-6 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-            <div>
-
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Información del cliente
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Datos internos de oficina, identificación y clasificación.
-              </p>
-
-            </div>
-
-            <Link
-              href={`/admin/clientes/${profile.id}/editar`}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
-            >
-              <Pencil className="h-4 w-4" />
-
-              Editar datos
-            </Link>
-
-          </div>
-
-          <div className="mt-6 grid gap-6 border-t border-gray-100 pt-6 dark:border-white/10 md:grid-cols-3">
-
-            <div>
-
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-
-                <Building2 className="h-4 w-4 text-[#0A9396]" />
-
-                Oficina / inmobiliaria
-
-              </div>
-
-              <p className="mt-2 font-bold text-gray-900 dark:text-white">
-                {officeName ||
-                  "Sin oficina asignada"}
-              </p>
-
-            </div>
-
-            <div>
-
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-
-                <IdCard className="h-4 w-4 text-[#0A9396]" />
-
-                CUIT / CUIL / DNI
-
-              </div>
-
-              <p className="mt-2 font-bold text-gray-900 dark:text-white">
-                {taxData?.tax_id ||
-                  "Sin cargar"}
-              </p>
-
-            </div>
-
-            <div>
-
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-
-                <Tag className="h-4 w-4 text-[#0A9396]" />
-
-                Tags del cliente
-
-              </div>
-
-              {clientTags.length >
-              0 ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-
-                  {clientTags.map(
-                    (tag) => (
-                      <span
-                        key={
-                          tag.id
-                        }
-                        className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:border-white/10 dark:text-gray-300"
-                      >
-                        {
-                          tag.name
-                        }
-                      </span>
-                    )
-                  )}
-
-                </div>
-              ) : (
-                <p className="mt-2 font-medium text-gray-400">
-                  Sin tags
-                </p>
-              )}
-
-            </div>
-
-          </div>
 
         </section>
 
