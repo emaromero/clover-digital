@@ -330,10 +330,6 @@ export default function EditProductionForm({
       string | null
     >(null)
 
-  /*
-   * Si no existe user_id pero sí email,
-   * todavía es un cliente pendiente.
-   */
   const isPendingClient =
     !production.user_id &&
     Boolean(
@@ -761,7 +757,7 @@ export default function EditProductionForm({
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
 
-      <div className="mx-auto max-w-5xl px-4 py-10 md:py-16">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:py-10 md:py-16">
 
         <Link
           href="/admin/producciones"
@@ -778,13 +774,13 @@ export default function EditProductionForm({
             Clover Digital
           </p>
 
-          <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
+          <h1 className="mt-1 break-words text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
             {
               production.property_name
             }
           </h1>
 
-          <p className="mt-3 text-gray-500 dark:text-gray-400">
+          <p className="mt-3 max-w-2xl text-gray-500 dark:text-gray-400">
             Editá la producción, gestioná su material y administrá los accesos desde la sección de clientes.
           </p>
 
@@ -794,14 +790,13 @@ export default function EditProductionForm({
           onSubmit={
             handleSubmit
           }
-          className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
+          className="mt-8 min-w-0 space-y-7 overflow-hidden rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:p-6 md:p-8"
         >
 
-          {/* CLIENTE PENDIENTE */}
           {isPendingClient && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
+            <div className="min-w-0 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10 sm:p-5">
 
-              <div className="flex items-start gap-4">
+              <div className="flex min-w-0 items-start gap-4">
 
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
                   <UserRound className="h-5 w-5" />
@@ -835,10 +830,9 @@ export default function EditProductionForm({
             </div>
           )}
 
-          {/* PROPIEDAD */}
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid min-w-0 gap-5 md:grid-cols-2">
 
-            <div>
+            <div className="min-w-0">
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Nombre de la propiedad
@@ -856,12 +850,12 @@ export default function EditProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
-            <div>
+            <div className="min-w-0">
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Dirección completa
@@ -879,25 +873,24 @@ export default function EditProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
           </div>
 
-          {/* FECHA / ESTADO */}
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid min-w-0 gap-5 md:grid-cols-2">
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Fecha y hora de producción
               </label>
 
-              <div className="relative mt-2">
+              <div className="relative mt-2 min-w-0 overflow-hidden">
 
-                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
                 <input
                   type="datetime-local"
@@ -911,14 +904,18 @@ export default function EditProductionForm({
                       event.target.value
                     )
                   }
-                  className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  className="block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  style={{
+                    minWidth: 0,
+                    maxWidth: "100%",
+                  }}
                 />
 
               </div>
 
             </div>
 
-            <div>
+            <div className="min-w-0">
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Estado
@@ -935,7 +932,7 @@ export default function EditProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               >
 
                 <option value="confirmed">
@@ -968,7 +965,6 @@ export default function EditProductionForm({
 
           </div>
 
-          {/* SERVICIOS */}
           <div>
 
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -997,7 +993,7 @@ export default function EditProductionForm({
                           service
                         )
                       }
-                      className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
+                      className={`min-w-0 rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
                         active
                           ? "border-[#0A9396] bg-[#0A9396]/10 text-[#0A9396]"
                           : "border-gray-200 text-gray-600 hover:border-[#0A9396]/40 dark:border-white/10 dark:text-gray-300"
@@ -1015,10 +1011,9 @@ export default function EditProductionForm({
 
           </div>
 
-          {/* VALOR / ENTREGA */}
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid min-w-0 gap-5 md:grid-cols-2">
 
-            <div>
+            <div className="min-w-0">
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Valor total
@@ -1037,12 +1032,12 @@ export default function EditProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
-            <div>
+            <div className="min-w-0 overflow-hidden">
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Entrega estimada
@@ -1060,48 +1055,17 @@ export default function EditProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                style={{
+                  minWidth: 0,
+                  maxWidth: "100%",
+                }}
               />
 
             </div>
 
           </div>
 
-          {production.delivered_at && (
-            <div className="grid gap-4 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-500/10 md:grid-cols-2">
-
-              <div>
-
-                <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
-                  Entregada
-                </p>
-
-                <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-300">
-                  {formatDate(
-                    production.delivered_at
-                  )}
-                </p>
-
-              </div>
-
-              <div>
-
-                <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70">
-                  Material disponible hasta
-                </p>
-
-                <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-300">
-                  {formatDate(
-                    production.available_until
-                  )}
-                </p>
-
-              </div>
-
-            </div>
-          )}
-
-          {/* NOTAS */}
           <div>
 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -1120,19 +1084,18 @@ export default function EditProductionForm({
                   event.target.value
                 )
               }
-              className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+              className="mt-2 block min-w-0 w-full max-w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
 
           </div>
 
           {message && (
             <p
-              className={`text-sm ${
-                message.includes(
-                  "correctamente"
-                )
-                  ? "text-[#0A9396]"
-                  : "text-red-600 dark:text-red-400"
+              className={`text-sm font-medium ${
+                message ===
+                "Cambios guardados correctamente."
+                  ? "text-emerald-600"
+                  : "text-red-600"
               }`}
             >
               {
@@ -1143,382 +1106,322 @@ export default function EditProductionForm({
 
           <div className="flex flex-col gap-3 border-t border-gray-100 pt-6 dark:border-white/10 sm:flex-row sm:justify-end">
 
-            <Link
-              href="/admin/producciones"
-              className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
-            >
-              Volver
-            </Link>
-
             <button
               type="submit"
               disabled={
                 saving
               }
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-60 sm:w-auto"
             >
 
               {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-
-                  Guardando...
-                </>
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <>
-                  <Save className="h-4 w-4" />
-
-                  Guardar cambios
-                </>
+                <Save className="h-4 w-4" />
               )}
+
+              {saving
+                ? "Guardando..."
+                : "Guardar cambios"}
 
             </button>
 
           </div>
 
-        </form>
+          <div className="border-t border-gray-100 pt-8 dark:border-white/10">
 
-        {/* MATERIAL */}
-        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+            <div className="flex items-start gap-3">
 
-          <div className="flex items-start gap-4">
-
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-              <FolderOpen className="h-5 w-5" />
-            </div>
-
-            <div>
-
-              <p className="text-sm font-semibold text-[#0A9396]">
-                Entrega
-              </p>
-
-              <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                Material de la producción
-              </h2>
-
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Agregá los enlaces que después estarán disponibles para todos los clientes con acceso.
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="mt-6 space-y-3">
-
-            {files.length ===
-            0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/10">
-                Todavía no cargaste material.
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+                <FolderOpen className="h-5 w-5" />
               </div>
-            ) : (
-              files.map(
-                (
-                  file
-                ) => {
-                  const expired =
-                    file.expires_at
-                      ? new Date(
-                          file.expires_at
-                        ).getTime() <=
-                        Date.now()
-                      : false
 
-                  const copied =
-                    copiedFileId ===
-                    file.id
+              <div>
 
-                  return (
+                <h2 className="font-bold text-gray-900 dark:text-white">
+                  Material de la producción
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Enlaces disponibles para este trabajo.
+                </p>
+
+              </div>
+
+            </div>
+
+            {files.length >
+            0 ? (
+              <div className="mt-5 space-y-3">
+
+                {files.map(
+                  (file) => (
                     <div
                       key={
                         file.id
                       }
-                      className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center"
+                      className="min-w-0 rounded-2xl border border-gray-200 p-4 dark:border-white/10"
                     >
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
 
-                        {file.file_type.includes(
-                          "video"
-                        ) ||
-                        file.file_type ===
-                          "talking_reel" ? (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
                           <FileVideo2 className="h-5 w-5" />
-                        ) : (
-                          <Link2 className="h-5 w-5" />
-                        )}
+                        </div>
 
-                      </div>
+                        <div className="min-w-0 flex-1">
 
-                      <div className="min-w-0 flex-1">
-
-                        <div className="flex flex-wrap items-center gap-2">
-
-                          <p className="font-semibold text-gray-900 dark:text-white">
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">
                             {
                               file.label
                             }
                           </p>
 
-                          {file.expires_at && (
-                            <span
-                              className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                                expired
-                                  ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
-                                  : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                              }`}
-                            >
-                              {expired
-                                ? "Vencido"
-                                : `Vence ${formatDateTime(
-                                    file.expires_at
-                                  )}`}
-                            </span>
-                          )}
+                          <p className="mt-1 truncate text-xs text-gray-400">
+                            {file.file_type ===
+                            "wetransfer"
+                              ? `Vence ${formatDateTime(
+                                  file.expires_at
+                                )}`
+                              : `Agregado ${formatDate(
+                                  file.created_at
+                                )}`}
+                          </p>
 
                         </div>
 
-                        <p className="mt-1 truncate text-xs text-gray-400">
-                          {
-                            file.url
-                          }
-                        </p>
+                        <div className="flex flex-wrap gap-2">
 
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-
-                        {!expired && (
                           <a
                             href={
                               file.url
                             }
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:border-[#0A9396]/30 hover:text-[#0A9396] dark:border-white/10 dark:text-gray-300"
                           >
+                            <ExternalLink className="h-3.5 w-3.5" />
+
                             Abrir
-
-                            <ExternalLink className="h-4 w-4" />
                           </a>
-                        )}
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCopyLink(
-                              file.id,
-                              file.url
-                            )
-                          }
-                          className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                            copied
-                              ? "border-[#0A9396]/30 bg-[#0A9396]/10 text-[#0A9396]"
-                              : "border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
-                          }`}
-                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleCopyLink(
+                                file.id,
+                                file.url
+                              )
+                            }
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:border-[#0A9396]/30 hover:text-[#0A9396] dark:border-white/10 dark:text-gray-300"
+                          >
+                            {copiedFileId ===
+                            file.id ? (
+                              <Check className="h-3.5 w-3.5" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5" />
+                            )}
 
-                          {copied ? (
-                            <>
-                              Copiado
+                            {copiedFileId ===
+                            file.id
+                              ? "Copiado"
+                              : "Copiar"}
+                          </button>
 
-                              <Check className="h-4 w-4" />
-                            </>
-                          ) : (
-                            <>
-                              Copiar
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDeleteFile(
+                                file.id
+                              )
+                            }
+                            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
 
-                              <Copy className="h-4 w-4" />
-                            </>
-                          )}
+                            Eliminar
+                          </button>
 
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDeleteFile(
-                              file.id
-                            )
-                          }
-                          className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        </div>
 
                       </div>
 
                     </div>
                   )
-                }
-              )
+                )}
+
+              </div>
+            ) : (
+              <div className="mt-5 rounded-2xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400 dark:border-white/10">
+                Todavía no hay material cargado.
+              </div>
             )}
+
+            <form
+              onSubmit={
+                handleAddFile
+              }
+              className="mt-6 space-y-4 rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]"
+            >
+
+              <div className="grid min-w-0 gap-4 md:grid-cols-2">
+
+                <div className="min-w-0">
+
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Tipo de material
+                  </label>
+
+                  <select
+                    value={
+                      fileType
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      handleFileTypeChange(
+                        event.target.value
+                      )
+                    }
+                    className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  >
+
+                    {FILE_TYPES.map(
+                      (item) => (
+                        <option
+                          key={
+                            item.value
+                          }
+                          value={
+                            item.value
+                          }
+                        >
+                          {
+                            item.label
+                          }
+                        </option>
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                <div className="min-w-0">
+
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Nombre
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      fileLabel
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setFileLabel(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Ej. Fotos finales"
+                    className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="min-w-0">
+
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Enlace
+                </label>
+
+                <div className="relative mt-2 min-w-0">
+
+                  <Link2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+                  <input
+                    type="url"
+                    value={
+                      fileUrl
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setFileUrl(
+                        event.target.value
+                      )
+                    }
+                    placeholder="https://..."
+                    className="block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  />
+
+                </div>
+
+              </div>
+
+              {fileType ===
+                "wetransfer" && (
+                <div className="min-w-0 overflow-hidden">
+
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Vencimiento
+                  </label>
+
+                  <input
+                    type="datetime-local"
+                    value={
+                      fileExpiresAt
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setFileExpiresAt(
+                        event.target.value
+                      )
+                    }
+                    className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                    style={{
+                      minWidth: 0,
+                      maxWidth: "100%",
+                    }}
+                  />
+
+                </div>
+              )}
+
+              {fileMessage && (
+                <p className="text-sm font-medium text-gray-500">
+                  {
+                    fileMessage
+                  }
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={
+                  addingFile
+                }
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0A9396]/30 px-4 py-3 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/5 disabled:opacity-60 sm:w-auto"
+              >
+                {addingFile ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+
+                Agregar material
+              </button>
+
+            </form>
 
           </div>
 
-          {/* AGREGAR MATERIAL */}
-          <form
-            onSubmit={
-              handleAddFile
-            }
-            className="mt-6 rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03]"
-          >
-
-            <div className="grid gap-4 md:grid-cols-2">
-
-              <div>
-
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Tipo
-                </label>
-
-                <select
-                  value={
-                    fileType
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    handleFileTypeChange(
-                      event.target.value
-                    )
-                  }
-                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
-                >
-
-                  {FILE_TYPES.map(
-                    (
-                      type
-                    ) => (
-                      <option
-                        key={
-                          type.value
-                        }
-                        value={
-                          type.value
-                        }
-                      >
-                        {
-                          type.label
-                        }
-                      </option>
-                    )
-                  )}
-
-                </select>
-
-              </div>
-
-              <div>
-
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Nombre visible
-                </label>
-
-                <input
-                  type="text"
-                  value={
-                    fileLabel
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setFileLabel(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Opcional"
-                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
-                />
-
-              </div>
-
-            </div>
-
-            <div className="mt-4">
-
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                Enlace
-              </label>
-
-              <input
-                type="url"
-                required
-                value={
-                  fileUrl
-                }
-                onChange={(
-                  event
-                ) =>
-                  setFileUrl(
-                    event.target.value
-                  )
-                }
-                placeholder="https://drive.google.com/..."
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
-              />
-
-            </div>
-
-            {fileType ===
-              "wetransfer" && (
-              <div className="mt-4">
-
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Vencimiento de WeTransfer
-                </label>
-
-                <input
-                  type="datetime-local"
-                  value={
-                    fileExpiresAt
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setFileExpiresAt(
-                      event.target.value
-                    )
-                  }
-                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
-                />
-
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Clover propone automáticamente 71 h 40 min desde ahora. Podés corregirlo si el enlace ya fue creado antes.
-                </p>
-
-              </div>
-            )}
-
-            {fileMessage && (
-              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                {
-                  fileMessage
-                }
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={
-                addingFile
-              }
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#001219] disabled:opacity-60"
-            >
-
-              {addingFile ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-
-              Agregar material
-            </button>
-
-          </form>
-
-        </section>
+        </form>
 
       </div>
 
