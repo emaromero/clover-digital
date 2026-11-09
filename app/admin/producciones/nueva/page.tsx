@@ -45,6 +45,7 @@ export default async function NuevaProduccionPage() {
         id,
         full_name,
         email,
+        avatar_url,
         office_id
       `)
       .order(
@@ -150,6 +151,9 @@ export default async function NuevaProduccionPage() {
 
         email:
           profile.email,
+
+        avatar_url:
+          profile.avatar_url,
 
         office_id:
           profile.office_id,

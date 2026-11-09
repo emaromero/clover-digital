@@ -5,12 +5,18 @@ import {
   ArrowLeft,
   ArrowRight,
   Banknote,
+  Building2,
+  CalendarDays,
   CircleDollarSign,
   FolderOpen,
   GraduationCap,
+  IdCard,
   Mail,
+  MessageCircle,
+  Pencil,
   Phone,
   ReceiptText,
+  Tag,
   UserRound,
 } from "lucide-react"
 
@@ -20,9 +26,6 @@ import {
 } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
-
-import ClientClassificationManager from "@/components/client-classification-manager"
-import ClientTaxIdEditor from "@/components/client-tax-id-editor"
 
 interface PageProps {
   params: Promise<{
@@ -144,46 +147,33 @@ export default async function AdminClientDetailPage({
       )
       .maybeSingle()
 
-  /*
-   * ORGANIZACIÓN INTERNA
-   */
-  const {
-    data: offices,
-  } =
-    await supabase
-      .from(
-        "client_offices"
-      )
-      .select(`
-        id,
-        name
-      `)
-      .order(
-        "name",
-        {
-          ascending: true,
-        }
-      )
+  let officeName:
+    | string
+    | null = null
 
-  const {
-    data: clientTags,
-  } =
-    await supabase
-      .from("tags")
-      .select(`
-        id,
-        name
-      `)
-      .eq(
-        "scope",
-        "client"
-      )
-      .order(
-        "name",
-        {
-          ascending: true,
-        }
-      )
+  if (
+    profile.office_id
+  ) {
+    const {
+      data: office,
+    } =
+      await supabase
+        .from(
+          "client_offices"
+        )
+        .select(
+          "name"
+        )
+        .eq(
+          "id",
+          profile.office_id
+        )
+        .maybeSingle()
+
+    officeName =
+      office?.name ||
+      null
+  }
 
   const {
     data: profileTagRows,
@@ -200,8 +190,51 @@ export default async function AdminClientDetailPage({
         id
       )
 
+  const clientTagIds =
+    (
+      profileTagRows ||
+      []
+    ).map(
+      (item) =>
+        item.tag_id
+    )
+
+  let clientTags:
+    {
+      id: string
+      name: string
+    }[] = []
+
+  if (
+    clientTagIds.length >
+    0
+  ) {
+    const {
+      data: tagRows,
+    } =
+      await supabase
+        .from("tags")
+        .select(`
+          id,
+          name
+        `)
+        .in(
+          "id",
+          clientTagIds
+        )
+        .order(
+          "name",
+          {
+            ascending: true,
+          }
+        )
+
+    clientTags =
+      tagRows || []
+  }
+
   /*
-   * PRODUCCIONES DEL CLIENTE
+   * PRODUCCIONES
    */
   const {
     data: memberships,
@@ -496,6 +529,14 @@ export default async function AdminClientDetailPage({
       )
     }
 
+  const whatsappNumber =
+    profile.phone
+      ? profile.phone.replace(
+          /\D/g,
+          ""
+        )
+      : ""
+
   return (
     <main className="min-h-screen bg-[#f5fafa] dark:bg-[#001219]">
 
@@ -510,83 +551,111 @@ export default async function AdminClientDetailPage({
           Volver a clientes
         </Link>
 
-        {/* CABECERA */}
+        {/* CLIENTE */}
         <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
-          <div className="flex flex-col gap-6 md:flex-row md:items-center">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
 
-            {profile.avatar_url ? (
-              <img
-                src={
-                  profile.avatar_url
-                }
-                alt=""
-                className="h-20 w-20 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
-                <UserRound className="h-8 w-8" />
-              </div>
-            )}
+            <div className="flex min-w-0 flex-1 items-center gap-5">
 
-            <div className="flex-1">
+              {profile.avatar_url ? (
+                <img
+                  src={
+                    profile.avatar_url
+                  }
+                  alt=""
+                  className="h-20 w-20 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+                  <UserRound className="h-8 w-8" />
+                </div>
+              )}
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-0">
 
-                <p className="text-sm font-semibold text-[#0A9396]">
-                  Cliente Clover
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
 
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                  Registrado
-                </span>
+                  <p className="text-sm font-semibold text-[#0A9396]">
+                    Cliente Clover
+                  </p>
 
-              </div>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    Registrado
+                  </span>
 
-              <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
-                {profile.full_name ||
-                  "Sin nombre"}
-              </h1>
+                </div>
 
-              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-500">
+                <h1 className="mt-1 truncate text-3xl font-bold text-gray-900 dark:text-white">
+                  {profile.full_name ||
+                    "Sin nombre"}
+                </h1>
 
-                {profile.email && (
-                  <a
-                    href={`mailto:${profile.email}`}
-                    className="inline-flex items-center gap-2 hover:text-[#0A9396]"
-                  >
-                    <Mail className="h-4 w-4" />
+                <div className="mt-3 space-y-2">
 
-                    {
-                      profile.email
-                    }
-                  </a>
-                )}
+                  {profile.email && (
+                    <a
+                      href={`mailto:${profile.email}`}
+                      className="flex w-fit items-center gap-2 text-sm text-gray-500 transition hover:text-[#0A9396]"
+                    >
+                      <Mail className="h-4 w-4" />
 
-                {profile.phone && (
-                  <a
-                    href={`tel:${profile.phone}`}
-                    className="inline-flex items-center gap-2 hover:text-[#0A9396]"
-                  >
-                    <Phone className="h-4 w-4" />
+                      {
+                        profile.email
+                      }
+                    </a>
+                  )}
 
-                    {
-                      profile.phone
-                    }
-                  </a>
-                )}
+                  {whatsappNumber ? (
+                    <a
+                      href={`https://wa.me/${whatsappNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#0A9396]/30 px-3 py-2 text-sm font-semibold text-[#0A9396] transition hover:bg-[#0A9396]/5"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+
+                      Hablar por WhatsApp
+                    </a>
+                  ) : (
+                    <Link
+                      href={`/admin/clientes/${profile.id}/editar`}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
+                    >
+                      <Phone className="h-4 w-4" />
+
+                      Agregar WhatsApp
+                    </Link>
+                  )}
+
+                </div>
 
               </div>
 
             </div>
 
-            <div className="text-sm text-gray-400">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
 
-              Registrado el{" "}
+              <div className="flex items-center gap-2 text-sm text-gray-400">
 
-              {formatDate(
-                profile.created_at
-              )}
+                <CalendarDays className="h-4 w-4" />
+
+                Registrado el{" "}
+
+                {formatDate(
+                  profile.created_at
+                )}
+
+              </div>
+
+              <Link
+                href={`/admin/clientes/${profile.id}/editar`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219]"
+              >
+                <Pencil className="h-4 w-4" />
+
+                Editar cliente
+              </Link>
 
             </div>
 
@@ -670,125 +739,7 @@ export default async function AdminClientDetailPage({
 
         </div>
 
-        {/* DATOS INTERNOS */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-
-          <ClientClassificationManager
-            userId={
-              profile.id
-            }
-            offices={
-              offices || []
-            }
-            tags={
-              clientTags || []
-            }
-            initialOfficeId={
-              profile.office_id ||
-              null
-            }
-            initialTagIds={
-              (
-                profileTagRows ||
-                []
-              ).map(
-                (item) =>
-                  item.tag_id
-              )
-            }
-          />
-
-          <ClientTaxIdEditor
-            userId={
-              profile.id
-            }
-            initialTaxId={
-              taxData?.tax_id ||
-              null
-            }
-          />
-
-        </div>
-
-        {/* ALERTAS */}
-        {(pendingInvoices >
-          0 ||
-          pendingRecoveries >
-            0) && (
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-
-            {pendingInvoices >
-              0 && (
-              <Link
-                href="/admin/finanzas"
-                className="rounded-3xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10"
-              >
-
-                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                  Facturación pendiente
-                </p>
-
-                <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
-
-                  {
-                    pendingInvoices
-                  }{" "}
-
-                  producción
-                  {pendingInvoices ===
-                  1
-                    ? ""
-                    : "es"}{" "}
-
-                  pendiente
-                  {pendingInvoices ===
-                  1
-                    ? ""
-                    : "s"}{" "}
-
-                  de facturar.
-
-                </p>
-
-              </Link>
-            )}
-
-            {pendingRecoveries >
-              0 && (
-              <Link
-                href="/admin/recuperaciones"
-                className="rounded-3xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10"
-              >
-
-                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                  Recuperaciones pendientes
-                </p>
-
-                <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
-
-                  Hay{" "}
-
-                  {
-                    pendingRecoveries
-                  }{" "}
-
-                  solicitud
-                  {pendingRecoveries ===
-                  1
-                    ? ""
-                    : "es"}{" "}
-
-                  para revisar.
-
-                </p>
-
-              </Link>
-            )}
-
-          </div>
-        )}
-
-        {/* PRODUCCIONES */}
+        {/* PRODUCCIONES PRIMERO */}
         <section className="mt-6 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c]">
 
           <div className="border-b border-gray-100 p-6 dark:border-white/10 md:p-8">
@@ -798,7 +749,7 @@ export default async function AdminClientDetailPage({
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Incluye producciones propias y compartidas con este cliente.
+              Producciones propias y compartidas con este cliente.
             </p>
 
           </div>
@@ -973,6 +924,176 @@ export default async function AdminClientDetailPage({
 
         </section>
 
+        {/* INFORMACIÓN DEL CLIENTE */}
+        <section className="mt-6 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Información del cliente
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Datos internos de oficina, identificación y clasificación.
+              </p>
+
+            </div>
+
+            <Link
+              href={`/admin/clientes/${profile.id}/editar`}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
+            >
+              <Pencil className="h-4 w-4" />
+
+              Editar datos
+            </Link>
+
+          </div>
+
+          <div className="mt-6 grid gap-6 border-t border-gray-100 pt-6 dark:border-white/10 md:grid-cols-3">
+
+            <div>
+
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+
+                <Building2 className="h-4 w-4 text-[#0A9396]" />
+
+                Oficina / inmobiliaria
+
+              </div>
+
+              <p className="mt-2 font-bold text-gray-900 dark:text-white">
+                {officeName ||
+                  "Sin oficina asignada"}
+              </p>
+
+            </div>
+
+            <div>
+
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+
+                <IdCard className="h-4 w-4 text-[#0A9396]" />
+
+                CUIT / CUIL / DNI
+
+              </div>
+
+              <p className="mt-2 font-bold text-gray-900 dark:text-white">
+                {taxData?.tax_id ||
+                  "Sin cargar"}
+              </p>
+
+            </div>
+
+            <div>
+
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+
+                <Tag className="h-4 w-4 text-[#0A9396]" />
+
+                Tags del cliente
+
+              </div>
+
+              {clientTags.length >
+              0 ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+
+                  {clientTags.map(
+                    (tag) => (
+                      <span
+                        key={
+                          tag.id
+                        }
+                        className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:border-white/10 dark:text-gray-300"
+                      >
+                        {
+                          tag.name
+                        }
+                      </span>
+                    )
+                  )}
+
+                </div>
+              ) : (
+                <p className="mt-2 font-medium text-gray-400">
+                  Sin tags
+                </p>
+              )}
+
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* ALERTAS */}
+        {(pendingInvoices >
+          0 ||
+          pendingRecoveries >
+            0) && (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+            {pendingInvoices >
+              0 && (
+              <Link
+                href="/admin/finanzas"
+                className="rounded-3xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10"
+              >
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                  Facturación pendiente
+                </p>
+
+                <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+                  {
+                    pendingInvoices
+                  }{" "}
+                  producción
+                  {pendingInvoices ===
+                  1
+                    ? ""
+                    : "es"}{" "}
+                  pendiente
+                  {pendingInvoices ===
+                  1
+                    ? ""
+                    : "s"}{" "}
+                  de facturar.
+                </p>
+              </Link>
+            )}
+
+            {pendingRecoveries >
+              0 && (
+              <Link
+                href="/admin/recuperaciones"
+                className="rounded-3xl border border-amber-200 bg-amber-50 p-5 transition hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10"
+              >
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                  Recuperaciones pendientes
+                </p>
+
+                <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+                  Hay{" "}
+                  {
+                    pendingRecoveries
+                  }{" "}
+                  solicitud
+                  {pendingRecoveries ===
+                  1
+                    ? ""
+                    : "es"}{" "}
+                  para revisar.
+                </p>
+              </Link>
+            )}
+
+          </div>
+        )}
+
         {/* ACADEMY */}
         <section className="mt-6 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
@@ -1029,16 +1150,6 @@ export default async function AdminClientDetailPage({
 
                       <p className="mt-1 text-sm font-medium text-[#0A9396]">
                         Acceso permanente
-                      </p>
-
-                      <p className="mt-1 text-xs text-gray-400">
-
-                        Asignado:{" "}
-
-                        {formatDate(
-                          enrollment.enrolled_at
-                        )}
-
                       </p>
 
                     </div>
@@ -1106,36 +1217,20 @@ export default async function AdminClientDetailPage({
                         </p>
 
                         <p className="mt-1 text-sm text-gray-500">
-
                           Solicitada el{" "}
-
                           {formatDate(
                             recovery.requested_at
                           )}
-
                         </p>
 
                       </div>
 
-                      <div>
-
-                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                          {RECOVERY_LABELS[
-                            recovery.status
-                          ] ||
-                            recovery.status}
-                        </span>
-
-                      </div>
-
-                      <Link
-                        href="/admin/recuperaciones"
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline"
-                      >
-                        Ver solicitud
-
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
+                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                        {RECOVERY_LABELS[
+                          recovery.status
+                        ] ||
+                          recovery.status}
+                      </span>
 
                     </div>
                   )
@@ -1147,7 +1242,6 @@ export default async function AdminClientDetailPage({
 
         </section>
 
-        {/* FINANZAS */}
         <Link
           href="/admin/finanzas"
           className="mt-6 flex items-center justify-between rounded-3xl border border-gray-200/70 bg-white p-6 transition hover:border-[#0A9396]/40 dark:border-white/10 dark:bg-[#06222c]"
@@ -1166,7 +1260,7 @@ export default async function AdminClientDetailPage({
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Consultá pagos, facturación y movimientos de todas las producciones.
+                Pagos, facturación y movimientos.
               </p>
 
             </div>
