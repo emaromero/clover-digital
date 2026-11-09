@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Home,
   LayoutDashboard,
+  Settings2,
   UserRound,
   Users,
 } from "lucide-react"
@@ -158,6 +159,19 @@ export default async function AdminLayout({
 
               <span className="hidden xl:inline">
                 Academy
+              </span>
+
+            </Link>
+
+            <Link
+              href="/admin/configuracion"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-[#0A9396]/10 hover:text-[#0A9396] dark:text-gray-300"
+            >
+
+              <Settings2 className="h-4 w-4" />
+
+              <span className="hidden xl:inline">
+                Configuración
               </span>
 
             </Link>

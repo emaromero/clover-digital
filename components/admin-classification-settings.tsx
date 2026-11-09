@@ -4,6 +4,10 @@ import {
   useState,
 } from "react"
 
+import type {
+  ReactNode,
+} from "react"
+
 import {
   Building2,
   Check,
@@ -36,6 +40,221 @@ interface Props {
   initialOffices: Office[]
   initialClientTags: TagItem[]
   initialProductionTags: TagItem[]
+}
+
+interface CollectionItem {
+  id: string
+  name: string
+}
+
+interface CollectionProps {
+  title: string
+  description: string
+  icon: ReactNode
+  items: CollectionItem[]
+  newValue: string
+  setNewValue: (
+    value: string
+  ) => void
+  onCreate:
+    () => void
+  onRename: (
+    item: CollectionItem
+  ) => void
+  onDelete: (
+    item: CollectionItem
+  ) => void
+  loadingKey:
+    | string
+    | null
+  loadingPrefix: string
+  placeholder: string
+}
+
+function Collection({
+  title,
+  description,
+  icon,
+  items,
+  newValue,
+  setNewValue,
+  onCreate,
+  onRename,
+  onDelete,
+  loadingKey,
+  loadingPrefix,
+  placeholder,
+}: CollectionProps) {
+  return (
+    <section className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+
+      <div className="flex items-start gap-4">
+
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
+          {
+            icon
+          }
+        </div>
+
+        <div>
+
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            {
+              title
+            }
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            {
+              description
+            }
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="mt-6 flex gap-2">
+
+        <input
+          type="text"
+          value={
+            newValue
+          }
+          onChange={(
+            event
+          ) =>
+            setNewValue(
+              event.target.value
+            )
+          }
+          onKeyDown={(
+            event
+          ) => {
+            if (
+              event.key ===
+              "Enter"
+            ) {
+              event.preventDefault()
+
+              onCreate()
+            }
+          }}
+          placeholder={
+            placeholder
+          }
+          className="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+        />
+
+        <button
+          type="button"
+          onClick={
+            onCreate
+          }
+          disabled={
+            Boolean(
+              loadingKey
+            ) ||
+            !newValue.trim()
+          }
+          className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50"
+        >
+
+          {loadingKey ===
+          loadingPrefix ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+
+          Crear
+
+        </button>
+
+      </div>
+
+      {items.length ===
+      0 ? (
+        <p className="mt-6 text-sm text-gray-400">
+          Todavía no hay elementos creados.
+        </p>
+      ) : (
+        <div className="mt-6 divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 dark:divide-white/10 dark:border-white/10">
+
+          {items.map(
+            (item) => {
+              const busy =
+                loadingKey ===
+                  `office-${item.id}` ||
+                loadingKey ===
+                  `tag-${item.id}`
+
+              return (
+                <div
+                  key={
+                    item.id
+                  }
+                  className="flex items-center gap-3 bg-white px-4 py-3 dark:bg-[#001219]"
+                >
+
+                  <Check className="h-4 w-4 shrink-0 text-[#0A9396]" />
+
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    {
+                      item.name
+                    }
+                  </p>
+
+                  <button
+                    type="button"
+                    disabled={
+                      Boolean(
+                        loadingKey
+                      )
+                    }
+                    onClick={() =>
+                      onRename(
+                        item
+                      )
+                    }
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-[#0A9396] disabled:opacity-50 dark:hover:bg-white/5"
+                    aria-label={`Editar ${item.name}`}
+                  >
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={
+                      Boolean(
+                        loadingKey
+                      )
+                    }
+                    onClick={() =>
+                      onDelete(
+                        item
+                      )
+                    }
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10"
+                    aria-label={`Eliminar ${item.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+
+                </div>
+              )
+            }
+          )}
+
+        </div>
+      )}
+
+    </section>
+  )
 }
 
 export default function AdminClassificationSettings({
@@ -280,7 +499,8 @@ export default function AdminClassificationSettings({
 
       if (
         !name ||
-        name === office.name
+        name ===
+          office.name
       ) {
         return
       }
@@ -304,6 +524,7 @@ export default function AdminClassificationSettings({
           )
           .update({
             name,
+
             updated_at:
               new Date().toISOString(),
           })
@@ -361,7 +582,8 @@ export default function AdminClassificationSettings({
 
       if (
         !name ||
-        name === tag.name
+        name ===
+          tag.name
       ) {
         return
       }
@@ -383,6 +605,7 @@ export default function AdminClassificationSettings({
           .from("tags")
           .update({
             name,
+
             updated_at:
               new Date().toISOString(),
           })
@@ -576,211 +799,6 @@ export default function AdminClassificationSettings({
       setLoadingKey(null)
     }
 
-  const Collection = ({
-    title,
-    description,
-    icon,
-    items,
-    newValue,
-    setNewValue,
-    onCreate,
-    onRename,
-    onDelete,
-    loadingPrefix,
-    placeholder,
-  }: {
-    title: string
-    description: string
-    icon: React.ReactNode
-    items: Array<{
-      id: string
-      name: string
-    }>
-    newValue: string
-    setNewValue: (
-      value: string
-    ) => void
-    onCreate:
-      () => void
-    onRename: (
-      item: any
-    ) => void
-    onDelete: (
-      item: any
-    ) => void
-    loadingPrefix: string
-    placeholder: string
-  }) => {
-    return (
-      <section className="rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
-
-        <div className="flex items-start gap-4">
-
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
-            {
-              icon
-            }
-          </div>
-
-          <div>
-
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              {
-                title
-              }
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              {
-                description
-              }
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="mt-6 flex gap-2">
-
-          <input
-            type="text"
-            value={
-              newValue
-            }
-            onChange={(
-              event
-            ) =>
-              setNewValue(
-                event.target.value
-              )
-            }
-            onKeyDown={(
-              event
-            ) => {
-              if (
-                event.key ===
-                "Enter"
-              ) {
-                event.preventDefault()
-
-                onCreate()
-              }
-            }}
-            placeholder={
-              placeholder
-            }
-            className="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
-          />
-
-          <button
-            type="button"
-            onClick={
-              onCreate
-            }
-            disabled={
-              Boolean(
-                loadingKey
-              ) ||
-              !newValue.trim()
-            }
-            className="inline-flex items-center gap-2 rounded-xl bg-[#0e5c6e] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50"
-          >
-
-            {loadingKey ===
-            loadingPrefix ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-
-            Crear
-
-          </button>
-
-        </div>
-
-        {items.length ===
-        0 ? (
-          <p className="mt-6 text-sm text-gray-400">
-            Todavía no hay elementos creados.
-          </p>
-        ) : (
-          <div className="mt-6 divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 dark:divide-white/10 dark:border-white/10">
-
-            {items.map(
-              (item) => {
-                const busy =
-                  loadingKey ===
-                    `office-${item.id}` ||
-                  loadingKey ===
-                    `tag-${item.id}`
-
-                return (
-                  <div
-                    key={
-                      item.id
-                    }
-                    className="flex items-center gap-3 bg-white px-4 py-3 dark:bg-[#001219]"
-                  >
-
-                    <Check className="h-4 w-4 shrink-0 text-[#0A9396]" />
-
-                    <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
-                      {
-                        item.name
-                      }
-                    </p>
-
-                    <button
-                      type="button"
-                      disabled={
-                        Boolean(
-                          loadingKey
-                        )
-                      }
-                      onClick={() =>
-                        onRename(
-                          item
-                        )
-                      }
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-[#0A9396] disabled:opacity-50 dark:hover:bg-white/5"
-                    >
-                      {busy ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Pencil className="h-4 w-4" />
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={
-                        Boolean(
-                          loadingKey
-                        )
-                      }
-                      onClick={() =>
-                        onDelete(
-                          item
-                        )
-                      }
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-
-                  </div>
-                )
-              }
-            )}
-
-          </div>
-        )}
-
-      </section>
-    )
-  }
-
   return (
     <>
 
@@ -825,11 +843,22 @@ export default function AdminClassificationSettings({
           onCreate={
             createOffice
           }
-          onRename={
-            renameOffice
+          onRename={(
+            item
+          ) =>
+            renameOffice(
+              item as Office
+            )
           }
-          onDelete={
-            deleteOffice
+          onDelete={(
+            item
+          ) =>
+            deleteOffice(
+              item as Office
+            )
+          }
+          loadingKey={
+            loadingKey
           }
           loadingPrefix="new-office"
           placeholder="Ej. RE/MAX Parque"
@@ -855,11 +884,22 @@ export default function AdminClassificationSettings({
               "client"
             )
           }
-          onRename={
-            renameTag
+          onRename={(
+            item
+          ) =>
+            renameTag(
+              item as TagItem
+            )
           }
-          onDelete={
-            deleteTag
+          onDelete={(
+            item
+          ) =>
+            deleteTag(
+              item as TagItem
+            )
+          }
+          loadingKey={
+            loadingKey
           }
           loadingPrefix="new-client"
           placeholder="Ej. Frecuente"
@@ -885,11 +925,22 @@ export default function AdminClassificationSettings({
               "production"
             )
           }
-          onRename={
-            renameTag
+          onRename={(
+            item
+          ) =>
+            renameTag(
+              item as TagItem
+            )
           }
-          onDelete={
-            deleteTag
+          onDelete={(
+            item
+          ) =>
+            deleteTag(
+              item as TagItem
+            )
+          }
+          loadingKey={
+            loadingKey
           }
           loadingPrefix="new-production"
           placeholder="Ej. Entrega urgente"
