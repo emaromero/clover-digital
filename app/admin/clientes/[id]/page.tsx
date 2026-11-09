@@ -20,6 +20,8 @@ import {
 } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+
+import ClientClassificationManager from "@/components/client-classification-manager"
 import ClientTaxIdEditor from "@/components/client-tax-id-editor"
 
 interface PageProps {
@@ -113,6 +115,7 @@ export default async function AdminClientDetailPage({
         email,
         phone,
         avatar_url,
+        office_id,
         created_at
       `)
       .eq(
@@ -142,8 +145,63 @@ export default async function AdminClientDetailPage({
       .maybeSingle()
 
   /*
+   * ORGANIZACIÓN INTERNA
+   */
+  const {
+    data: offices,
+  } =
+    await supabase
+      .from(
+        "client_offices"
+      )
+      .select(`
+        id,
+        name
+      `)
+      .order(
+        "name",
+        {
+          ascending: true,
+        }
+      )
+
+  const {
+    data: clientTags,
+  } =
+    await supabase
+      .from("tags")
+      .select(`
+        id,
+        name
+      `)
+      .eq(
+        "scope",
+        "client"
+      )
+      .order(
+        "name",
+        {
+          ascending: true,
+        }
+      )
+
+  const {
+    data: profileTagRows,
+  } =
+    await supabase
+      .from(
+        "profile_tags"
+      )
+      .select(
+        "tag_id"
+      )
+      .eq(
+        "user_id",
+        id
+      )
+
+  /*
    * PRODUCCIONES DEL CLIENTE
-   * Incluye las compartidas.
    */
   const {
     data: memberships,
@@ -193,8 +251,7 @@ export default async function AdminClientDetailPage({
     0
   ) {
     const {
-      data:
-        productions,
+      data: productions,
     } =
       await supabase
         .from(
@@ -243,8 +300,7 @@ export default async function AdminClientDetailPage({
     0
   ) {
     const {
-      data:
-        paymentData,
+      data: paymentData,
     } =
       await supabase
         .from(
@@ -614,8 +670,33 @@ export default async function AdminClientDetailPage({
 
         </div>
 
-        {/* CUIT / DNI */}
-        <div className="mt-6">
+        {/* DATOS INTERNOS */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+
+          <ClientClassificationManager
+            userId={
+              profile.id
+            }
+            offices={
+              offices || []
+            }
+            tags={
+              clientTags || []
+            }
+            initialOfficeId={
+              profile.office_id ||
+              null
+            }
+            initialTagIds={
+              (
+                profileTagRows ||
+                []
+              ).map(
+                (item) =>
+                  item.tag_id
+              )
+            }
+          />
 
           <ClientTaxIdEditor
             userId={
@@ -906,7 +987,7 @@ export default async function AdminClientDetailPage({
               </h2>
 
               <p className="text-sm text-gray-500">
-                Inscripciones del cliente.
+                Cursos asignados al cliente.
               </p>
 
             </div>
@@ -946,19 +1027,13 @@ export default async function AdminClientDetailPage({
                           "Curso"}
                       </p>
 
-                      <p className="mt-1 text-sm text-gray-500">
-
-                        Estado:{" "}
-
-                        {
-                          enrollment.status
-                        }
-
+                      <p className="mt-1 text-sm font-medium text-[#0A9396]">
+                        Acceso permanente
                       </p>
 
                       <p className="mt-1 text-xs text-gray-400">
 
-                        Inscripción:{" "}
+                        Asignado:{" "}
 
                         {formatDate(
                           enrollment.enrolled_at
