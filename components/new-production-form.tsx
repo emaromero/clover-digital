@@ -1,31 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import {
+  useMemo,
+  useState,
+} from "react"
+
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+
+import {
+  useRouter,
+} from "next/navigation"
 
 import {
   ArrowLeft,
+  Building2,
   CalendarDays,
   Check,
+  Filter,
   Loader2,
   Mail,
   Save,
+  Search,
+  Tag,
   UserCheck,
   UserPlus,
   Users,
+  X,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
+
+interface Office {
+  id: string
+  name: string
+}
+
+interface TagItem {
+  id: string
+  name: string
+}
 
 interface Client {
   id: string
   full_name: string | null
   email: string | null
+  office_id: string | null
+  office_name: string | null
+  tag_ids: string[]
 }
 
 interface Props {
   clients: Client[]
+  offices: Office[]
+  clientTags: TagItem[]
+  productionTags: TagItem[]
 }
 
 const SERVICES = [
@@ -43,6 +71,9 @@ type ClientMode =
 
 export default function NewProductionForm({
   clients,
+  offices,
+  clientTags,
+  productionTags,
 }: Props) {
   const router =
     useRouter()
@@ -58,6 +89,32 @@ export default function NewProductionForm({
   const [
     selectedClientIds,
     setSelectedClientIds,
+  ] =
+    useState<string[]>(
+      []
+    )
+
+  const [
+    clientSearch,
+    setClientSearch,
+  ] =
+    useState("")
+
+  const [
+    officeFilter,
+    setOfficeFilter,
+  ] =
+    useState("all")
+
+  const [
+    clientTagFilter,
+    setClientTagFilter,
+  ] =
+    useState("all")
+
+  const [
+    selectedProductionTagIds,
+    setSelectedProductionTagIds,
   ] =
     useState<string[]>(
       []
@@ -139,6 +196,84 @@ export default function NewProductionForm({
   ] =
     useState("")
 
+  const selectedClients =
+    useMemo(
+      () =>
+        selectedClientIds
+          .map(
+            (id) =>
+              clients.find(
+                (client) =>
+                  client.id ===
+                  id
+              )
+          )
+          .filter(
+            Boolean
+          ) as Client[],
+      [
+        clients,
+        selectedClientIds,
+      ]
+    )
+
+  const filteredClients =
+    useMemo(
+      () => {
+        const search =
+          clientSearch
+            .trim()
+            .toLowerCase()
+
+        return clients.filter(
+          (client) => {
+            const matchesOffice =
+              officeFilter ===
+                "all" ||
+              client.office_id ===
+                officeFilter
+
+            const matchesTag =
+              clientTagFilter ===
+                "all" ||
+              client.tag_ids.includes(
+                clientTagFilter
+              )
+
+            const text =
+              [
+                client.full_name ||
+                  "",
+                client.email ||
+                  "",
+                client.office_name ||
+                  "",
+              ]
+                .join(" ")
+                .toLowerCase()
+
+            const matchesSearch =
+              !search ||
+              text.includes(
+                search
+              )
+
+            return (
+              matchesOffice &&
+              matchesTag &&
+              matchesSearch
+            )
+          }
+        )
+      },
+      [
+        clients,
+        clientSearch,
+        officeFilter,
+        clientTagFilter,
+      ]
+    )
+
   const toggleClient = (
     clientId: string
   ) => {
@@ -179,9 +314,30 @@ export default function NewProductionForm({
     )
   }
 
+  const toggleProductionTag = (
+    tagId: string
+  ) => {
+    setSelectedProductionTagIds(
+      (current) =>
+        current.includes(
+          tagId
+        )
+          ? current.filter(
+              (id) =>
+                id !==
+                tagId
+            )
+          : [
+              ...current,
+              tagId,
+            ]
+    )
+  }
+
   const handleSubmit =
     async (
-      event: React.FormEvent
+      event:
+        React.FormEvent
     ) => {
       event.preventDefault()
 
@@ -279,15 +435,6 @@ export default function NewProductionForm({
         | string
         | null = null
 
-      /*
-       * El primer cliente seleccionado
-       * queda como cliente principal
-       * en productions.user_id para
-       * mantener compatibilidad.
-       *
-       * Todos los clientes seleccionados
-       * se guardan luego en production_users.
-       */
       if (
         clientMode ===
         "registered"
@@ -310,9 +457,6 @@ export default function NewProductionForm({
           primaryClient?.email ||
           null
       } else {
-        finalUserId =
-          null
-
         finalClientName =
           pendingClientName
             .trim()
@@ -432,27 +576,10 @@ export default function NewProductionForm({
         return
       }
 
-      /*
-       * Si hay varios clientes registrados,
-       * todos reciben acceso a la producción.
-       */
       if (
         clientMode ===
-          "registered" &&
-        selectedClientIds.length >
-          0
+          "registered"
       ) {
-        const membershipRows =
-          selectedClientIds.map(
-            (userId) => ({
-              production_id:
-                createdProduction.id,
-
-              user_id:
-                userId,
-            })
-          )
-
         const {
           error:
             membershipError,
@@ -462,7 +589,15 @@ export default function NewProductionForm({
               "production_users"
             )
             .upsert(
-              membershipRows,
+              selectedClientIds.map(
+                (userId) => ({
+                  production_id:
+                    createdProduction.id,
+
+                  user_id:
+                    userId,
+                })
+              ),
               {
                 onConflict:
                   "production_id,user_id",
@@ -478,6 +613,45 @@ export default function NewProductionForm({
 
           setMessage(
             "La producción se creó, pero no pudimos vincular a todos los clientes."
+          )
+
+          setLoading(false)
+
+          return
+        }
+      }
+
+      if (
+        selectedProductionTagIds.length >
+        0
+      ) {
+        const {
+          error:
+            tagsError,
+        } =
+          await supabase
+            .from(
+              "production_tags"
+            )
+            .insert(
+              selectedProductionTagIds.map(
+                (tagId) => ({
+                  production_id:
+                    createdProduction.id,
+
+                  tag_id:
+                    tagId,
+                })
+              )
+            )
+
+        if (tagsError) {
+          console.error(
+            tagsError
+          )
+
+          setMessage(
+            "La producción se creó, pero no pudimos guardar sus tags."
           )
 
           setLoading(false)
@@ -518,7 +692,7 @@ export default function NewProductionForm({
           </h1>
 
           <p className="mt-3 text-gray-500 dark:text-gray-400">
-            Creá una producción para uno o varios clientes registrados, o cargá un cliente que todavía no tenga cuenta.
+            Creá una producción para uno o varios clientes registrados.
           </p>
 
         </div>
@@ -530,7 +704,6 @@ export default function NewProductionForm({
           className="mt-8 space-y-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8"
         >
 
-          {/* TIPO DE CLIENTE */}
           <div>
 
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -550,20 +723,10 @@ export default function NewProductionForm({
                   clientMode ===
                   "registered"
                     ? "border-[#0A9396] bg-[#0A9396]/10"
-                    : "border-gray-200 hover:border-[#0A9396]/40 dark:border-white/10"
+                    : "border-gray-200 dark:border-white/10"
                 }`}
               >
-
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                    clientMode ===
-                    "registered"
-                      ? "bg-[#0A9396] text-white"
-                      : "bg-gray-100 text-gray-500 dark:bg-white/10"
-                  }`}
-                >
-                  <Users className="h-5 w-5" />
-                </div>
+                <Users className="h-5 w-5 text-[#0A9396]" />
 
                 <div>
 
@@ -571,8 +734,8 @@ export default function NewProductionForm({
                     Cliente registrado
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                    Podés seleccionar uno o varios usuarios.
+                  <p className="mt-1 text-xs text-gray-500">
+                    Uno o varios usuarios.
                   </p>
 
                 </div>
@@ -590,20 +753,10 @@ export default function NewProductionForm({
                   clientMode ===
                   "pending"
                     ? "border-[#0A9396] bg-[#0A9396]/10"
-                    : "border-gray-200 hover:border-[#0A9396]/40 dark:border-white/10"
+                    : "border-gray-200 dark:border-white/10"
                 }`}
               >
-
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                    clientMode ===
-                    "pending"
-                      ? "bg-[#0A9396] text-white"
-                      : "bg-gray-100 text-gray-500 dark:bg-white/10"
-                  }`}
-                >
-                  <UserPlus className="h-5 w-5" />
-                </div>
+                <UserPlus className="h-5 w-5 text-[#0A9396]" />
 
                 <div>
 
@@ -611,8 +764,8 @@ export default function NewProductionForm({
                     Cliente sin cuenta
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                    Todavía no se registró en Clover Digital.
+                  <p className="mt-1 text-xs text-gray-500">
+                    Se vinculará cuando se registre.
                   </p>
 
                 </div>
@@ -623,21 +776,20 @@ export default function NewProductionForm({
 
           </div>
 
-          {/* CLIENTES REGISTRADOS */}
           {clientMode ===
             "registered" && (
             <div>
 
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-wrap items-end justify-between gap-4">
 
                 <div>
 
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
                     Clientes con acceso
-                  </label>
+                  </p>
 
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Todos verán la misma producción y los mismos archivos.
+                  <p className="mt-1 text-xs text-gray-500">
+                    Todos verán la misma producción.
                   </p>
 
                 </div>
@@ -645,97 +797,383 @@ export default function NewProductionForm({
                 {selectedClientIds.length >
                   0 && (
                   <span className="rounded-full bg-[#0A9396]/10 px-3 py-1 text-xs font-semibold text-[#0A9396]">
+
                     {
                       selectedClientIds.length
                     }{" "}
-                    {selectedClientIds.length ===
-                    1
-                      ? "cliente"
-                      : "clientes"}
+
+                    seleccionados
+
                   </span>
                 )}
 
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {selectedClients.length >
+                0 && (
+                <div className="mt-4 rounded-2xl border border-[#0A9396]/20 bg-[#0A9396]/5 p-4">
 
-                {clients.map(
-                  (
-                    client
-                  ) => {
-                    const selected =
-                      selectedClientIds.includes(
-                        client.id
-                      )
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#0A9396]">
+                    Seleccionados
+                  </p>
 
-                    return (
-                      <button
-                        key={
-                          client.id
-                        }
-                        type="button"
-                        onClick={() =>
-                          toggleClient(
+                  <div className="mt-3 flex flex-wrap gap-2">
+
+                    {selectedClients.map(
+                      (
+                        client,
+                        index
+                      ) => (
+                        <button
+                          key={
                             client.id
+                          }
+                          type="button"
+                          onClick={() =>
+                            toggleClient(
+                              client.id
+                            )
+                          }
+                          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm dark:bg-[#06222c] dark:text-gray-200"
+                        >
+
+                          {index ===
+                            0 && (
+                            <span className="text-[#0A9396]">
+                              Principal ·
+                            </span>
+                          )}
+
+                          {client.full_name ||
+                            client.email ||
+                            "Cliente"}
+
+                          <X className="h-3.5 w-3.5" />
+
+                        </button>
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+              )}
+
+              <div className="mt-5 rounded-2xl border border-gray-200 p-4 dark:border-white/10">
+
+                <div className="flex items-center gap-2">
+
+                  <Filter className="h-4 w-4 text-[#0A9396]" />
+
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    Buscar y filtrar
+                  </p>
+
+                </div>
+
+                <div className="mt-4 grid gap-3">
+
+                  <div className="relative">
+
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+                    <input
+                      type="search"
+                      value={
+                        clientSearch
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setClientSearch(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Nombre, email u oficina"
+                      className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                    />
+
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+
+                    <div className="relative">
+
+                      <Building2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+                      <select
+                        value={
+                          officeFilter
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setOfficeFilter(
+                            event.target.value
                           )
                         }
-                        className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                          selected
-                            ? "border-[#0A9396] bg-[#0A9396]/10"
-                            : "border-gray-200 hover:border-[#0A9396]/40 dark:border-white/10"
-                        }`}
+                        className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
                       >
 
-                        <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                            selected
-                              ? "bg-[#0A9396] text-white"
-                              : "bg-gray-100 text-gray-500 dark:bg-white/10"
-                          }`}
-                        >
-                          {selected ? (
-                            <Check className="h-5 w-5" />
-                          ) : (
-                            <UserCheck className="h-5 w-5" />
-                          )}
-                        </div>
+                        <option value="all">
+                          Todas las oficinas
+                        </option>
 
-                        <div className="min-w-0">
+                        {offices.map(
+                          (office) => (
+                            <option
+                              key={
+                                office.id
+                              }
+                              value={
+                                office.id
+                              }
+                            >
+                              {
+                                office.name
+                              }
+                            </option>
+                          )
+                        )}
 
-                          <p className="truncate font-semibold text-gray-900 dark:text-white">
-                            {client.full_name ||
-                              "Sin nombre"}
-                          </p>
+                      </select>
 
-                          <p className="mt-1 truncate text-xs text-gray-500">
-                            {
-                              client.email ||
-                              "Sin email"
-                            }
-                          </p>
+                    </div>
 
-                        </div>
+                    <div className="relative">
 
-                      </button>
-                    )
-                  }
-                )}
+                      <Tag className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+                      <select
+                        value={
+                          clientTagFilter
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          setClientTagFilter(
+                            event.target.value
+                          )
+                        }
+                        className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                      >
+
+                        <option value="all">
+                          Todos los tags
+                        </option>
+
+                        {clientTags.map(
+                          (tag) => (
+                            <option
+                              key={
+                                tag.id
+                              }
+                              value={
+                                tag.id
+                              }
+                            >
+                              {
+                                tag.name
+                              }
+                            </option>
+                          )
+                        )}
+
+                      </select>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+
+                  <p className="text-xs text-gray-400">
+
+                    {
+                      filteredClients.length
+                    }{" "}
+
+                    {filteredClients.length ===
+                    1
+                      ? "resultado"
+                      : "resultados"}
+
+                  </p>
+
+                  {(clientSearch ||
+                    officeFilter !==
+                      "all" ||
+                    clientTagFilter !==
+                      "all") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClientSearch(
+                          ""
+                        )
+
+                        setOfficeFilter(
+                          "all"
+                        )
+
+                        setClientTagFilter(
+                          "all"
+                        )
+                      }}
+                      className="text-xs font-semibold text-[#0A9396] hover:underline"
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
+
+                </div>
 
               </div>
+
+              {filteredClients.length ===
+              0 ? (
+                <div className="mt-4 rounded-2xl border border-dashed border-gray-200 p-8 text-center dark:border-white/10">
+
+                  <Search className="mx-auto h-6 w-6 text-gray-300" />
+
+                  <p className="mt-3 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                    No encontramos clientes
+                  </p>
+
+                </div>
+              ) : (
+                <div className="mt-4 grid max-h-[520px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
+
+                  {filteredClients.map(
+                    (client) => {
+                      const selected =
+                        selectedClientIds.includes(
+                          client.id
+                        )
+
+                      const index =
+                        selectedClientIds.indexOf(
+                          client.id
+                        )
+
+                      return (
+                        <button
+                          key={
+                            client.id
+                          }
+                          type="button"
+                          onClick={() =>
+                            toggleClient(
+                              client.id
+                            )
+                          }
+                          className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                            selected
+                              ? "border-[#0A9396] bg-[#0A9396]/10"
+                              : "border-gray-200 hover:border-[#0A9396]/40 dark:border-white/10"
+                          }`}
+                        >
+
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                              selected
+                                ? "bg-[#0A9396] text-white"
+                                : "bg-gray-100 text-gray-500 dark:bg-white/10"
+                            }`}
+                          >
+                            {selected ? (
+                              <Check className="h-5 w-5" />
+                            ) : (
+                              <UserCheck className="h-5 w-5" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+
+                            <div className="flex items-center gap-2">
+
+                              <p className="truncate font-semibold text-gray-900 dark:text-white">
+                                {client.full_name ||
+                                  "Sin nombre"}
+                              </p>
+
+                              {index ===
+                                0 && (
+                                <span className="shrink-0 rounded-full bg-[#0A9396]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0A9396]">
+                                  Principal
+                                </span>
+                              )}
+
+                            </div>
+
+                            <p className="mt-1 truncate text-xs text-gray-500">
+                              {client.email ||
+                                "Sin email"}
+                            </p>
+
+                            {client.office_name && (
+                              <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+
+                                <Building2 className="h-3 w-3" />
+
+                                {
+                                  client.office_name
+                                }
+
+                              </p>
+                            )}
+
+                            {client.tag_ids.length >
+                              0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+
+                                {clientTags
+                                  .filter(
+                                    (tag) =>
+                                      client.tag_ids.includes(
+                                        tag.id
+                                      )
+                                  )
+                                  .map(
+                                    (tag) => (
+                                      <span
+                                        key={
+                                          tag.id
+                                        }
+                                        className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-white/5 dark:text-gray-400"
+                                      >
+                                        {
+                                          tag.name
+                                        }
+                                      </span>
+                                    )
+                                  )}
+
+                              </div>
+                            )}
+
+                          </div>
+
+                        </button>
+                      )
+                    }
+                  )}
+
+                </div>
+              )}
 
             </div>
           )}
 
-          {/* CLIENTE SIN CUENTA */}
           {clientMode ===
             "pending" && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
 
               <div className="flex items-start gap-3">
 
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                  <Mail className="h-5 w-5" />
-                </div>
+                <Mail className="mt-1 h-5 w-5 text-amber-600" />
 
                 <div>
 
@@ -743,8 +1181,8 @@ export default function NewProductionForm({
                     Cliente pendiente de registro
                   </p>
 
-                  <p className="mt-1 text-sm leading-6 text-amber-800/70 dark:text-amber-200/70">
-                    Cuando se registre con este email, la producción se vinculará automáticamente a su cuenta.
+                  <p className="mt-1 text-sm text-amber-800/70 dark:text-amber-200/70">
+                    Cuando se registre con este email, la producción se vinculará automáticamente.
                   </p>
 
                 </div>
@@ -755,7 +1193,7 @@ export default function NewProductionForm({
 
                 <div>
 
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                     Nombre y apellido
                   </label>
 
@@ -771,15 +1209,14 @@ export default function NewProductionForm({
                         event.target.value
                       )
                     }
-                    placeholder="Ej. Mariana Kuhn"
-                    className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                    className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                   />
 
                 </div>
 
                 <div>
 
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                     Email
                   </label>
 
@@ -795,8 +1232,7 @@ export default function NewProductionForm({
                         event.target.value
                       )
                     }
-                    placeholder="cliente@email.com"
-                    className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                    className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
                   />
 
                 </div>
@@ -806,19 +1242,17 @@ export default function NewProductionForm({
             </div>
           )}
 
-          {/* PROPIEDAD */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Nombre de la propiedad
               </label>
 
               <input
                 type="text"
                 required
-                placeholder="Ej. Bucarelli 3354"
                 value={
                   propertyName
                 }
@@ -829,20 +1263,20 @@ export default function NewProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                placeholder="Ej. Bucarelli 3354"
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Dirección completa
               </label>
 
               <input
                 type="text"
-                placeholder="Bucarelli 3354, CABA"
                 value={
                   propertyAddress
                 }
@@ -853,19 +1287,19 @@ export default function NewProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                placeholder="Bucarelli 3354, CABA"
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
           </div>
 
-          {/* FECHA / ESTADO */}
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Fecha y hora
               </label>
 
@@ -885,7 +1319,7 @@ export default function NewProductionForm({
                       event.target.value
                     )
                   }
-                  className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 dark:border-white/15 dark:bg-[#001219]"
                 />
 
               </div>
@@ -894,7 +1328,7 @@ export default function NewProductionForm({
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Estado
               </label>
 
@@ -909,7 +1343,7 @@ export default function NewProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
               >
 
                 <option value="confirmed">
@@ -942,7 +1376,6 @@ export default function NewProductionForm({
 
           </div>
 
-          {/* SERVICIOS */}
           <div>
 
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -952,9 +1385,7 @@ export default function NewProductionForm({
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
               {SERVICES.map(
-                (
-                  service
-                ) => {
+                (service) => {
                   const active =
                     services.includes(
                       service
@@ -971,10 +1402,10 @@ export default function NewProductionForm({
                           service
                         )
                       }
-                      className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
+                      className={`rounded-xl border px-4 py-3 text-left text-sm font-medium ${
                         active
                           ? "border-[#0A9396] bg-[#0A9396]/10 text-[#0A9396]"
-                          : "border-gray-200 text-gray-600 hover:border-[#0A9396]/40 dark:border-white/10 dark:text-gray-300"
+                          : "border-gray-200 text-gray-600 dark:border-white/10 dark:text-gray-300"
                       }`}
                     >
                       {
@@ -989,12 +1420,78 @@ export default function NewProductionForm({
 
           </div>
 
-          {/* VALOR / ENTREGA */}
+          <div>
+
+            <div className="flex items-center gap-2">
+
+              <Tag className="h-4 w-4 text-[#0A9396]" />
+
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                Tags internos de la producción
+              </p>
+
+            </div>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Por ejemplo: Entrega urgente, Pendiente de pago o Requiere factura.
+            </p>
+
+            {productionTags.length ===
+            0 ? (
+              <p className="mt-3 text-sm text-gray-400">
+                Todavía no creaste tags de producciones.
+              </p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+
+                {productionTags.map(
+                  (tag) => {
+                    const active =
+                      selectedProductionTagIds.includes(
+                        tag.id
+                      )
+
+                    return (
+                      <button
+                        key={
+                          tag.id
+                        }
+                        type="button"
+                        onClick={() =>
+                          toggleProductionTag(
+                            tag.id
+                          )
+                        }
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
+                          active
+                            ? "border-[#0A9396] bg-[#0A9396]/10 text-[#0A9396]"
+                            : "border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-300"
+                        }`}
+                      >
+
+                        {active && (
+                          <Check className="h-3.5 w-3.5" />
+                        )}
+
+                        {
+                          tag.name
+                        }
+
+                      </button>
+                    )
+                  }
+                )}
+
+              </div>
+            )}
+
+          </div>
+
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Valor total
               </label>
 
@@ -1012,14 +1509,14 @@ export default function NewProductionForm({
                   )
                 }
                 placeholder="90000"
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
             <div>
 
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Entrega estimada
               </label>
 
@@ -1035,17 +1532,16 @@ export default function NewProductionForm({
                     event.target.value
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
               />
 
             </div>
 
           </div>
 
-          {/* NOTAS */}
           <div>
 
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Notas internas
             </label>
 
@@ -1061,52 +1557,64 @@ export default function NewProductionForm({
                   event.target.value
                 )
               }
-              placeholder="Notas internas de la producción..."
-              className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+              className="mt-2 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
             />
 
           </div>
 
           {message && (
-            <p className="text-sm font-medium text-red-600 dark:text-red-400">
+            <p className="text-sm font-medium text-red-600">
               {
                 message
               }
             </p>
           )}
 
-          <div className="flex flex-col gap-3 border-t border-gray-100 pt-6 dark:border-white/10 sm:flex-row sm:justify-end">
+          <div className="flex flex-col gap-3 border-t border-gray-100 pt-6 dark:border-white/10 sm:flex-row sm:justify-between">
 
             <Link
-              href="/admin/producciones"
-              className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+              href="/admin/configuracion"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0A9396]/30 px-4 py-3 text-sm font-semibold text-[#0A9396]"
             >
-              Cancelar
+              <Building2 className="h-4 w-4" />
+
+              Administrar oficinas y tags
             </Link>
 
-            <button
-              type="submit"
-              disabled={
-                loading
-              }
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-60"
-            >
+            <div className="flex flex-col gap-3 sm:flex-row">
 
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+              <Link
+                href="/admin/producciones"
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-600 dark:border-white/10 dark:text-gray-300"
+              >
+                Cancelar
+              </Link>
 
-                  Creando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
+              <button
+                type="submit"
+                disabled={
+                  loading
+                }
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              >
 
-                  Crear producción
-                </>
-              )}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
 
-            </button>
+                    Creando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+
+                    Crear producción
+                  </>
+                )}
+
+              </button>
+
+            </div>
 
           </div>
 

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server"
 import EditProductionForm from "@/components/edit-production-form"
 import ProductionFinancePanel from "@/components/production-finance-panel"
 import ProductionParticipantsManager from "@/components/production-participants-manager"
+import ProductionTagsManager from "@/components/production-tags-manager"
 
 interface PageProps {
   params: Promise<{
@@ -125,16 +126,10 @@ export default async function AdminProductionPage({
 
   const participantIds =
     participantRows?.map(
-      (
-        row
-      ) =>
+      (row) =>
         row.user_id
     ) || []
 
-  /*
-   * Compatibilidad con producciones
-   * antiguas.
-   */
   if (
     production.user_id &&
     !participantIds.includes(
@@ -146,18 +141,12 @@ export default async function AdminProductionPage({
     )
   }
 
-  /*
-   * Dejamos primero al cliente principal
-   * cuando existe.
-   */
   const orderedParticipantIds =
     production.user_id
       ? [
           production.user_id,
           ...participantIds.filter(
-            (
-              userId
-            ) =>
+            (userId) =>
               userId !==
               production.user_id
           ),
@@ -218,6 +207,41 @@ export default async function AdminProductionPage({
         }
       )
 
+  const {
+    data: tags,
+  } =
+    await supabase
+      .from("tags")
+      .select(`
+        id,
+        name
+      `)
+      .eq(
+        "scope",
+        "production"
+      )
+      .order(
+        "name",
+        {
+          ascending: true,
+        }
+      )
+
+  const {
+    data: productionTagRows,
+  } =
+    await supabase
+      .from(
+        "production_tags"
+      )
+      .select(
+        "tag_id"
+      )
+      .eq(
+        "production_id",
+        production.id
+      )
+
   return (
     <>
       <EditProductionForm
@@ -229,7 +253,7 @@ export default async function AdminProductionPage({
         }
       />
 
-      <div className="mx-auto -mt-8 max-w-5xl px-4 pb-8">
+      <div className="mx-auto -mt-8 grid max-w-5xl gap-6 px-4 pb-8 lg:grid-cols-2">
 
         <ProductionParticipantsManager
           productionId={
@@ -249,6 +273,24 @@ export default async function AdminProductionPage({
           }
           pendingClientEmail={
             production.client_email
+          }
+        />
+
+        <ProductionTagsManager
+          productionId={
+            production.id
+          }
+          tags={
+            tags || []
+          }
+          initialTagIds={
+            (
+              productionTagRows ||
+              []
+            ).map(
+              (item) =>
+                item.tag_id
+            )
           }
         />
 
