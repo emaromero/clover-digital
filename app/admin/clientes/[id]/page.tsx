@@ -861,6 +861,38 @@ export default async function AdminClientDetailPage({
                       0
                     )
 
+                  const hasAmount =
+                    productionTotal >
+                    0
+
+                  const isPaid =
+                    hasAmount &&
+                    collected >=
+                      productionTotal
+
+                  const isPartial =
+                    hasAmount &&
+                    collected >
+                      0 &&
+                    collected <
+                      productionTotal
+
+                  const paymentLabel =
+                    !hasAmount
+                      ? "Sin importe"
+                      : isPaid
+                        ? "Cobrado"
+                        : isPartial
+                          ? "Pago parcial"
+                          : "Pendiente"
+
+                  const paymentClass =
+                    !hasAmount
+                      ? "bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-300"
+                      : isPaid
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                        : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+
                   return (
                     <div
                       key={
@@ -869,6 +901,7 @@ export default async function AdminClientDetailPage({
                       className="flex flex-col gap-5 p-6 md:px-8 lg:flex-row lg:items-center"
                     >
 
+                      {/* DATOS DE LA PRODUCCIÓN */}
                       <div className="min-w-0 flex-1">
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -915,76 +948,72 @@ export default async function AdminClientDetailPage({
 
                       </div>
 
-                      <div className="grid gap-4 text-sm sm:grid-cols-2 lg:w-[46%] lg:grid-cols-4">
+                      {/* FECHA */}
+                      <div className="lg:w-[110px]">
 
-                        <div>
+                        <p className="text-xs text-gray-400">
+                          Fecha
+                        </p>
 
-                          <p className="text-xs text-gray-400">
-                            Fecha
-                          </p>
-
-                          <p className="mt-1 font-medium text-gray-700 dark:text-gray-300">
-                            {formatDate(
-                              production.production_date
-                            )}
-                          </p>
-
-                        </div>
-
-                        <div>
-
-                          <p className="text-xs text-gray-400">
-                            Total
-                          </p>
-
-                          <p className="mt-1 font-medium text-gray-700 dark:text-gray-300">
-                            {formatCurrency(
-                              productionTotal
-                            )}
-                          </p>
-
-                        </div>
-
-                        <div>
-
-                          <p className="text-xs text-gray-400">
-                            Cobrado
-                          </p>
-
-                          <p className="mt-1 font-medium text-emerald-600">
-                            {formatCurrency(
-                              collected
-                            )}
-                          </p>
-
-                        </div>
-
-                        <div>
-
-                          <p className="text-xs text-gray-400">
-                            Pendiente
-                          </p>
-
-                          <p
-                            className={`mt-1 font-semibold ${
-                              pending >
-                              0
-                                ? "text-amber-600"
-                                : "text-gray-400"
-                            }`}
-                          >
-                            {formatCurrency(
-                              pending
-                            )}
-                          </p>
-
-                        </div>
+                        <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {formatDate(
+                            production.production_date
+                          )}
+                        </p>
 
                       </div>
 
+                      {/* TOTAL + ESTADO DE PAGO */}
+                      <div className="lg:w-[190px]">
+
+                        <p className="text-xs text-gray-400">
+                          Total
+                        </p>
+
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+
+                          <p className="font-semibold text-gray-800 dark:text-gray-100">
+                            {hasAmount
+                              ? formatCurrency(
+                                  productionTotal
+                                )
+                              : "-"}
+                          </p>
+
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentClass}`}
+                          >
+                            {
+                              paymentLabel
+                            }
+                          </span>
+
+                        </div>
+
+                        {isPartial && (
+                          <p className="mt-1.5 text-xs text-gray-400">
+                            Cobrado{" "}
+                            <span className="font-semibold text-emerald-600">
+                              {formatCurrency(
+                                collected
+                              )}
+                            </span>
+                            {" · "}
+                            Resta{" "}
+                            <span className="font-semibold text-amber-600">
+                              {formatCurrency(
+                                pending
+                              )}
+                            </span>
+                          </p>
+                        )}
+
+                      </div>
+
+                      {/* LINK */}
                       <Link
                         href={`/admin/producciones/${production.id}`}
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline"
+                        className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-[#0A9396] hover:underline"
                       >
                         Ver producción
 
