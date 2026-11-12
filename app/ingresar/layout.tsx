@@ -4,7 +4,6 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Ingresá a Clover Digital",
-
   description:
     "Accedé a tu cuenta y consultá tus producciones, fotografías, videos y entregas desde un solo lugar.",
 
@@ -19,14 +18,10 @@ export const metadata: Metadata = {
 
   openGraph: {
     title: "Ingresá a Clover Digital",
-
     description:
       "Accedé a tu cuenta y consultá tus producciones, fotografías, videos y entregas desde un solo lugar.",
-
     url: "/ingresar",
-
     siteName: "Clover Digital",
-
     images: [
       {
         url: "/logo-clover.png",
@@ -35,7 +30,6 @@ export const metadata: Metadata = {
         alt: "Logo de Clover Digital",
       },
     ],
-
     type: "website",
     locale: "es_AR",
   },
@@ -43,10 +37,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "Ingresá a Clover Digital",
-
     description:
       "Accedé a tu cuenta y consultá tus producciones, fotografías, videos y entregas desde un solo lugar.",
-
     images: ["/logo-clover.png"],
   },
 }
