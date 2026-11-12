@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
@@ -10,7 +11,52 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient()
 
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error: exchangeError } =
+      await supabase.auth.exchangeCodeForSession(code)
+
+    if (exchangeError) {
+      return NextResponse.redirect(
+        new URL("/ingresar?error=auth", requestUrl.origin)
+      )
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const isGoogleUser =
+      user?.app_metadata?.provider === "google" ||
+      user?.app_metadata?.providers?.includes("google")
+
+    if (user && isGoogleUser) {
+      const googleAvatar =
+        user.user_metadata?.avatar_url ||
+        user.user_metadata?.picture ||
+        null
+
+      const validAvatar =
+        typeof googleAvatar === "string" &&
+        googleAvatar.startsWith("https://")
+          ? googleAvatar
+          : null
+
+      if (validAvatar) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", user.id)
+          .maybeSingle()
+
+        if (profile?.avatar_url !== validAvatar) {
+          await supabase
+            .from("profiles")
+            .update({
+              avatar_url: validAvatar,
+            })
+            .eq("id", user.id)
+        }
+      }
+    }
   }
 
   const safeNext =
