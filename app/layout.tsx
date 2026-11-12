@@ -59,7 +59,7 @@ export const metadata: Metadata =
 
     title: {
       default:
-        "Fotografía inmobiliaria y video para propiedades en Buenos Aires | Clover Digital",
+        "Fotografía inmobiliaria en Buenos Aires | Clover Digital",
 
       template:
         "%s | Clover Digital",
@@ -70,12 +70,19 @@ export const metadata: Metadata =
 
     keywords: [
       "fotografía inmobiliaria",
+      "fotografía inmobiliaria Buenos Aires",
       "fotógrafo inmobiliario Buenos Aires",
+      "fotografía inmobiliaria CABA",
+      "fotografía inmobiliaria Zona Norte",
+      "fotógrafo inmobiliario Zona Norte",
       "video inmobiliario",
-      "fotos HDR propiedades",
-      "drone inmobiliario",
+      "video para propiedades",
       "reels inmobiliarios",
+      "fotografía HDR propiedades",
+      "drone inmobiliario",
+      "fotografía aérea inmobiliaria",
       "fotografía de arquitectura",
+      "Corredor Norte",
       "Zona Norte",
       "CABA",
       "Clover Digital",
@@ -177,7 +184,7 @@ export const metadata: Metadata =
 
     openGraph: {
       title:
-        "Clover Digital | Fotografía y video para vender propiedades",
+        "Fotografía inmobiliaria en Buenos Aires | Clover Digital",
 
       description:
         SITE_DESCRIPTION,
@@ -200,7 +207,7 @@ export const metadata: Metadata =
             630,
 
           alt:
-            "Clover Digital - fotografía y video para propiedades",
+            "Clover Digital - fotografía inmobiliaria y video para propiedades en Buenos Aires",
         },
       ],
 
@@ -216,7 +223,7 @@ export const metadata: Metadata =
         "summary_large_image",
 
       title:
-        "Clover Digital | Fotografía y video para vender propiedades",
+        "Fotografía inmobiliaria en Buenos Aires | Clover Digital",
 
       description:
         SITE_DESCRIPTION,
@@ -244,6 +251,9 @@ const jsonLd = {
 
       name:
         SITE_NAME,
+
+      description:
+        SITE_DESCRIPTION,
 
       inLanguage:
         "es-AR",
@@ -291,6 +301,13 @@ const jsonLd = {
       areaServed: [
         {
           "@type":
+            "City",
+
+          name:
+            "Ciudad Autónoma de Buenos Aires",
+        },
+        {
+          "@type":
             "AdministrativeArea",
 
           name:
@@ -298,18 +315,42 @@ const jsonLd = {
         },
         {
           "@type":
-            "City",
+            "Place",
 
           name:
-            "Ciudad Autónoma de Buenos Aires",
+            "Corredor Norte de Buenos Aires",
         },
       ],
 
+      contactPoint: {
+        "@type":
+          "ContactPoint",
+
+        telephone:
+          "+5491164473603",
+
+        contactType:
+          "customer service",
+
+        areaServed:
+          "AR",
+
+        availableLanguage: [
+          "Spanish",
+          "English",
+        ],
+      },
+
       knowsAbout: [
         "Fotografía inmobiliaria",
+        "Fotografía HDR",
         "Video inmobiliario",
+        "Video recorrido para propiedades",
+        "Reels inmobiliarios",
         "Fotografía con drone",
+        "Video con drone",
         "Fotografía de arquitectura",
+        "Producción audiovisual inmobiliaria",
       ],
 
       sameAs: [
@@ -331,6 +372,7 @@ const jsonLd = {
           "Video vertical para redes sociales",
           "Reel hablado",
           "Fotografía y video con drone",
+          "Producción aérea integral",
           "Producción para desarrollos inmobiliarios",
         ].map(
           (
@@ -344,6 +386,11 @@ const jsonLd = {
                 "Service",
 
               name,
+
+              provider: {
+                "@id":
+                  `${SITE_URL}/#negocio`,
+              },
             },
           })
         ),

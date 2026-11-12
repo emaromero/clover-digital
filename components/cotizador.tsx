@@ -15,26 +15,51 @@ import {
 import { useLanguage } from "./language-provider"
 import { trackEvent } from "@/lib/analytics"
 
-const WHATSAPP = "5491164473603"
+const WHATSAPP =
+  "5491164473603"
 
 const PRECIOS_TIPOS = [
-  [70000, 70000, 90000],
-  [90000, 90000, 115000],
-  [115000, 115000, 140000],
+  [
+    70000,
+    70000,
+    90000,
+  ],
+  [
+    90000,
+    90000,
+    115000,
+  ],
+  [
+    115000,
+    115000,
+    140000,
+  ],
 ]
 
-const DRONE_SOLO = 90000
-const DRONE_ADICIONAL = 55000
-const REEL_HABLADO = 45000
-const VIDEO_VERTICAL = 30000
+const DRONE_ESTANDAR =
+  90000
 
-const VIATICO_BASE = 20000
+const DRONE_INTEGRAL =
+  130000
 
-const ENTREGA_36 = 15000
-const ENTREGA_24 = 20000
+const REEL_HABLADO =
+  45000
+
+const VIDEO_VERTICAL =
+  30000
+
+const VIATICO_BASE =
+  20000
+
+const ENTREGA_36 =
+  15000
+
+const ENTREGA_24 =
+  20000
 
 type ExtraId =
-  | "drone"
+  | "drone_standard"
+  | "drone_integral"
   | "reel"
   | "vert"
 
@@ -80,16 +105,25 @@ const COPY = {
 
     tipos: [
       {
-        n: "Propiedad estándar",
-        d: "Departamentos y PH de tamaño habitual, sin grandes exteriores ni múltiples amenities.",
+        n:
+          "Propiedad estándar",
+
+        d:
+          "Departamentos y PH de tamaño habitual, sin grandes exteriores ni múltiples amenities.",
       },
       {
-        n: "Propiedad ampliada",
-        d: "Departamentos grandes, PH y casas con más espacios, terrazas, jardines o sectores adicionales.",
+        n:
+          "Propiedad ampliada",
+
+        d:
+          "Departamentos grandes, PH y casas con más espacios, terrazas, jardines o sectores adicionales.",
       },
       {
-        n: "Propiedad grande",
-        d: "Casas de gran cobertura, múltiples ambientes, exteriores amplios, pileta, quincho o varias plantas.",
+        n:
+          "Propiedad grande",
+
+        d:
+          "Casas de gran cobertura, múltiples ambientes, exteriores amplios, pileta, quincho o varias plantas.",
       },
     ],
 
@@ -104,16 +138,25 @@ const COPY = {
 
     paquetes: [
       {
-        n: "Esenciales",
-        d: "Fotos HDR + video recorrido para portal",
+        n:
+          "Esenciales",
+
+        d:
+          "Fotos HDR + video recorrido para portal",
       },
       {
-        n: "Redes sociales",
-        d: "Fotos HDR + video vertical para redes",
+        n:
+          "Redes sociales",
+
+        d:
+          "Fotos HDR + video vertical para redes",
       },
       {
-        n: "Completo",
-        d: "Fotos HDR + video vertical + video recorrido para portal",
+        n:
+          "Completo",
+
+        d:
+          "Fotos HDR + video vertical + video recorrido para portal",
       },
     ],
 
@@ -123,44 +166,54 @@ const COPY = {
     extrasSubtitle:
       "Podés sumar contenido al paquete o contratar determinados servicios de forma independiente.",
 
-    droneWithPackage:
-      "Con un paquete, el drone se suma por",
-
-    droneWithoutPackage:
-      "Sin paquete, el servicio de drone tiene un valor de",
-
     extras: [
       {
-        id: "drone" as ExtraId,
-        n: "Drone",
-        nAdditional:
-          "Drone adicional",
-        d: "Fotografía aérea + video aéreo",
-        dAdditional:
-          "Fotografía aérea + clips de video para incorporar al material",
+        id:
+          "drone_standard" as ExtraId,
+
+        n:
+          "Drone estándar",
+
+        d:
+          "Fotografía aérea + clips de video aéreo de una propiedad.",
       },
       {
-        id: "reel" as ExtraId,
-        n: "Reel hablado",
-        nAdditional:
+        id:
+          "drone_integral" as ExtraId,
+
+        n:
+          "Producción aérea integral",
+
+        d:
+          "Cobertura aérea ampliada de propiedad, terreno, amenities, accesos y entorno.",
+      },
+      {
+        id:
+          "reel" as ExtraId,
+
+        n:
           "Reel hablado",
-        d: "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos.",
-        dAdditional:
+
+        d:
           "Grabación vertical con micrófono + edición + subtítulos. Máximo 60 segundos.",
       },
       {
-        id: "vert" as ExtraId,
-        n: "Video vertical para RRSS",
-        nAdditional:
+        id:
+          "vert" as ExtraId,
+
+        n:
           "Video vertical para RRSS",
-        d: "Grabación + edición de video vertical. Máximo 60 segundos.",
-        dAdditional:
+
+        d:
           "Grabación + edición de video vertical. Máximo 60 segundos.",
       },
     ],
 
     specialNote:
       "Desarrollos inmobiliarios, proyectos en pozo y producciones de gran escala se cotizan aparte.",
+
+    droneNote:
+      "Las producciones con drone están sujetas a condiciones climáticas, restricciones del espacio aéreo y autorización de la locación cuando corresponda.",
 
     selectService:
       "Elegí al menos un paquete o servicio adicional para continuar.",
@@ -175,19 +228,19 @@ const COPY = {
       "Ubicación de la propiedad",
 
     zoneInside:
-      "CABA y Zona Norte",
+      "CABA y Corredor Norte",
 
     zoneInsideDesc:
-      "Sin costo adicional",
+      "Zona base · sin costo adicional",
 
     zoneOutside:
-      "Fuera de CABA y Zona Norte",
+      "Pilar, Tortugas y otras zonas",
 
     zoneOutsideDesc:
       "Viáticos desde $20.000",
 
     zoneWarning:
-      "El adicional de $20.000 es el viático mínimo. El valor final puede variar según distancia y tiempo de traslado.",
+      "El adicional de $20.000 es el viático mínimo. El importe final se confirma según distancia, tiempo de traslado y logística de la producción.",
 
     selectZone:
       "Elegí la ubicación para continuar.",
@@ -264,7 +317,7 @@ const COPY = {
       "Sin cargo",
 
     travelSummary:
-      "Viáticos fuera de zona",
+      "Viáticos por zona extendida",
 
     standardDeliverySummary:
       "Entrega estándar · hasta 72 hs hábiles",
@@ -306,7 +359,7 @@ const COPY = {
       "a coordinar",
 
     travelWhatsappNote:
-      "Importante: el viático indicado es el mínimo y queda sujeto a confirmación según distancia y tiempo de traslado.",
+      "Importante: el viático indicado es el mínimo. El importe final queda sujeto a confirmación según distancia, tiempo de traslado y logística.",
   },
 
   en: {
@@ -336,16 +389,25 @@ const COPY = {
 
     tipos: [
       {
-        n: "Standard property",
-        d: "Apartments and PH units of standard size, without large outdoor areas or multiple amenities.",
+        n:
+          "Standard property",
+
+        d:
+          "Apartments and PH units of standard size, without large outdoor areas or multiple amenities.",
       },
       {
-        n: "Expanded property",
-        d: "Large apartments, PH units and houses with terraces, gardens or additional areas.",
+        n:
+          "Expanded property",
+
+        d:
+          "Large apartments, PH units and houses with terraces, gardens or additional areas.",
       },
       {
-        n: "Large property",
-        d: "Large houses with multiple rooms, extensive outdoor areas, pool, barbecue area or several floors.",
+        n:
+          "Large property",
+
+        d:
+          "Large houses with multiple rooms, extensive outdoor areas, pool, barbecue area or several floors.",
       },
     ],
 
@@ -360,16 +422,25 @@ const COPY = {
 
     paquetes: [
       {
-        n: "Essentials",
-        d: "HDR photos + walkthrough video for real estate portals",
+        n:
+          "Essentials",
+
+        d:
+          "HDR photos + walkthrough video for real estate portals",
       },
       {
-        n: "Social media",
-        d: "HDR photos + vertical video for social media",
+        n:
+          "Social media",
+
+        d:
+          "HDR photos + vertical video for social media",
       },
       {
-        n: "Complete",
-        d: "HDR photos + vertical video + walkthrough video",
+        n:
+          "Complete",
+
+        d:
+          "HDR photos + vertical video + walkthrough video",
       },
     ],
 
@@ -379,44 +450,54 @@ const COPY = {
     extrasSubtitle:
       "Add content to a package or book selected services separately.",
 
-    droneWithPackage:
-      "With a package, drone can be added for",
-
-    droneWithoutPackage:
-      "Without a package, drone service costs",
-
     extras: [
       {
-        id: "drone" as ExtraId,
-        n: "Drone",
-        nAdditional:
-          "Additional drone",
-        d: "Aerial photography + aerial video",
-        dAdditional:
-          "Aerial photography + video clips for the production",
+        id:
+          "drone_standard" as ExtraId,
+
+        n:
+          "Standard drone",
+
+        d:
+          "Aerial photography + aerial video clips for one property.",
       },
       {
-        id: "reel" as ExtraId,
-        n: "Talking reel",
-        nAdditional:
+        id:
+          "drone_integral" as ExtraId,
+
+        n:
+          "Full aerial production",
+
+        d:
+          "Extended aerial coverage of the property, lot, amenities, access points and surroundings.",
+      },
+      {
+        id:
+          "reel" as ExtraId,
+
+        n:
           "Talking reel",
-        d: "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds.",
-        dAdditional:
+
+        d:
           "Vertical recording with microphone + editing + subtitles. Maximum 60 seconds.",
       },
       {
-        id: "vert" as ExtraId,
-        n: "Vertical social media video",
-        nAdditional:
+        id:
+          "vert" as ExtraId,
+
+        n:
           "Vertical social media video",
-        d: "Vertical video recording + editing. Maximum 60 seconds.",
-        dAdditional:
+
+        d:
           "Vertical video recording + editing. Maximum 60 seconds.",
       },
     ],
 
     specialNote:
       "Real estate developments, off-plan projects and large-scale productions are quoted separately.",
+
+    droneNote:
+      "Drone productions are subject to weather conditions, airspace restrictions and location authorization when required.",
 
     selectService:
       "Choose at least one package or additional service to continue.",
@@ -431,19 +512,19 @@ const COPY = {
       "Property location",
 
     zoneInside:
-      "CABA and North Zone",
+      "CABA and North Corridor",
 
     zoneInsideDesc:
-      "No additional charge",
+      "Base service area · no additional charge",
 
     zoneOutside:
-      "Outside CABA and North Zone",
+      "Pilar, Tortugas and other areas",
 
     zoneOutsideDesc:
       "Travel fee from ARS 20,000",
 
     zoneWarning:
-      "ARS 20,000 is the minimum travel fee. Final pricing may vary depending on distance and travel time.",
+      "ARS 20,000 is the minimum travel fee. Final pricing is confirmed according to distance, travel time and production logistics.",
 
     selectZone:
       "Choose the location to continue.",
@@ -520,7 +601,7 @@ const COPY = {
       "Included",
 
     travelSummary:
-      "Travel fee outside service area",
+      "Extended-area travel fee",
 
     standardDeliverySummary:
       "Standard delivery · within 72 business hours",
@@ -562,17 +643,18 @@ const COPY = {
       "to be arranged",
 
     travelWhatsappNote:
-      "Important: the displayed travel fee is the minimum and is subject to confirmation depending on distance and travel time.",
+      "Important: the displayed travel fee is the minimum. Final pricing is subject to confirmation depending on distance, travel time and logistics.",
   },
 }
 
-const money = (
-  value: number
-) =>
-  "$ " +
-  value.toLocaleString(
-    "es-AR"
-  )
+const money =
+  (
+    value: number
+  ) =>
+    "$ " +
+    value.toLocaleString(
+      "es-AR"
+    )
 
 const optBase =
   "relative w-full rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e5c6e] md:p-5"
@@ -590,7 +672,9 @@ export default function Cotizador() {
     useLanguage()
 
   const c =
-    COPY[language]
+    COPY[
+      language
+    ]
 
   const topRef =
     useRef<HTMLDivElement | null>(
@@ -601,23 +685,31 @@ export default function Cotizador() {
     step,
     setStep,
   ] =
-    useState(1)
+    useState(
+      1
+    )
 
   const [
     tipo,
     setTipo,
   ] =
     useState<
-      number | null
-    >(null)
+      number |
+      null
+    >(
+      null
+    )
 
   const [
     paq,
     setPaq,
   ] =
     useState<
-      number | null
-    >(null)
+      number |
+      null
+    >(
+      null
+    )
 
   const [
     extras,
@@ -629,9 +721,17 @@ export default function Cotizador() {
         boolean
       >
     >({
-      drone: false,
-      reel: false,
-      vert: false,
+      drone_standard:
+        false,
+
+      drone_integral:
+        false,
+
+      reel:
+        false,
+
+      vert:
+        false,
     })
 
   const [
@@ -639,8 +739,11 @@ export default function Cotizador() {
     setZona,
   ] =
     useState<
-      ZonaId | null
-    >(null)
+      ZonaId |
+      null
+    >(
+      null
+    )
 
   const [
     entrega,
@@ -655,25 +758,91 @@ export default function Cotizador() {
     setHora,
   ] =
     useState<
-      HoraId | null
-    >(null)
+      HoraId |
+      null
+    >(
+      null
+    )
 
   const [
     warning,
     setWarning,
   ] =
-    useState("")
+    useState(
+      ""
+    )
 
   const [
     f,
     setF,
   ] =
     useState({
-      nombre: "",
-      empresa: "",
-      dir: "",
-      fecha: "",
+      nombre:
+        "",
+
+      empresa:
+        "",
+
+      dir:
+        "",
+
+      fecha:
+        "",
     })
+
+  const toggleExtra =
+    (
+      id: ExtraId
+    ) => {
+      setExtras(
+        (
+          current
+        ) => {
+          if (
+            id ===
+            "drone_standard"
+          ) {
+            return {
+              ...current,
+
+              drone_standard:
+                !current.drone_standard,
+
+              drone_integral:
+                false,
+            }
+          }
+
+          if (
+            id ===
+            "drone_integral"
+          ) {
+            return {
+              ...current,
+
+              drone_standard:
+                false,
+
+              drone_integral:
+                !current.drone_integral,
+            }
+          }
+
+          return {
+            ...current,
+
+            [id]:
+              !current[
+                id
+              ],
+          }
+        }
+      )
+
+      setWarning(
+        ""
+      )
+    }
 
   const lineasServicio =
     useMemo(
@@ -684,29 +853,43 @@ export default function Cotizador() {
         ][] = []
 
         if (
-          tipo !== null &&
-          paq !== null
+          tipo !==
+            null &&
+          paq !==
+            null
         ) {
           lineas.push([
             `${c.tipos[tipo].n} · ${c.paquetes[paq].n}`,
+
             PRECIOS_TIPOS[
               tipo
-            ][paq],
+            ][
+              paq
+            ],
           ])
         }
 
         if (
-          extras.drone
+          extras
+            .drone_standard
         ) {
           lineas.push([
-            paq !== null
-              ? c.extras[0]
-                  .nAdditional
-              : c.extras[0].n,
+            c.extras[0]
+              .n,
 
-            paq !== null
-              ? DRONE_ADICIONAL
-              : DRONE_SOLO,
+            DRONE_ESTANDAR,
+          ])
+        }
+
+        if (
+          extras
+            .drone_integral
+        ) {
+          lineas.push([
+            c.extras[1]
+              .n,
+
+            DRONE_INTEGRAL,
           ])
         }
 
@@ -714,7 +897,9 @@ export default function Cotizador() {
           extras.reel
         ) {
           lineas.push([
-            c.extras[1].n,
+            c.extras[2]
+              .n,
+
             REEL_HABLADO,
           ])
         }
@@ -723,7 +908,9 @@ export default function Cotizador() {
           extras.vert
         ) {
           lineas.push([
-            c.extras[2].n,
+            c.extras[3]
+              .n,
+
             VIDEO_VERTICAL,
           ])
         }
@@ -829,34 +1016,43 @@ export default function Cotizador() {
     )
 
   const zonaTexto =
-    zona === "dentro"
+    zona ===
+      "dentro"
       ? c.zoneInside
-      : zona === "fuera"
+      : zona ===
+          "fuera"
         ? c.zoneOutside
         : c.toCoordinate
 
   const entregaTexto =
-    entrega === "72"
+    entrega ===
+      "72"
       ? c.standardDeliverySummary
-      : entrega === "36"
+      : entrega ===
+          "36"
         ? c.priorityDeliverySummary
         : c.expressDeliverySummary
 
   const horaTexto =
-    hora !== null
-      ? c.horas[hora]
+    hora !==
+    null
+      ? c.horas[
+          hora
+        ]
       : c.toCoordinate
 
   const scrollToStep =
     () => {
       window.setTimeout(
         () => {
-          topRef.current?.scrollIntoView({
-            behavior:
-              "smooth",
-            block:
-              "start",
-          })
+          topRef.current
+            ?.scrollIntoView({
+              behavior:
+                "smooth",
+
+              block:
+                "start",
+            })
         },
         60
       )
@@ -864,35 +1060,45 @@ export default function Cotizador() {
 
   const goNext =
     () => {
-      setWarning("")
+      setWarning(
+        ""
+      )
 
       if (
-        step === 1 &&
-        tipo === null
+        step ===
+          1 &&
+        tipo ===
+          null
       ) {
         setWarning(
           c.selectProperty
         )
+
         return
       }
 
       if (
-        step === 2 &&
+        step ===
+          2 &&
         !hasService
       ) {
         setWarning(
           c.selectService
         )
+
         return
       }
 
       if (
-        step === 3 &&
-        zona === null
+        step ===
+          3 &&
+        zona ===
+          null
       ) {
         setWarning(
           c.selectZone
         )
+
         return
       }
 
@@ -901,7 +1107,8 @@ export default function Cotizador() {
           current
         ) =>
           Math.min(
-            current + 1,
+            current +
+              1,
             4
           )
       )
@@ -911,14 +1118,17 @@ export default function Cotizador() {
 
   const goBack =
     () => {
-      setWarning("")
+      setWarning(
+        ""
+      )
 
       setStep(
         (
           current
         ) =>
           Math.max(
-            current - 1,
+            current -
+              1,
             1
           )
       )
@@ -952,7 +1162,8 @@ export default function Cotizador() {
     () => {
       if (
         !hasService ||
-        zona === null
+        zona ===
+          null
       ) {
         return
       }
@@ -972,10 +1183,13 @@ export default function Cotizador() {
                     )
               }`
           )
-          .join("\n")
+          .join(
+            "\n"
+          )
 
       const notaViatico =
-        zona === "fuera"
+        zona ===
+        "fuera"
           ? `\n\n${c.travelWhatsappNote}`
           : ""
 
@@ -1006,19 +1220,35 @@ export default function Cotizador() {
         `\n${c.whatsappDelivery}: ${entregaTexto}` +
         notaViatico
 
+      const droneType =
+        extras
+          .drone_integral
+          ? "integral"
+          : extras
+              .drone_standard
+            ? "standard"
+            : "none"
+
       trackEvent(
         "quote_request",
         {
           value:
             total,
+
           currency:
             "ARS",
+
           services:
             lineasServicio.length,
+
           zone:
             zona,
+
           delivery:
             entrega,
+
+          drone_type:
+            droneType,
         }
       )
 
@@ -1054,7 +1284,6 @@ export default function Cotizador() {
         className="mx-auto max-w-5xl scroll-mt-24"
       >
 
-        {/* TÍTULO */}
         <div className="mx-auto max-w-2xl text-center">
 
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
@@ -1071,7 +1300,6 @@ export default function Cotizador() {
 
         </div>
 
-        {/* PROGRESO */}
         <div className="mx-auto mt-8 max-w-3xl md:mt-10">
 
           <div className="grid grid-cols-4 gap-2">
@@ -1082,7 +1310,8 @@ export default function Cotizador() {
                 index
               ) => {
                 const number =
-                  index + 1
+                  index +
+                  1
 
                 const active =
                   step ===
@@ -1147,7 +1376,6 @@ export default function Cotizador() {
 
         </div>
 
-        {/* RESUMEN STICKY MOBILE / TABLET */}
         <div className="sticky top-0 z-40 -mx-4 mt-5 border-y border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-[#06222c]/95 lg:hidden">
 
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
@@ -1190,14 +1418,12 @@ export default function Cotizador() {
 
         </div>
 
-        {/* CONTENIDO + RESUMEN DESKTOP */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
 
-          {/* FORMULARIO */}
           <div className="min-w-0 rounded-3xl border border-gray-200 bg-[#f8fbfb] p-5 dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
-            {/* PASO 1 */}
-            {step === 1 && (
+            {step ===
+              1 && (
               <div>
 
                 <p className="text-sm font-semibold text-[#0A9396]">
@@ -1352,6 +1578,7 @@ export default function Cotizador() {
                           </span>
 
                           <span className="mt-4 block text-lg font-bold">
+
                             {tipo !==
                             null
                               ? money(
@@ -1362,6 +1589,7 @@ export default function Cotizador() {
                                   ]
                                 )
                               : c.chooseProperty}
+
                           </span>
 
                         </button>
@@ -1375,8 +1603,8 @@ export default function Cotizador() {
               </div>
             )}
 
-            {/* PASO 2 */}
-            {step === 2 && (
+            {step ===
+              2 && (
               <div>
 
                 <p className="text-sm font-semibold text-[#0A9396]">
@@ -1404,38 +1632,22 @@ export default function Cotizador() {
                       const id =
                         item.id
 
-                      const isDrone =
-                        id ===
-                        "drone"
-
                       const precio =
                         id ===
-                        "drone"
-                          ? paq !==
-                            null
-                            ? DRONE_ADICIONAL
-                            : DRONE_SOLO
+                          "drone_standard"
+                          ? DRONE_ESTANDAR
                           : id ===
-                              "reel"
-                            ? REEL_HABLADO
-                            : VIDEO_VERTICAL
-
-                      const nombre =
-                        isDrone &&
-                        paq !==
-                          null
-                          ? item.nAdditional
-                          : item.n
-
-                      const descripcion =
-                        isDrone &&
-                        paq !==
-                          null
-                          ? item.dAdditional
-                          : item.d
+                              "drone_integral"
+                            ? DRONE_INTEGRAL
+                            : id ===
+                                "reel"
+                              ? REEL_HABLADO
+                              : VIDEO_VERTICAL
 
                       const selected =
-                        extras[id]
+                        extras[
+                          id
+                        ]
 
                       return (
                         <button
@@ -1446,23 +1658,11 @@ export default function Cotizador() {
                           aria-pressed={
                             selected
                           }
-                          onClick={() => {
-                            setExtras(
-                              (
-                                current
-                              ) => ({
-                                ...current,
-                                [id]:
-                                  !current[
-                                    id
-                                  ],
-                              })
+                          onClick={() =>
+                            toggleExtra(
+                              id
                             )
-
-                            setWarning(
-                              ""
-                            )
-                          }}
+                          }
                           className={`${optBase} ${
                             selected
                               ? optOn
@@ -1482,13 +1682,13 @@ export default function Cotizador() {
 
                               <b className="block">
                                 {
-                                  nombre
+                                  item.n
                                 }
                               </b>
 
                               <span className="mt-1 block text-sm leading-5 opacity-80">
                                 {
-                                  descripcion
+                                  item.d
                                 }
                               </span>
 
@@ -1509,15 +1709,10 @@ export default function Cotizador() {
 
                 </div>
 
-                <p className="mt-5 text-sm text-gray-500 dark:text-gray-400">
-                  {paq !==
-                  null
-                    ? `${c.droneWithPackage} ${money(
-                        DRONE_ADICIONAL
-                      )}.`
-                    : `${c.droneWithoutPackage} ${money(
-                        DRONE_SOLO
-                      )}.`}
+                <p className="mt-5 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                  {
+                    c.droneNote
+                  }
                 </p>
 
                 <div className="mt-6 rounded-2xl bg-white p-4 text-sm leading-6 text-gray-500 dark:bg-[#001219] dark:text-gray-400">
@@ -1529,8 +1724,8 @@ export default function Cotizador() {
               </div>
             )}
 
-            {/* PASO 3 */}
-            {step === 3 && (
+            {step ===
+              3 && (
               <div>
 
                 <p className="text-sm font-semibold text-[#0A9396]">
@@ -1788,8 +1983,8 @@ export default function Cotizador() {
               </div>
             )}
 
-            {/* PASO 4 */}
-            {step === 4 && (
+            {step ===
+              4 && (
               <div>
 
                 <p className="text-sm font-semibold text-[#0A9396]">
@@ -1828,6 +2023,7 @@ export default function Cotizador() {
                       ) =>
                         setF({
                           ...f,
+
                           nombre:
                             event
                               .target
@@ -1857,6 +2053,7 @@ export default function Cotizador() {
                       ) =>
                         setF({
                           ...f,
+
                           empresa:
                             event
                               .target
@@ -1886,6 +2083,7 @@ export default function Cotizador() {
                       ) =>
                         setF({
                           ...f,
+
                           dir:
                             event
                               .target
@@ -1916,6 +2114,7 @@ export default function Cotizador() {
                       ) =>
                         setF({
                           ...f,
+
                           fecha:
                             event
                               .target
@@ -1990,7 +2189,6 @@ export default function Cotizador() {
               </div>
             )}
 
-            {/* AVISO */}
             {warning && (
               <div className="mt-6 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                 {
@@ -1999,7 +2197,6 @@ export default function Cotizador() {
               </div>
             )}
 
-            {/* NAVEGACIÓN */}
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-gray-200 pt-6 dark:border-white/10">
 
               {step >
@@ -2061,7 +2258,6 @@ export default function Cotizador() {
 
           </div>
 
-          {/* RESUMEN DESKTOP */}
           <aside className="hidden h-fit min-w-0 rounded-3xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] lg:sticky lg:top-24 lg:block">
 
             <div className="flex items-center justify-between gap-3">
@@ -2098,12 +2294,14 @@ export default function Cotizador() {
                     </span>
 
                     <strong className="shrink-0 text-right text-gray-900 dark:text-white">
+
                       {linea[1] ===
                       0
                         ? c.included
                         : money(
                             linea[1]
                           )}
+
                     </strong>
 
                   </div>
