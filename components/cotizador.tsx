@@ -234,7 +234,7 @@ const COPY = {
       "Zona base · sin costo adicional",
 
     zoneOutside:
-      "Pilar, Tortugas y otras zonas",
+  "Fuera de Corredor Norte y CABA",
 
     zoneOutsideDesc:
       "Viáticos desde $20.000",
@@ -518,7 +518,7 @@ const COPY = {
       "Base service area · no additional charge",
 
     zoneOutside:
-      "Pilar, Tortugas and other areas",
+  "Outside North Corridor and CABA",
 
     zoneOutsideDesc:
       "Travel fee from ARS 20,000",
