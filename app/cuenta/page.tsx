@@ -89,9 +89,25 @@ export default async function CuentaPage() {
     profile?.full_name ||
     metadataName
 
-  const profileAvatar =
-    profile?.avatar_url ||
-    metadataAvatar
+const profileAvatar =
+  metadataAvatar ||
+  profile?.avatar_url ||
+  null
+
+// Sincronizar la foto de Google con el perfil
+if (
+  metadataAvatar &&
+  metadataAvatar !== profile?.avatar_url &&
+  typeof metadataAvatar === "string" &&
+  metadataAvatar.startsWith("https://")
+) {
+  await supabase
+    .from("profiles")
+    .update({
+      avatar_url: metadataAvatar,
+    })
+    .eq("id", user.id)
+}
 
   /*
    * PRODUCCIONES
