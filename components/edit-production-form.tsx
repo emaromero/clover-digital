@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -550,10 +551,7 @@ export default function EditProductionForm({
     }
 
   const handleAddFile =
-    async (
-      event: React.FormEvent
-    ) => {
-      event.preventDefault()
+    async () => {
 
       if (
         !fileUrl.trim()
@@ -1257,10 +1255,7 @@ export default function EditProductionForm({
               </div>
             )}
 
-            <form
-              onSubmit={
-                handleAddFile
-              }
+            <div
               className="mt-6 space-y-4 rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]"
             >
 
@@ -1402,7 +1397,8 @@ export default function EditProductionForm({
               )}
 
               <button
-                type="submit"
+                type="button"
+                onClick={handleAddFile}
                 disabled={
                   addingFile
                 }
@@ -1417,7 +1413,7 @@ export default function EditProductionForm({
                 Agregar material
               </button>
 
-            </form>
+            </div>
 
           </div>
 
