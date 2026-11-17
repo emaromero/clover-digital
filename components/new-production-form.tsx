@@ -57,6 +57,25 @@ interface Props {
   productionTags: TagItem[]
 }
 
+const TIME_OPTIONS = Array.from(
+  { length: 48 },
+  (_, index) => {
+    const hours = Math.floor(index / 2)
+    const minutes = index % 2 === 0 ? "00" : "30"
+    const value = `${String(hours).padStart(2, "0")}:${minutes}`
+
+    return { value, label: value }
+  }
+)
+
+const combineLocalDateTime = (
+  date: string,
+  time: string
+) =>
+  date && time
+    ? new Date(`${date}T${time}:00`).toISOString()
+    : null
+
 const SERVICES = [
   "Fotos HDR",
   "Video horizontal",
@@ -152,6 +171,12 @@ export default function NewProductionForm({
     useState("")
 
   const [
+    productionTime,
+    setProductionTime,
+  ] =
+    useState("")
+
+  const [
     status,
     setStatus,
   ] =
@@ -176,6 +201,12 @@ export default function NewProductionForm({
   const [
     estimatedDelivery,
     setEstimatedDelivery,
+  ] =
+    useState("")
+
+  const [
+    estimatedDeliveryTime,
+    setEstimatedDeliveryTime,
   ] =
     useState("")
 
@@ -422,24 +453,26 @@ export default function NewProductionForm({
         return
       }
 
+      if (Boolean(productionDate) !== Boolean(productionTime)) {
+        setMessage("Completá la fecha y la hora de producción, o dejá ambos campos vacíos.")
+        return
+      }
+
+      if (Boolean(estimatedDelivery) !== Boolean(estimatedDeliveryTime)) {
+        setMessage("Completá la fecha y la hora de entrega estimada, o dejá ambos campos vacíos.")
+        return
+      }
+
       setLoading(true)
 
       const supabase =
         createClient()
 
       const productionDateISO =
-        productionDate
-          ? new Date(
-              productionDate
-            ).toISOString()
-          : null
+        combineLocalDateTime(productionDate, productionTime)
 
       const estimatedDeliveryISO =
-        estimatedDelivery
-          ? new Date(
-              estimatedDelivery
-            ).toISOString()
-          : null
+        combineLocalDateTime(estimatedDelivery, estimatedDeliveryTime)
 
       let finalUserId:
         | string
@@ -1309,29 +1342,33 @@ export default function NewProductionForm({
             <div>
 
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                Fecha y hora
+                Fecha y hora de producción
               </label>
 
-              <div className="relative mt-2">
-
-                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-
-                <input
-                  type="datetime-local"
-                  value={
-                    productionDate
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setProductionDate(
-                      event.target.value
-                    )
-                  }
-                  className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 dark:border-white/15 dark:bg-[#001219]"
-                />
-
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_120px] gap-2">
+                <div className="relative min-w-0">
+                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="date"
+                    value={productionDate}
+                    onChange={(event) => setProductionDate(event.target.value)}
+                    className="w-full min-w-0 rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-2 text-sm dark:border-white/15 dark:bg-[#001219]"
+                    aria-label="Fecha de producción"
+                  />
+                </div>
+                <select
+                  value={productionTime}
+                  onChange={(event) => setProductionTime(event.target.value)}
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm dark:border-white/15 dark:bg-[#001219]"
+                  aria-label="Hora de producción"
+                >
+                  <option value="">Hora</option>
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time.value} value={time.value}>{time.label}</option>
+                  ))}
+                </select>
               </div>
+              <p className="mt-2 text-xs text-gray-400">Seleccioná un horario en intervalos de 30 minutos.</p>
 
             </div>
 
@@ -1530,20 +1567,27 @@ export default function NewProductionForm({
                 Entrega estimada
               </label>
 
-              <input
-                type="datetime-local"
-                value={
-                  estimatedDelivery
-                }
-                onChange={(
-                  event
-                ) =>
-                  setEstimatedDelivery(
-                    event.target.value
-                  )
-                }
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-white/15 dark:bg-[#001219]"
-              />
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_120px] gap-2">
+                <input
+                  type="date"
+                  value={estimatedDelivery}
+                  onChange={(event) => setEstimatedDelivery(event.target.value)}
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm dark:border-white/15 dark:bg-[#001219]"
+                  aria-label="Fecha de entrega estimada"
+                />
+                <select
+                  value={estimatedDeliveryTime}
+                  onChange={(event) => setEstimatedDeliveryTime(event.target.value)}
+                  className="w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm dark:border-white/15 dark:bg-[#001219]"
+                  aria-label="Hora de entrega estimada"
+                >
+                  <option value="">Hora</option>
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time.value} value={time.value}>{time.label}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-2 text-xs text-gray-400">Seleccioná un horario en intervalos de 30 minutos.</p>
 
             </div>
 

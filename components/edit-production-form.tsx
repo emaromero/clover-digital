@@ -105,6 +105,25 @@ const FILE_TYPES = [
   },
 ]
 
+const TIME_OPTIONS = Array.from(
+  { length: 48 },
+  (_, index) => {
+    const hours = Math.floor(index / 2)
+    const minutes = index % 2 === 0 ? "00" : "30"
+    const value = `${String(hours).padStart(2, "0")}:${minutes}`
+
+    return { value, label: value }
+  }
+)
+
+const combineLocalDateTime = (
+  date: string,
+  time: string
+) =>
+  date && time
+    ? new Date(`${date}T${time}:00`).toISOString()
+    : null
+
 const toLocalInput = (
   value: string | null
 ) => {
@@ -123,6 +142,12 @@ const toLocalInput = (
     .toISOString()
     .slice(0, 16)
 }
+
+const toLocalDate = (value: string | null) =>
+  toLocalInput(value).slice(0, 10)
+
+const toLocalTime = (value: string | null) =>
+  toLocalInput(value).slice(11, 16)
 
 const formatDate = (
   value: string | null
@@ -213,9 +238,15 @@ export default function EditProductionForm({
     setProductionDate,
   ] =
     useState(
-      toLocalInput(
-        production.production_date
-      )
+      toLocalDate(production.production_date)
+    )
+
+  const [
+    productionTime,
+    setProductionTime,
+  ] =
+    useState(
+      toLocalTime(production.production_date)
     )
 
   const [
@@ -249,9 +280,15 @@ export default function EditProductionForm({
     setEstimatedDelivery,
   ] =
     useState(
-      toLocalInput(
-        production.estimated_delivery_at
-      )
+      toLocalDate(production.estimated_delivery_at)
+    )
+
+  const [
+    estimatedDeliveryTime,
+    setEstimatedDeliveryTime,
+  ] =
+    useState(
+      toLocalTime(production.estimated_delivery_at)
     )
 
   const [
@@ -426,25 +463,28 @@ export default function EditProductionForm({
         return
       }
 
-      setSaving(true)
       setMessage("")
+
+      if (Boolean(productionDate) !== Boolean(productionTime)) {
+        setMessage("Completá la fecha y la hora de producción, o dejá ambos campos vacíos.")
+        return
+      }
+
+      if (Boolean(estimatedDelivery) !== Boolean(estimatedDeliveryTime)) {
+        setMessage("Completá la fecha y la hora de entrega estimada, o dejá ambos campos vacíos.")
+        return
+      }
+
+      setSaving(true)
 
       const supabase =
         createClient()
 
       const productionDateISO =
-        productionDate
-          ? new Date(
-              productionDate
-            ).toISOString()
-          : null
+        combineLocalDateTime(productionDate, productionTime)
 
       const estimatedDeliveryISO =
-        estimatedDelivery
-          ? new Date(
-              estimatedDelivery
-            ).toISOString()
-          : null
+        combineLocalDateTime(estimatedDelivery, estimatedDeliveryTime)
 
       let deliveredAt =
         production.delivered_at
@@ -886,30 +926,30 @@ export default function EditProductionForm({
                 Fecha y hora de producción
               </label>
 
-              <div className="relative mt-2 min-w-0 overflow-hidden">
-
-                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-gray-400" />
-
-                <input
-                  type="datetime-local"
-                  value={
-                    productionDate
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setProductionDate(
-                      event.target.value
-                    )
-                  }
-                  className="block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
-                  style={{
-                    minWidth: 0,
-                    maxWidth: "100%",
-                  }}
-                />
-
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_120px] gap-2">
+                <div className="relative min-w-0">
+                  <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="date"
+                    value={productionDate}
+                    onChange={(event) => setProductionDate(event.target.value)}
+                    className="block min-w-0 w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-2 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                    aria-label="Fecha de producción"
+                  />
+                </div>
+                <select
+                  value={productionTime}
+                  onChange={(event) => setProductionTime(event.target.value)}
+                  className="block min-w-0 w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  aria-label="Hora de producción"
+                >
+                  <option value="">Hora</option>
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time.value} value={time.value}>{time.label}</option>
+                  ))}
+                </select>
               </div>
+              <p className="mt-2 text-xs text-gray-400">Horarios disponibles cada 30 minutos.</p>
 
             </div>
 
@@ -1041,24 +1081,27 @@ export default function EditProductionForm({
                 Entrega estimada
               </label>
 
-              <input
-                type="datetime-local"
-                value={
-                  estimatedDelivery
-                }
-                onChange={(
-                  event
-                ) =>
-                  setEstimatedDelivery(
-                    event.target.value
-                  )
-                }
-                className="mt-2 block min-w-0 w-full max-w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
-                style={{
-                  minWidth: 0,
-                  maxWidth: "100%",
-                }}
-              />
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_120px] gap-2">
+                <input
+                  type="date"
+                  value={estimatedDelivery}
+                  onChange={(event) => setEstimatedDelivery(event.target.value)}
+                  className="block min-w-0 w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  aria-label="Fecha de entrega estimada"
+                />
+                <select
+                  value={estimatedDeliveryTime}
+                  onChange={(event) => setEstimatedDeliveryTime(event.target.value)}
+                  className="block min-w-0 w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
+                  aria-label="Hora de entrega estimada"
+                >
+                  <option value="">Hora</option>
+                  {TIME_OPTIONS.map((time) => (
+                    <option key={time.value} value={time.value}>{time.label}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-2 text-xs text-gray-400">Horarios disponibles cada 30 minutos.</p>
 
             </div>
 
