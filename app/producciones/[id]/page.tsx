@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
+import { PortalActivity, TrackedMaterialLink } from "@/components/portal-activity"
 
 import RecoveryRequestButton from "@/components/recovery-request-button"
 
@@ -275,6 +276,7 @@ export default async function ProductionDetailPage({
 
   return (
     <main className="min-h-screen bg-[#f5fafa] px-4 py-6 dark:bg-[#001219] sm:py-10 md:py-16">
+      <PortalActivity productionId={production.id} />
 
       <div className="mx-auto max-w-5xl">
 
@@ -598,7 +600,9 @@ export default async function ProductionDetailPage({
                       "talking_reel"
 
                   return (
-                    <a
+                    <TrackedMaterialLink
+                      productionId={production.id}
+                      fileId={file.id}
                       key={
                         file.id
                       }
@@ -635,7 +639,7 @@ export default async function ProductionDetailPage({
                             </p>
 
                             {isWeTransfer && (
-                              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 sm:px-2.5 sm:py-1 sm:text-xs">
+                              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 sm:text-xs">
                                 WeTransfer
                               </span>
                             )}
@@ -672,7 +676,7 @@ export default async function ProductionDetailPage({
 
                       </span>
 
-                    </a>
+                    </TrackedMaterialLink>
                   )
                 }
               )}
@@ -690,7 +694,7 @@ export default async function ProductionDetailPage({
                   Algunos enlaces temporales vencieron
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400 sm:text-sm sm:leading-6">
+                <p className="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400 sm:mt-2 sm:text-sm sm:leading-6">
                   Los enlaces de WeTransfer tienen duración limitada. Si hay una entrega permanente disponible, podés seguir accediendo desde los enlaces superiores.
                 </p>
 

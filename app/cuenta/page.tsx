@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
+import { PortalActivity } from "@/components/portal-activity"
 
 import LogoutButton from "@/components/logout-button"
 
@@ -486,6 +487,7 @@ if (
 
   return (
     <main className="min-h-screen bg-[#f5fafa] px-4 py-6 dark:bg-[#001219] sm:py-10 md:py-16">
+      <PortalActivity />
 
       <div className="mx-auto max-w-6xl">
 
