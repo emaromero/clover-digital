@@ -1376,7 +1376,7 @@ export default function Cotizador() {
 
         </div>
 
-        <div className="sticky top-0 z-40 -mx-4 mt-5 border-y border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-[#06222c]/95 lg:hidden">
+        <div className="sticky top-20 z-40 -mx-4 mt-5 border-y border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-[#06222c]/95 lg:hidden">
 
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
 
