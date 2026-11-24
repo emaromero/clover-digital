@@ -1,5 +1,6 @@
 
 import Link from "next/link"
+import type { Metadata } from "next"
 
 import {
   ArrowLeft,
@@ -39,7 +40,36 @@ function validExternalUrl(value: string) {
     return false
   }
 }
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Te compartieron una producción",
+    description:
+      "Accedé al material fotográfico y audiovisual de una propiedad compartida a través de Clover Digital.",
 
+    openGraph: {
+      title: "Te compartieron una producción | Clover Digital",
+      description:
+        "Consultá fotografías y videos de propiedades compartidas de forma privada a través de Clover Digital.",
+      type: "website",
+      images: [
+        {
+          url: "/og-image.jpg",
+          width: 1200,
+          height: 630,
+          alt: "Clover Digital | Producciones inmobiliarias",
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: "Te compartieron una producción | Clover Digital",
+      description:
+        "Accedé al material audiovisual compartido.",
+      images: ["/og-image.jpg"],
+    },
+  }
+}
 export default async function SharedProductionPage({
   params,
 }: Props) {
