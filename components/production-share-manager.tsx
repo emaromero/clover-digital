@@ -6,24 +6,39 @@ import {
   Check,
   Copy,
   Loader2,
-  Mail,
   Share2,
   Trash2,
+  Users,
+  Link2,
+  Clock3,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
 
-interface Invitation {
-  token: string
-  recipient_email: string
-  created_at: string
-  expires_at: string
-  accepted_at: string | null
-  revoked_at: string | null
+interface ShareAccess {
+  user_id: string | null
+  user_email: string | null
+  user_name: string | null
+  first_access_at: string | null
   last_viewed_at: string | null
   view_count: number
   last_clicked_at: string | null
   click_count: number
+}
+
+interface ShareLink {
+  share_token: string
+  created_at: string
+  expires_at: string
+  revoked_at: string | null
+  accesses: ShareAccess[]
+}
+
+interface ShareRow extends ShareAccess {
+  share_token: string
+  created_at: string
+  expires_at: string
+  revoked_at: string | null
 }
 
 interface Props {
@@ -44,45 +59,92 @@ const formatDate = (value: string | null) => {
   }).format(new Date(value))
 }
 
+const isActive = (link: ShareLink) =>
+  !link.revoked_at &&
+  new Date(link.expires_at).getTime() > Date.now()
+
 export default function ProductionShareManager({
   productionId,
   propertyName,
 }: Props) {
-  const [email, setEmail] = useState("")
-  const [invitations, setInvitations] = useState<Invitation[]>([])
+  const [links, setLinks] = useState<ShareLink[]>([])
   const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [busyToken, setBusyToken] = useState<string | null>(null)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
-  const loadInvitations = useCallback(async () => {
+  const loadLinks = useCallback(async () => {
     const supabase = createClient()
 
     const { data, error: queryError } = await supabase.rpc(
-      "list_production_shares",
+      "list_production_share_links",
       { p_production_id: productionId }
     )
 
     if (queryError) {
-      setError("No se pudieron cargar las invitaciones.")
-    } else {
-      setInvitations((data || []) as Invitation[])
+      setError("No se pudieron cargar los enlaces compartidos.")
+      setLoading(false)
+      return
     }
 
+    const grouped = new Map<string, ShareLink>()
+
+    for (const row of (data || []) as ShareRow[]) {
+      let link = grouped.get(row.share_token)
+
+      if (!link) {
+        link = {
+          share_token: row.share_token,
+          created_at: row.created_at,
+          expires_at: row.expires_at,
+          revoked_at: row.revoked_at,
+          accesses: [],
+        }
+
+        grouped.set(row.share_token, link)
+      }
+
+      if (row.user_id) {
+        link.accesses.push({
+          user_id: row.user_id,
+          user_email: row.user_email,
+          user_name: row.user_name,
+          first_access_at: row.first_access_at,
+          last_viewed_at: row.last_viewed_at,
+          view_count: row.view_count,
+          last_clicked_at: row.last_clicked_at,
+          click_count: row.click_count,
+        })
+      }
+    }
+
+    setLinks(
+      Array.from(grouped.values()).sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      )
+    )
+
     setLoading(false)
+    setError("")
   }, [productionId])
 
   useEffect(() => {
-    void loadInvitations()
-  }, [loadInvitations])
+    void loadLinks()
+  }, [loadLinks])
 
-  const invite = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const activeLinks = links.filter(isActive)
 
-    if (!email.trim()) return
+  const createLink = async () => {
+    if (activeLinks.length > 0) {
+      setError("Ya existe un enlace activo para esta producción.")
+      return
+    }
 
-    setSending(true)
+    setCreating(true)
     setMessage("")
     setError("")
 
@@ -92,35 +154,30 @@ export default function ProductionShareManager({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          productionId,
-          email: email.trim(),
-        }),
+        body: JSON.stringify({ productionId }),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "No pudimos crear la invitación.")
+        throw new Error(
+          result.error || "No pudimos generar el enlace."
+        )
       }
 
-      setEmail("")
+      setMessage("Enlace generado correctamente.")
 
-      setMessage(
-        result.emailSent
-          ? "Invitación enviada por correo correctamente."
-          : "Invitación creada, pero el correo no pudo enviarse. Copiá el enlace de la lista y compartilo con tu colega."
-      )
+      await loadLinks()
 
-      await loadInvitations()
+      await copyLink(result.token)
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Ocurrió un error."
+          : "Ocurrió un error al generar el enlace."
       )
     } finally {
-      setSending(false)
+      setCreating(false)
     }
   }
 
@@ -129,20 +186,31 @@ export default function ProductionShareManager({
 
     try {
       await navigator.clipboard.writeText(url)
-      setMessage("Enlace copiado.")
+      setCopiedToken(token)
+      setMessage("Enlace copiado. Ya podés compartirlo.")
+
+      window.setTimeout(() => {
+        setCopiedToken((current) =>
+          current === token ? null : current
+        )
+      }, 2500)
     } catch {
-      setError("No se pudo copiar el enlace.")
+      setError("No se pudo copiar el enlace. Intentá nuevamente.")
     }
   }
 
   const revoke = async (token: string) => {
-    if (!window.confirm("¿Revocar el acceso de este colega?")) {
+    if (
+      !window.confirm(
+        "¿Querés revocar este enlace? Los colegas dejarán de tener acceso."
+      )
+    ) {
       return
     }
 
     setBusyToken(token)
-    setError("")
     setMessage("")
+    setError("")
 
     const supabase = createClient()
 
@@ -154,8 +222,8 @@ export default function ProductionShareManager({
     if (revokeError) {
       setError(revokeError.message)
     } else {
-      setMessage("Acceso revocado correctamente.")
-      await loadInvitations()
+      setMessage("Enlace revocado correctamente.")
+      await loadLinks()
     }
 
     setBusyToken(null)
@@ -175,52 +243,93 @@ export default function ProductionShareManager({
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
-              Invitá a un colega para consultar el material de{" "}
-              <strong>{propertyName}</strong>.
-              Solo podrá visualizar esta producción.
+              Compartí el material de <strong>{propertyName}</strong> con
+              otros colegas mediante un único enlace privado.
             </p>
           </div>
         </div>
 
-        <form onSubmit={invite} className="mt-6">
-          <label
-            htmlFor="share-email"
-            className="text-sm font-semibold text-gray-800 dark:text-white"
-          >
-            Correo del colega
-          </label>
+        <div className="mt-6 rounded-2xl border border-[#0A9396]/20 bg-[#0A9396]/5 p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-5 w-5 text-[#0A9396]" />
 
-          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-            <input
-              id="share-email"
-              type="email"
-              required
-              maxLength={254}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="colega@inmobiliaria.com"
-              className="min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-[#0A9396] dark:border-white/15 dark:bg-[#001219] dark:text-white"
-            />
-
-            <button
-              type="submit"
-              disabled={sending}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50"
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Mail className="h-4 w-4" />
-              )}
-              Enviar invitación
-            </button>
+            <h3 className="font-bold text-gray-900 dark:text-white">
+              Enlace de acceso
+            </h3>
           </div>
 
-          <p className="mt-2 text-xs text-gray-400">
-            El colega deberá ingresar con el mismo correo.
-            El enlace vence a los 30 días o al revocar el acceso.
+          <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+            Cualquier colega que tenga el enlace podrá ingresar con una
+            cuenta de Clover Digital y consultar esta producción.
           </p>
-        </form>
+
+          {activeLinks.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => void createLink()}
+              disabled={creating || loading}
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50 sm:w-auto"
+            >
+              {creating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Share2 className="h-4 w-4" />
+              )}
+
+              {creating ? "Generando enlace..." : "Generar enlace"}
+            </button>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {activeLinks.map((link) => (
+                <div
+                  key={link.share_token}
+                  className="rounded-xl border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-[#001219]"
+                >
+                  <p className="break-all text-xs text-gray-500 dark:text-gray-400">
+                    {`${typeof window !== "undefined" ? window.location.origin : ""}/compartida/${link.share_token}`}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void copyLink(link.share_token)}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0e5c6e] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#001219]"
+                    >
+                      {copiedToken === link.share_token ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+
+                      {copiedToken === link.share_token
+                        ? "Copiado"
+                        : "Copiar enlace"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void revoke(link.share_token)}
+                      disabled={busyToken === link.share_token}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
+                    >
+                      {busyToken === link.share_token ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+
+                      Revocar enlace
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-xs text-gray-400">
+                    Vence el {formatDate(link.expires_at)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {message && (
           <p
@@ -242,105 +351,110 @@ export default function ProductionShareManager({
         )}
 
         <div className="mt-8 border-t border-gray-100 pt-6 dark:border-white/10">
-          <h3 className="font-bold text-gray-900 dark:text-white">
-            Colegas invitados
-          </h3>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-[#0A9396]" />
+
+            <h3 className="font-bold text-gray-900 dark:text-white">
+              Colegas que ingresaron
+            </h3>
+          </div>
 
           {loading ? (
             <p className="mt-4 text-sm text-gray-400">
-              Cargando invitaciones...
+              Cargando actividad...
             </p>
-          ) : invitations.length === 0 ? (
+          ) : links.length === 0 ? (
             <p className="mt-4 text-sm text-gray-400">
-              Todavía no compartiste esta producción.
+              Todavía no generaste un enlace para esta producción.
             </p>
           ) : (
-            <div className="mt-4 space-y-3">
-              {invitations.map((invitation) => {
-                const active =
-                  !invitation.revoked_at &&
-                  new Date(invitation.expires_at).getTime() >
-                    Date.now()
+            <div className="mt-4 space-y-5">
+              {links.map((link) => (
+                <div
+                  key={link.share_token}
+                  className="rounded-2xl border border-gray-200 p-4 dark:border-white/10"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {link.revoked_at
+                        ? "Enlace revocado"
+                        : isActive(link)
+                          ? "Enlace activo"
+                          : "Enlace vencido"}
+                    </p>
 
-                return (
-                  <div
-                    key={invitation.token}
-                    className="rounded-2xl border border-gray-200 p-4 dark:border-white/10"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="break-all text-sm font-semibold text-gray-900 dark:text-white">
-                          {invitation.recipient_email}
-                        </p>
-
-                        <p className="mt-1 text-xs text-gray-400">
-                          {invitation.revoked_at
-                            ? "Acceso revocado"
-                            : !active
-                              ? "Invitación vencida"
-                              : invitation.accepted_at
-                                ? "Acceso utilizado"
-                                : "Invitación pendiente"}
-                        </p>
-                      </div>
-
-                      {active && (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void copyLink(invitation.token)
-                            }
-                            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-[#0e5c6e] dark:border-white/15 dark:text-teal-300"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                            Copiar
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={busyToken === invitation.token}
-                            onClick={() =>
-                              void revoke(invitation.token)
-                            }
-                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 disabled:opacity-50 dark:border-red-500/30"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Revocar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 grid gap-3 border-t border-gray-100 pt-4 text-xs dark:border-white/10 sm:grid-cols-2">
-                      <div>
-                        <p className="text-gray-400">
-                          Última visualización
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-800 dark:text-gray-100">
-                          {formatDate(invitation.last_viewed_at)}
-                          {" · "}
-                          {invitation.view_count} visitas
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-gray-400">
-                          Último clic en material
-                        </p>
-                        <p className="mt-1 font-semibold text-gray-800 dark:text-gray-100">
-                          {formatDate(invitation.last_clicked_at)}
-                          {" · "}
-                          {invitation.click_count} clics
-                        </p>
-                      </div>
-                    </div>
+                    <span className="text-xs text-gray-400">
+                      {link.accesses.length} colegas
+                    </span>
                   </div>
-                )
-              })}
+
+                  {link.accesses.length === 0 ? (
+                    <p className="mt-3 text-xs text-gray-400">
+                      Todavía nadie ingresó con este enlace.
+                    </p>
+                  ) : (
+                    <div className="mt-3 divide-y divide-gray-100 dark:divide-white/10">
+                      {link.accesses.map((access) => (
+                        <div
+                          key={access.user_id}
+                          className="py-4 first:pt-1 last:pb-1"
+                        >
+                          <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">
+                            {access.user_name ||
+                              access.user_email ||
+                              "Usuario registrado"}
+                          </p>
+
+                          {access.user_email && (
+                            <p className="mt-1 break-all text-xs text-gray-500">
+                              {access.user_email}
+                            </p>
+                          )}
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <p className="text-xs text-gray-400">
+                                Última visualización
+                              </p>
+
+                              <p className="mt-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+                                {formatDate(access.last_viewed_at)}
+                                {" · "}
+                                {access.view_count} visitas
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-gray-400">
+                                Último clic en material
+                              </p>
+
+                              <p className="mt-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+                                {formatDate(access.last_clicked_at)}
+                                {" · "}
+                                {access.click_count} clics
+                              </p>
+                            </div>
+                          </div>
+
+                          <p className="mt-2 flex items-center gap-1 text-xs text-gray-400">
+                            <Clock3 className="h-3 w-3" />
+                            Primer ingreso: {formatDate(access.first_access_at)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
+
+        <p className="mt-6 text-xs leading-5 text-gray-400">
+          Los colegas tienen permisos de solo lectura. El enlace puede
+          reenviarse y su acceso se bloquea al revocarlo o al vencer.
+        </p>
       </div>
     </section>
   )

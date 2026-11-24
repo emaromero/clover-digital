@@ -1,9 +1,25 @@
+
 "use client"
 
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+
+function getSafeNext() {
+  const params = new URLSearchParams(window.location.search)
+  const next = params.get("next")
+
+  if (
+    next &&
+    next.startsWith("/compartida/") &&
+    !next.startsWith("//")
+  ) {
+    return next
+  }
+
+  return "/cuenta"
+}
 
 export default function RegistroPage() {
   const router = useRouter()
@@ -19,10 +35,13 @@ export default function RegistroPage() {
     setLoading(true)
     setMessage("")
 
+    const next = getSafeNext()
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo:
+          `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
 
@@ -38,6 +57,8 @@ export default function RegistroPage() {
     setLoading(true)
     setMessage("")
 
+    const next = getSafeNext()
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -45,7 +66,8 @@ export default function RegistroPage() {
         data: {
           full_name: name,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo:
+          `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
 
@@ -61,17 +83,19 @@ export default function RegistroPage() {
 
     setLoading(false)
 
-    setTimeout(() => {
-      router.push("/ingresar")
+    window.setTimeout(() => {
+      router.push(
+        `/ingresar?next=${encodeURIComponent(next)}`
+      )
     }, 2500)
   }
 
   return (
-    <main className="min-h-screen bg-[#B8D8D8]/30 dark:bg-[#001219] flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md bg-white dark:bg-[#06222c] rounded-3xl shadow-xl border border-gray-200/70 dark:border-white/10 p-7 md:p-8">
+    <main className="min-h-screen bg-[#B8D8D8]/30 flex items-center justify-center px-4 py-16 dark:bg-[#001219]">
+      <div className="w-full max-w-md rounded-3xl border border-gray-200/70 bg-white p-7 shadow-xl dark:border-white/10 dark:bg-[#06222c] md:p-8">
 
-        <div className="text-center mb-8">
-          <p className="text-sm font-medium text-[#0A9396] mb-2">
+        <div className="mb-8 text-center">
+          <p className="mb-2 text-sm font-medium text-[#0A9396]">
             Clover Digital
           </p>
 
@@ -88,26 +112,7 @@ export default function RegistroPage() {
           type="button"
           onClick={handleGoogle}
           disabled={loading}
-          className="
-            w-full
-            flex
-            items-center
-            justify-center
-            gap-3
-            border
-            border-gray-300
-            dark:border-white/15
-            rounded-xl
-            px-4
-            py-3
-            font-medium
-            text-gray-800
-            dark:text-white
-            hover:bg-gray-50
-            dark:hover:bg-white/5
-            transition-colors
-            disabled:opacity-60
-          "
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 px-4 py-3 font-medium text-gray-800 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
         >
           <svg
             width="20"
@@ -136,19 +141,17 @@ export default function RegistroPage() {
           Registrarme con Google
         </button>
 
-        <div className="flex items-center gap-3 my-6">
-          <div className="h-px bg-gray-200 dark:bg-white/10 flex-1" />
-          <span className="text-xs text-gray-500">
-            o
-          </span>
-          <div className="h-px bg-gray-200 dark:bg-white/10 flex-1" />
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-gray-200 dark:bg-white/10" />
+          <span className="text-xs text-gray-500">o</span>
+          <div className="h-px flex-1 bg-gray-200 dark:bg-white/10" />
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200"
             >
               Nombre y apellido
             </label>
@@ -160,27 +163,14 @@ export default function RegistroPage() {
               onChange={(event) => setName(event.target.value)}
               required
               autoComplete="name"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-gray-300
-                dark:border-white/15
-                bg-white
-                dark:bg-[#001219]
-                px-4
-                py-3
-                outline-none
-                focus:ring-2
-                focus:ring-[#0A9396]
-              "
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
           </div>
 
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200"
             >
               Email
             </label>
@@ -192,27 +182,14 @@ export default function RegistroPage() {
               onChange={(event) => setEmail(event.target.value)}
               required
               autoComplete="email"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-gray-300
-                dark:border-white/15
-                bg-white
-                dark:bg-[#001219]
-                px-4
-                py-3
-                outline-none
-                focus:ring-2
-                focus:ring-[#0A9396]
-              "
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200"
             >
               Contraseña
             </label>
@@ -225,20 +202,7 @@ export default function RegistroPage() {
               required
               minLength={6}
               autoComplete="new-password"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-gray-300
-                dark:border-white/15
-                bg-white
-                dark:bg-[#001219]
-                px-4
-                py-3
-                outline-none
-                focus:ring-2
-                focus:ring-[#0A9396]
-              "
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#0A9396] dark:border-white/15 dark:bg-[#001219]"
             />
           </div>
 
@@ -251,18 +215,7 @@ export default function RegistroPage() {
           <button
             type="submit"
             disabled={loading}
-            className="
-              w-full
-              rounded-xl
-              bg-[#0e5c6e]
-              hover:bg-[#001219]
-              text-white
-              font-medium
-              px-4
-              py-3
-              transition-colors
-              disabled:opacity-60
-            "
+            className="w-full rounded-xl bg-[#0e5c6e] px-4 py-3 font-medium text-white transition-colors hover:bg-[#001219] disabled:opacity-60"
           >
             {loading ? "Creando cuenta..." : "Crear cuenta"}
           </button>
@@ -271,17 +224,22 @@ export default function RegistroPage() {
         <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-300">
           ¿Ya tenés cuenta?{" "}
           <Link
-            href="/ingresar"
-            className="font-medium text-[#0A9396] hover:underline"
-          >
-            Ingresar
-          </Link>
-        </div>
+  href="/ingresar"
+  onClick={(event) => {
+    event.preventDefault()
+    router.push(
+      `/ingresar?next=${encodeURIComponent(getSafeNext())}`
+    )
+  }}
+  className="font-medium text-[#0A9396] hover:underline"
+>
+  Ingresar
+</Link>        </div>
 
         <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-sm text-gray-500 hover:text-[#0A9396] transition-colors"
+            className="text-sm text-gray-500 transition-colors hover:text-[#0A9396]"
           >
             ← Volver a Clover Digital
           </Link>

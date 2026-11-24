@@ -46,11 +46,20 @@ export default async function SharedProductionPage({
   const { token } = await params
   const supabase = await createClient()
 
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+  if (!uuidPattern.test(token)) {
+    return <Unavailable />
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
+    const next = `/compartida/${token}`
+
     return (
       <PageShell>
         <div className="mx-auto max-w-xl rounded-3xl border border-gray-200 bg-white p-8 text-center dark:border-white/10 dark:bg-[#06222c]">
@@ -61,21 +70,20 @@ export default async function SharedProductionPage({
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
-            Iniciá sesión o registrate utilizando
-            el mismo correo al que enviaron la invitación.
-            Después, volvé a abrir el enlace que recibiste.
+            Iniciá sesión o creá una cuenta para consultar el material.
+            Podés ingresar con Google o con tu correo electrónico.
           </p>
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
-              href="/ingresar"
+              href={`/ingresar?next=${encodeURIComponent(next)}`}
               className="rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white"
             >
               Iniciar sesión
             </Link>
 
             <Link
-              href="/registro"
+              href={`/registro?next=${encodeURIComponent(next)}`}
               className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-[#0e5c6e] dark:border-white/15 dark:text-teal-300"
             >
               Crear cuenta
@@ -86,20 +94,24 @@ export default async function SharedProductionPage({
     )
   }
 
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-  if (!uuidPattern.test(token)) {
-    return <Unavailable />
-  }
-
   const { data, error } = await supabase.rpc(
     "get_shared_production",
     { p_token: token }
   )
 
   if (error || !data) {
-    return <Unavailable />
+    const needsVerification =
+      error?.message?.toLowerCase().includes("verificar")
+
+    return (
+      <Unavailable
+        message={
+          needsVerification
+            ? "Tu correo todavía no está verificado. Confirmalo para poder consultar esta producción."
+            : undefined
+        }
+      />
+    )
   }
 
   const production = data as SharedProduction
@@ -156,10 +168,9 @@ export default async function SharedProductionPage({
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-400">
-            Acceso privado de solo lectura.
-            Esta producción fue compartida por un agente
-            inmobiliario mediante Clover Digital.
-            Los enlaces externos pueden tener vencimientos propios.
+            Acceso privado de solo lectura. Esta producción fue compartida
+            mediante Clover Digital. Los enlaces externos pueden tener
+            vencimientos propios.
           </p>
         </div>
 
@@ -187,7 +198,11 @@ function PageShell({
   )
 }
 
-function Unavailable() {
+function Unavailable({
+  message,
+}: {
+  message?: string
+}) {
   return (
     <PageShell>
       <div className="mx-auto max-w-xl rounded-3xl border border-gray-200 bg-white p-8 text-center dark:border-white/10 dark:bg-[#06222c]">
@@ -198,9 +213,8 @@ function Unavailable() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
-          La invitación puede haber vencido, haber sido
-          revocada o pertenecer a otra cuenta.
-          Verificá que hayas ingresado con el correo invitado.
+          {message ||
+            "El enlace puede haber vencido, haber sido revocado o la producción ya no estar disponible."}
         </p>
 
         <Link
