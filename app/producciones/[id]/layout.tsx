@@ -4,7 +4,6 @@ import type React from "react"
 import { createClient } from "@/lib/supabase/server"
 
 import ClientActivityTracker from "@/components/client-activity-tracker"
-import ProductionShareManager from "@/components/production-share-manager"
 
 interface Props {
   children: React.ReactNode
@@ -53,16 +52,6 @@ export default async function ProductionTrackingLayout({
       url: file.url,
     }))
 
-  const isOwner = production.user_id === user.id
-
-  const isAvailable =
-    production.status === "delivered" &&
-    (
-      !production.available_until ||
-      new Date(production.available_until).getTime() >
-        Date.now()
-    )
-
   return (
     <>
       <ClientActivityTracker
@@ -72,15 +61,6 @@ export default async function ProductionTrackingLayout({
       />
 
       {children}
-
-      {isOwner && isAvailable && (
-        <div className="bg-[#f5fafa] dark:bg-[#001219]">
-          <ProductionShareManager
-            productionId={production.id}
-            propertyName={production.property_name}
-          />
-        </div>
-      )}
     </>
   )
 }

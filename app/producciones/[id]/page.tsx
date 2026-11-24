@@ -1,3 +1,4 @@
+
 import Link from "next/link"
 import {
   notFound,
@@ -20,8 +21,8 @@ import {
 
 import { createClient } from "@/lib/supabase/server"
 import { PortalActivity, TrackedMaterialLink } from "@/components/portal-activity"
-
 import RecoveryRequestButton from "@/components/recovery-request-button"
+import ProductionShareManager from "@/components/production-share-manager"
 
 interface PageProps {
   params: Promise<{
@@ -41,238 +42,160 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_CLASSES: Record<string, string> = {
   confirmed:
     "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
-
   completed:
     "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300",
-
   editing:
     "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
-
   delivered:
     "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
-
   archived:
     "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300",
-
   cancelled:
     "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300",
 }
 
-const formatDate = (
-  value?: string | null
-) => {
+const formatDate = (value?: string | null) => {
   if (!value) {
     return "-"
   }
 
-  return new Intl.DateTimeFormat(
-    "es-AR",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }
-  ).format(
-    new Date(value)
-  )
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value))
 }
 
-const formatDateTime = (
-  value?: string | null
-) => {
+const formatDateTime = (value?: string | null) => {
   if (!value) {
     return "-"
   }
 
-  return new Intl.DateTimeFormat(
-    "es-AR",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  ).format(
-    new Date(value)
-  )
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value))
 }
 
 export default async function ProductionDetailPage({
   params,
 }: PageProps) {
-  const {
-    id,
-  } =
-    await params
+  const { id } = await params
 
-  const supabase =
-    await createClient()
+  const supabase = await createClient()
 
   const {
-    data: {
-      user,
-    },
-  } =
-    await supabase.auth.getUser()
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect("/ingresar")
   }
 
-  const {
-    data: production,
-  } =
-    await supabase
-      .from("productions")
-      .select(`
-        id,
-        user_id,
-        property_name,
-        property_address,
-        production_date,
-        status,
-        services,
-        estimated_delivery_at,
-        delivered_at,
-        available_until,
-        created_at
-      `)
-      .eq(
-        "id",
-        id
-      )
-      .maybeSingle()
+  const { data: production } = await supabase
+    .from("productions")
+    .select(`
+      id,
+      user_id,
+      property_name,
+      property_address,
+      production_date,
+      status,
+      services,
+      estimated_delivery_at,
+      delivered_at,
+      available_until,
+      created_at
+    `)
+    .eq("id", id)
+    .maybeSingle()
 
   if (!production) {
     notFound()
   }
 
-  const {
-    data: files,
-  } =
-    await supabase
-      .from(
-        "production_files"
-      )
-      .select(`
-        id,
-        label,
-        file_type,
-        url,
-        expires_at,
-        created_at
-      `)
-      .eq(
-        "production_id",
-        production.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending: true,
-        }
-      )
+  const { data: files } = await supabase
+    .from("production_files")
+    .select(`
+      id,
+      label,
+      file_type,
+      url,
+      expires_at,
+      created_at
+    `)
+    .eq("production_id", production.id)
+    .order("created_at", {
+      ascending: true,
+    })
 
-  const now =
-    Date.now()
+  const now = Date.now()
 
   const isArchived =
-    production.status ===
-      "archived" ||
+    production.status === "archived" ||
     (
       production.available_until &&
-      new Date(
-        production.available_until
-      ).getTime() <=
-        now
+      new Date(production.available_until).getTime() <= now
     )
 
   const isDelivered =
-    production.status ===
-      "delivered" ||
-    Boolean(
-      production.delivered_at
+    production.status === "delivered" ||
+    Boolean(production.delivered_at)
+
+  const allFiles = files || []
+
+  const availableFiles = allFiles.filter((file) => {
+    if (isArchived) {
+      return false
+    }
+
+    if (
+      file.file_type === "wetransfer" &&
+      file.expires_at
+    ) {
+      return (
+        new Date(file.expires_at).getTime() > now
+      )
+    }
+
+    return true
+  })
+
+  const expiredWeTransfers = allFiles.filter(
+    (file) =>
+      file.file_type === "wetransfer" &&
+      file.expires_at &&
+      new Date(file.expires_at).getTime() <= now
+  )
+
+  const { data: existingRecoveryRequest } = await supabase
+    .from("recovery_requests")
+    .select("id, status")
+    .eq("production_id", production.id)
+    .eq("user_id", user.id)
+    .in("status", [
+      "pending",
+      "reviewing",
+      "approved",
+    ])
+    .order("requested_at", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle()
+
+  const hasAvailableMaterial = availableFiles.length > 0
+
+  const canShareProduction =
+    production.user_id === user.id &&
+    production.status === "delivered" &&
+    (
+      !production.available_until ||
+      new Date(production.available_until).getTime() > now
     )
-
-  const allFiles =
-    files || []
-
-  const availableFiles =
-    allFiles.filter(
-      (file) => {
-        if (isArchived) {
-          return false
-        }
-
-        if (
-          file.file_type ===
-            "wetransfer" &&
-          file.expires_at
-        ) {
-          return (
-            new Date(
-              file.expires_at
-            ).getTime() >
-            now
-          )
-        }
-
-        return true
-      }
-    )
-
-  const expiredWeTransfers =
-    allFiles.filter(
-      (file) =>
-        file.file_type ===
-          "wetransfer" &&
-        file.expires_at &&
-        new Date(
-          file.expires_at
-        ).getTime() <=
-          now
-    )
-
-  const {
-    data:
-      existingRecoveryRequest,
-  } =
-    await supabase
-      .from(
-        "recovery_requests"
-      )
-      .select(
-        "id, status"
-      )
-      .eq(
-        "production_id",
-        production.id
-      )
-      .eq(
-        "user_id",
-        user.id
-      )
-      .in(
-        "status",
-        [
-          "pending",
-          "reviewing",
-          "approved",
-        ]
-      )
-      .order(
-        "requested_at",
-        {
-          ascending: false,
-        }
-      )
-      .limit(1)
-      .maybeSingle()
-
-  const hasAvailableMaterial =
-    availableFiles.length >
-    0
 
   return (
     <main className="min-h-screen bg-[#f5fafa] px-4 py-6 dark:bg-[#001219] sm:py-10 md:py-16">
@@ -285,7 +208,6 @@ export default async function ProductionDetailPage({
           className="inline-flex items-center gap-2 text-sm font-medium text-[#0A9396] hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
-
           Volver a mis producciones
         </Link>
 
@@ -301,22 +223,15 @@ export default async function ProductionDetailPage({
               </p>
 
               <h1 className="mt-1 break-words text-2xl font-bold leading-tight text-gray-900 dark:text-white sm:text-3xl md:text-5xl">
-                {
-                  production.property_name
-                }
+                {production.property_name}
               </h1>
 
               {production.property_address && (
                 <div className="mt-3 flex items-start gap-2 text-sm text-gray-500 dark:text-gray-400">
-
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-
                   <span className="break-words">
-                    {
-                      production.property_address
-                    }
+                    {production.property_address}
                   </span>
-
                 </div>
               )}
 
@@ -326,17 +241,13 @@ export default async function ProductionDetailPage({
               className={`w-fit rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${
                 isArchived
                   ? STATUS_CLASSES.archived
-                  : STATUS_CLASSES[
-                      production.status
-                    ] ||
+                  : STATUS_CLASSES[production.status] ||
                     STATUS_CLASSES.archived
               }`}
             >
               {isArchived
                 ? "Archivada"
-                : STATUS_LABELS[
-                    production.status
-                  ] ||
+                : STATUS_LABELS[production.status] ||
                   production.status}
             </span>
 
@@ -354,93 +265,65 @@ export default async function ProductionDetailPage({
           >
 
             <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03] sm:p-5">
-
               <div className="flex items-center gap-2 text-[#0A9396]">
-
                 <CalendarDays className="h-4 w-4" />
-
                 <p className="text-[10px] font-semibold uppercase tracking-wide sm:text-xs">
                   Producción
                 </p>
-
               </div>
 
               <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
-                {formatDate(
-                  production.production_date
-                )}
+                {formatDate(production.production_date)}
               </p>
-
             </div>
 
             {!isDelivered &&
               production.estimated_delivery_at && (
-              <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03] sm:p-5">
+                <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03] sm:p-5">
+                  <div className="flex items-center gap-2 text-[#0A9396]">
+                    <Clock3 className="h-4 w-4" />
+                    <p className="text-[10px] font-semibold uppercase tracking-wide sm:text-xs">
+                      Entrega estimada
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-2 text-[#0A9396]">
-
-                  <Clock3 className="h-4 w-4" />
-
-                  <p className="text-[10px] font-semibold uppercase tracking-wide sm:text-xs">
-                    Entrega estimada
+                  <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+                    {formatDate(production.estimated_delivery_at)}
                   </p>
-
                 </div>
-
-                <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
-                  {formatDate(
-                    production.estimated_delivery_at
-                  )}
-                </p>
-
-              </div>
-            )}
+              )}
 
             {isDelivered &&
               production.delivered_at && (
-              <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03] sm:p-5">
+                <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03] sm:p-5">
+                  <div className="flex items-center gap-2 text-[#0A9396]">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <p className="text-[10px] font-semibold uppercase tracking-wide sm:text-xs">
+                      Entregada
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-2 text-[#0A9396]">
-
-                  <CheckCircle2 className="h-4 w-4" />
-
-                  <p className="text-[10px] font-semibold uppercase tracking-wide sm:text-xs">
-                    Entregada
+                  <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+                    {formatDate(production.delivered_at)}
                   </p>
-
                 </div>
-
-                <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
-                  {formatDate(
-                    production.delivered_at
-                  )}
-                </p>
-
-              </div>
-            )}
+              )}
 
             {isDelivered &&
               production.estimated_delivery_at && (
-              <div className="hidden rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03] md:block">
+                <div className="hidden rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03] md:block">
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Clock3 className="h-4 w-4" />
+                    <p className="text-xs font-semibold uppercase tracking-wide">
+                      Entrega estimada
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-2 text-gray-400">
-
-                  <Clock3 className="h-4 w-4" />
-
-                  <p className="text-xs font-semibold uppercase tracking-wide">
-                    Entrega estimada
+                  <p className="mt-2 font-semibold text-gray-500 dark:text-gray-400">
+                    {formatDate(production.estimated_delivery_at)}
                   </p>
-
                 </div>
-
-                <p className="mt-2 font-semibold text-gray-500 dark:text-gray-400">
-                  {formatDate(
-                    production.estimated_delivery_at
-                  )}
-                </p>
-
-              </div>
-            )}
+              )}
 
           </div>
 
@@ -453,24 +336,15 @@ export default async function ProductionDetailPage({
 
             <div className="mt-2.5 flex flex-wrap gap-2 sm:mt-3">
 
-              {production.services
-                ?.length ? (
-                production.services.map(
-                  (
-                    service
-                  ) => (
-                    <span
-                      key={
-                        service
-                      }
-                      className="rounded-full bg-[#0A9396]/10 px-2.5 py-1 text-xs font-medium text-[#0A9396] sm:px-3 sm:py-1.5 sm:text-sm"
-                    >
-                      {
-                        service
-                      }
-                    </span>
-                  )
-                )
+              {production.services?.length ? (
+                production.services.map((service) => (
+                  <span
+                    key={service}
+                    className="rounded-full bg-[#0A9396]/10 px-2.5 py-1 text-xs font-medium text-[#0A9396] sm:px-3 sm:py-1.5 sm:text-sm"
+                  >
+                    {service}
+                  </span>
+                ))
               ) : (
                 <p className="text-sm text-gray-500">
                   Sin servicios cargados.
@@ -506,19 +380,13 @@ export default async function ProductionDetailPage({
 
                 {!isArchived &&
                   production.available_until && (
-                  <p className="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400 sm:mt-2 sm:text-sm">
-
-                    Disponible online hasta el{" "}
-
-                    <strong className="font-semibold text-gray-700 dark:text-gray-200">
-                      {formatDate(
-                        production.available_until
-                      )}
-                    </strong>
-                    .
-
-                  </p>
-                )}
+                    <p className="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400 sm:mt-2 sm:text-sm">
+                      Disponible online hasta el{" "}
+                      <strong className="font-semibold text-gray-700 dark:text-gray-200">
+                        {formatDate(production.available_until)}
+                      </strong>.
+                    </p>
+                  )}
 
               </div>
 
@@ -551,15 +419,9 @@ export default async function ProductionDetailPage({
                   </p>
 
                   <RecoveryRequestButton
-                    productionId={
-                      production.id
-                    }
-                    userId={
-                      user.id
-                    }
-                    existingRequest={
-                      existingRecoveryRequest
-                    }
+                    productionId={production.id}
+                    userId={user.id}
+                    existingRequest={existingRecoveryRequest}
                   />
 
                 </div>
@@ -584,110 +446,84 @@ export default async function ProductionDetailPage({
           ) : (
             <div className="mt-5 space-y-3 sm:mt-6">
 
-              {availableFiles.map(
-                (
-                  file
-                ) => {
-                  const isWeTransfer =
-                    file.file_type ===
-                    "wetransfer"
+              {availableFiles.map((file) => {
+                const isWeTransfer =
+                  file.file_type === "wetransfer"
 
-                  const isVideo =
-                    file.file_type.includes(
-                      "video"
-                    ) ||
-                    file.file_type ===
-                      "talking_reel"
+                const isVideo =
+                  file.file_type.includes("video") ||
+                  file.file_type === "talking_reel"
 
-                  return (
-                    <TrackedMaterialLink
-                      productionId={production.id}
-                      fileId={file.id}
-                      key={
-                        file.id
-                      }
-                      href={
-                        file.url
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group block rounded-2xl border border-gray-200 p-4 transition hover:border-[#0A9396]/40 hover:bg-[#0A9396]/5 dark:border-white/10 dark:hover:bg-white/[0.03] sm:flex sm:items-center sm:gap-4 sm:p-5"
-                    >
+                return (
+                  <TrackedMaterialLink
+                    productionId={production.id}
+                    fileId={file.id}
+                    key={file.id}
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block rounded-2xl border border-gray-200 p-4 transition hover:border-[#0A9396]/40 hover:bg-[#0A9396]/5 dark:border-white/10 dark:hover:bg-white/[0.03] sm:flex sm:items-center sm:gap-4 sm:p-5"
+                  >
 
-                      <div className="flex items-start gap-3 sm:contents">
+                    <div className="flex items-start gap-3 sm:contents">
 
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396] sm:h-12 sm:w-12">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396] sm:h-12 sm:w-12">
+                        {isVideo ? (
+                          <FileVideo2 className="h-5 w-5" />
+                        ) : isWeTransfer ? (
+                          <Download className="h-5 w-5" />
+                        ) : (
+                          <Link2 className="h-5 w-5" />
+                        )}
+                      </div>
 
-                          {isVideo ? (
-                            <FileVideo2 className="h-5 w-5" />
-                          ) : isWeTransfer ? (
-                            <Download className="h-5 w-5" />
-                          ) : (
-                            <Link2 className="h-5 w-5" />
+                      <div className="min-w-0 flex-1">
+
+                        <div className="flex flex-wrap items-center gap-2">
+
+                          <p className="break-words text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+                            {file.label}
+                          </p>
+
+                          {isWeTransfer && (
+                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 sm:text-xs">
+                              WeTransfer
+                            </span>
                           )}
 
                         </div>
 
-                        <div className="min-w-0 flex-1">
+                        {isWeTransfer && file.expires_at && (
+                          <p className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-300 sm:mt-2">
+                            Vence el {formatDateTime(file.expires_at)}
+                          </p>
+                        )}
 
-                          <div className="flex flex-wrap items-center gap-2">
-
-                            <p className="break-words text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
-                              {
-                                file.label
-                              }
-                            </p>
-
-                            {isWeTransfer && (
-                              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 sm:text-xs">
-                                WeTransfer
-                              </span>
-                            )}
-
-                          </div>
-
-                          {isWeTransfer &&
-                            file.expires_at && (
-                            <p className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-300 sm:mt-2">
-                              Vence el{" "}
-                              {formatDateTime(
-                                file.expires_at
-                              )}
-                            </p>
-                          )}
-
-                          {!isWeTransfer && (
-                            <p className="mt-1.5 text-xs text-gray-400 sm:mt-2">
-                              Abrí el enlace para acceder al material.
-                            </p>
-                          )}
-
-                        </div>
+                        {!isWeTransfer && (
+                          <p className="mt-1.5 text-xs text-gray-400 sm:mt-2">
+                            Abrí el enlace para acceder al material.
+                          </p>
+                        )}
 
                       </div>
 
-                      <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-4 py-2.5 text-sm font-semibold text-white transition group-hover:bg-[#001219] sm:mt-0 sm:w-auto sm:shrink-0">
+                    </div>
 
-                        {isWeTransfer
-                          ? "Descargar"
-                          : "Abrir material"}
+                    <span className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-4 py-2.5 text-sm font-semibold text-white transition group-hover:bg-[#001219] sm:mt-0 sm:w-auto sm:shrink-0">
+                      {isWeTransfer ? "Descargar" : "Abrir material"}
+                      <ExternalLink className="h-4 w-4" />
+                    </span>
 
-                        <ExternalLink className="h-4 w-4" />
-
-                      </span>
-
-                    </TrackedMaterialLink>
-                  )
-                }
-              )}
+                  </TrackedMaterialLink>
+                )
+              })}
 
             </div>
           )}
 
           {/* WETRANSFER VENCIDO */}
           {!isArchived &&
-            expiredWeTransfers.length >
-              0 && (
+            expiredWeTransfers.length > 0 && (
               <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:mt-6 sm:p-5">
 
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -714,6 +550,14 @@ export default async function ProductionDetailPage({
             )}
 
         </section>
+
+        {/* COMPARTIR PRODUCCIÓN */}
+        {canShareProduction && (
+          <ProductionShareManager
+            productionId={production.id}
+            propertyName={production.property_name}
+          />
+        )}
 
       </div>
 

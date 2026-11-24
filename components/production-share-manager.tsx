@@ -230,9 +230,11 @@ export default function ProductionShareManager({
   }
 
   return (
-    <section className="mx-auto mt-6 max-w-5xl px-4 pb-8">
+    <section className="mt-6 pb-8">
       <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:p-7">
+
         <div className="flex items-start gap-3">
+
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A9396]/10 text-[#0A9396]">
             <Share2 className="h-5 w-5" />
           </div>
@@ -247,9 +249,11 @@ export default function ProductionShareManager({
               otros colegas mediante un único enlace privado.
             </p>
           </div>
+
         </div>
 
         <div className="mt-6 rounded-2xl border border-[#0A9396]/20 bg-[#0A9396]/5 p-4 sm:p-5">
+
           <div className="flex items-center gap-2">
             <Link2 className="h-5 w-5 text-[#0A9396]" />
 
@@ -280,16 +284,19 @@ export default function ProductionShareManager({
             </button>
           ) : (
             <div className="mt-5 space-y-3">
+
               {activeLinks.map((link) => (
                 <div
                   key={link.share_token}
                   className="rounded-xl border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-[#001219]"
                 >
+
                   <p className="break-all text-xs text-gray-500 dark:text-gray-400">
                     {`${typeof window !== "undefined" ? window.location.origin : ""}/compartida/${link.share_token}`}
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
+
                     <button
                       type="button"
                       onClick={() => void copyLink(link.share_token)}
@@ -320,15 +327,19 @@ export default function ProductionShareManager({
 
                       Revocar enlace
                     </button>
+
                   </div>
 
                   <p className="mt-3 text-xs text-gray-400">
                     Vence el {formatDate(link.expires_at)}
                   </p>
+
                 </div>
               ))}
+
             </div>
           )}
+
         </div>
 
         {message && (
@@ -351,6 +362,7 @@ export default function ProductionShareManager({
         )}
 
         <div className="mt-8 border-t border-gray-100 pt-6 dark:border-white/10">
+
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-[#0A9396]" />
 
@@ -369,12 +381,15 @@ export default function ProductionShareManager({
             </p>
           ) : (
             <div className="mt-4 space-y-5">
+
               {links.map((link) => (
                 <div
                   key={link.share_token}
                   className="rounded-2xl border border-gray-200 p-4 dark:border-white/10"
                 >
+
                   <div className="flex flex-wrap items-center justify-between gap-2">
+
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {link.revoked_at
                         ? "Enlace revocado"
@@ -386,6 +401,7 @@ export default function ProductionShareManager({
                     <span className="text-xs text-gray-400">
                       {link.accesses.length} colegas
                     </span>
+
                   </div>
 
                   {link.accesses.length === 0 ? (
@@ -394,11 +410,13 @@ export default function ProductionShareManager({
                     </p>
                   ) : (
                     <div className="mt-3 divide-y divide-gray-100 dark:divide-white/10">
+
                       {link.accesses.map((access) => (
                         <div
                           key={access.user_id}
                           className="py-4 first:pt-1 last:pb-1"
                         >
+
                           <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">
                             {access.user_name ||
                               access.user_email ||
@@ -412,6 +430,7 @@ export default function ProductionShareManager({
                           )}
 
                           <div className="mt-3 grid gap-3 sm:grid-cols-2">
+
                             <div>
                               <p className="text-xs text-gray-400">
                                 Última visualización
@@ -435,26 +454,33 @@ export default function ProductionShareManager({
                                 {access.click_count} clics
                               </p>
                             </div>
+
                           </div>
 
                           <p className="mt-2 flex items-center gap-1 text-xs text-gray-400">
                             <Clock3 className="h-3 w-3" />
                             Primer ingreso: {formatDate(access.first_access_at)}
                           </p>
+
                         </div>
                       ))}
+
                     </div>
                   )}
+
                 </div>
               ))}
+
             </div>
           )}
+
         </div>
 
         <p className="mt-6 text-xs leading-5 text-gray-400">
           Los colegas tienen permisos de solo lectura. El enlace puede
           reenviarse y su acceso se bloquea al revocarlo o al vencer.
         </p>
+
       </div>
     </section>
   )
