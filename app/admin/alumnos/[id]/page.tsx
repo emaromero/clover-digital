@@ -1062,9 +1062,7 @@ export default async function AdminAlumnoPage({
 
                                             <div className="mt-1 flex flex-wrap gap-4 text-xs text-gray-400">
 
-                                              {lessonProgress
-                                                ?.last_position_seconds >
-                                                0 && (
+                                              {(lessonProgress?.last_position_seconds ?? 0) > 0 && (
                                                 <span className="flex items-center gap-1">
 
                                                   <Clock3 className="h-3.5 w-3.5" />
