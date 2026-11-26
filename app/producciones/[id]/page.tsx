@@ -230,22 +230,6 @@ export default async function ProductionDetailPage({
           Volver a mis producciones
         </Link>
 
-        <nav aria-label="Accesos de la producción" className="mt-5 flex flex-wrap gap-2">
-          <a href="#material" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0A9396]/25 bg-[#0A9396]/10 px-4 py-2.5 text-sm font-semibold text-[#0A9396] hover:bg-[#0A9396]/15">
-            <FolderOpen className="h-4 w-4" /> Mi material
-          </a>
-          {isProductionOwner && productionAmount > 0 && (
-            <a href="#pagos" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
-              <CreditCard className="h-4 w-4" /> Estado de pago
-            </a>
-          )}
-          {canShareProduction && (
-            <a href="#compartir" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
-              <Link2 className="h-4 w-4" /> Compartir
-            </a>
-          )}
-        </nav>
-
         {/* CABECERA */}
         <section className="mt-6 rounded-3xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
 
@@ -344,22 +328,6 @@ export default async function ProductionDetailPage({
                 </div>
               )}
 
-            {isDelivered &&
-              production.estimated_delivery_at && (
-                <div className="hidden rounded-2xl bg-gray-50 p-5 dark:bg-white/[0.03] md:block">
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <Clock3 className="h-4 w-4" />
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                      Entrega estimada
-                    </p>
-                  </div>
-
-                  <p className="mt-2 font-semibold text-gray-500 dark:text-gray-400">
-                    {formatDate(production.estimated_delivery_at)}
-                  </p>
-                </div>
-              )}
-
           </div>
 
           {/* SERVICIOS */}
@@ -388,59 +356,30 @@ export default async function ProductionDetailPage({
 
             </div>
 
+            {/* Resumen económico discreto: únicamente para el titular. */}
+            {isProductionOwner && production.total_amount !== null && productionAmount > 0 && (
+              <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-gray-100 pt-4 text-xs text-gray-600 dark:border-white/10 dark:text-gray-300 sm:mt-6 sm:text-sm">
+                <CreditCard className="h-4 w-4 shrink-0 text-[#0A9396]" aria-hidden="true" />
+                {paymentStatus === "Pagado" ? (
+                  <span>Producción abonada · {formatArs(productionAmount)}</span>
+                ) : paymentStatus === "Pago parcial" ? (
+                  <span>
+                    Valor {formatArs(productionAmount)} · Abonado {formatArs(amountPaid)} · Saldo pendiente {formatArs(amountPending)}
+                  </span>
+                ) : (
+                  <span>
+                    Valor {formatArs(productionAmount)} · {paymentStatus}
+                  </span>
+                )}
+              </div>
+            )}
+
           </div>
 
         </section>
 
-        {/* RESUMEN ECONÓMICO: visible exclusivamente para el titular. */}
-        {isProductionOwner && production.total_amount !== null && productionAmount > 0 && (
-          <section id="pagos" className="mt-5 scroll-mt-6 rounded-3xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
-                <CreditCard className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                  Estado de pago
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Resumen de tu producción
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]">
-                <p className="text-xs text-gray-500 dark:text-gray-400">Valor total</p>
-                <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
-                  {formatArs(productionAmount)}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]">
-                <p className="text-xs text-gray-500 dark:text-gray-400">Estado</p>
-                <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
-                  {paymentStatus}
-                </p>
-              </div>
-              {paymentTotals && (
-                <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {amountPending > 0 ? "Saldo pendiente" : "Total abonado"}
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
-                    {formatArs(amountPending > 0 ? amountPending : amountPaid)}
-                  </p>
-                </div>
-              )}
-            </div>
-            <p className="mt-4 text-xs leading-5 text-gray-400">
-              Este resumen se actualiza con los pagos registrados por Clover Digital.
-              Si encontrás alguna diferencia, contactanos para revisarla.
-            </p>
-          </section>
-        )}
-
         {/* ENTREGA */}
-        <section id="material" className="mt-5 scroll-mt-6 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
+        <section className="mt-5 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
 
@@ -635,12 +574,10 @@ export default async function ProductionDetailPage({
 
         {/* COMPARTIR PRODUCCIÓN */}
         {canShareProduction && (
-          <div id="compartir" className="scroll-mt-6">
           <ProductionShareManager
             productionId={production.id}
             propertyName={production.property_name}
           />
-          </div>
         )}
 
       </div>
