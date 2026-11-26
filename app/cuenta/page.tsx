@@ -8,12 +8,14 @@ import {
   Clock3,
   FolderOpen,
   GraduationCap,
+  CreditCard,
   ShieldCheck,
   UserRound,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
 import { PortalActivity } from "@/components/portal-activity"
+import { formatArs, getOwnerPaymentTotals } from "@/lib/production-client-finance"
 
 import LogoutButton from "@/components/logout-button"
 
@@ -138,6 +140,7 @@ if (
     {
       id: string
       property_name: string
+      user_id: string | null
       property_address: string | null
       production_date: string | null
       status: string
@@ -160,6 +163,7 @@ if (
         .from("productions")
         .select(`
           id,
+          user_id,
           property_name,
           property_address,
           production_date,
@@ -189,6 +193,12 @@ if (
 
   const allProductions =
     productions
+
+  // Solo el agente titular puede consultar importes y cobros.
+  const ownedProductionIds = allProductions
+    .filter((production) => production.user_id === user.id)
+    .map((production) => production.id)
+  const ownerPaymentTotals = await getOwnerPaymentTotals(ownedProductionIds)
 
   const now =
     Date.now()
@@ -348,6 +358,18 @@ if (
 
     archived?: boolean
   }) => {
+    const isOwner = production.user_id === user.id
+    const amount = production.total_amount
+    const paid = ownerPaymentTotals?.get(production.id) ?? 0
+    const remaining = Math.max(0, Number(amount ?? 0) - paid)
+    const paymentStatus = !ownerPaymentTotals
+      ? "Pago por verificar"
+      : paid <= 0
+        ? "Pendiente de pago"
+        : remaining > 0
+          ? "Pago parcial"
+          : "Pagado"
+
     return (
       <div className="flex flex-col gap-4 p-4 sm:p-5 md:flex-row md:items-center md:gap-5 md:px-6">
 
@@ -412,6 +434,26 @@ if (
             </span>
 
           </div>
+
+          {isOwner && amount !== null && Number(amount) > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+              <span className="font-semibold text-gray-800 dark:text-gray-100">
+                <CreditCard className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" /> Valor: {formatArs(Number(amount))}
+              </span>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                ownerPaymentTotals && remaining <= 0
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                  : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+              }`}>
+                {paymentStatus}
+              </span>
+              {ownerPaymentTotals && remaining > 0 && (
+                <span className="text-gray-500 dark:text-gray-400">
+                  Saldo: {formatArs(remaining)}
+                </span>
+              )}
+            </div>
+          )}
 
           {production.status ===
             "confirmed" &&
@@ -574,6 +616,20 @@ if (
 
         </section>
 
+        <nav aria-label="Secciones de mi cuenta" className="mt-5 flex flex-wrap gap-2 sm:mt-6">
+          <a href="#producciones" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0A9396]/25 bg-[#0A9396]/10 px-4 py-2.5 text-sm font-semibold text-[#0A9396] hover:bg-[#0A9396]/15">
+            <FolderOpen className="h-4 w-4" /> Mis producciones
+          </a>
+          <Link href="/cuenta/perfil" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
+            <UserRound className="h-4 w-4" /> Mi perfil
+          </Link>
+          {activeEnrollments.length > 0 && (
+            <a href="#academy" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
+              <GraduationCap className="h-4 w-4" /> Mis cursos
+            </a>
+          )}
+        </nav>
+
         {/* PRODUCCIONES */}
         <section
           id="producciones"
@@ -591,7 +647,7 @@ if (
             </h2>
 
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Consultá tus trabajos, entregas e historial.
+              Consultá tus trabajos, estados de pago y entregas desde un solo lugar.
             </p>
 
           </div>
@@ -855,7 +911,7 @@ if (
         </section>
 
         {/* ACADEMY */}
-        <section className="mt-6 sm:mt-8">
+        <section id="academy" className="mt-6 sm:mt-8">
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:p-6 md:p-8">
 

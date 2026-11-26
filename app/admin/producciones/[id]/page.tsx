@@ -239,9 +239,9 @@ export default async function AdminProductionPage({ params }: PageProps) {
         <ProductionFinancePanel
           productionId={production.id}
           totalAmount={production.total_amount}
-          invoiceStatus={production.invoice_status}
-          invoiceNumber={production.invoice_number}
-          invoiceDate={production.invoice_date}
+          initialInvoiceStatus={production.invoice_status}
+          initialInvoiceNumber={production.invoice_number}
+          initialInvoiceDate={production.invoice_date}
           initialPayments={payments || []}
         />
       </div>
