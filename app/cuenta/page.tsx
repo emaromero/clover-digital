@@ -436,21 +436,16 @@ if (
           </div>
 
           {isOwner && amount !== null && Number(amount) > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-              <span className="font-semibold text-gray-800 dark:text-gray-100">
-                <CreditCard className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" /> Valor: {formatArs(Number(amount))}
-              </span>
-              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                ownerPaymentTotals && remaining <= 0
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                  : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-              }`}>
-                {paymentStatus}
-              </span>
-              {ownerPaymentTotals && remaining > 0 && (
-                <span className="text-gray-500 dark:text-gray-400">
-                  Saldo: {formatArs(remaining)}
+            <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600 dark:text-gray-300 sm:text-sm">
+              <CreditCard className="h-3.5 w-3.5 shrink-0 text-[#0A9396]" aria-hidden="true" />
+              {paymentStatus === "Pagado" ? (
+                <span>Abonada · {formatArs(Number(amount))}</span>
+              ) : paymentStatus === "Pago parcial" ? (
+                <span>
+                  Valor {formatArs(Number(amount))} · Saldo pendiente {formatArs(remaining)}
                 </span>
+              ) : (
+                <span>Valor {formatArs(Number(amount))} · {paymentStatus}</span>
               )}
             </div>
           )}
@@ -615,20 +610,6 @@ if (
           </div>
 
         </section>
-
-        <nav aria-label="Secciones de mi cuenta" className="mt-5 flex flex-wrap gap-2 sm:mt-6">
-          <a href="#producciones" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0A9396]/25 bg-[#0A9396]/10 px-4 py-2.5 text-sm font-semibold text-[#0A9396] hover:bg-[#0A9396]/15">
-            <FolderOpen className="h-4 w-4" /> Mis producciones
-          </a>
-          <Link href="/cuenta/perfil" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
-            <UserRound className="h-4 w-4" /> Mi perfil
-          </Link>
-          {activeEnrollments.length > 0 && (
-            <a href="#academy" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
-              <GraduationCap className="h-4 w-4" /> Mis cursos
-            </a>
-          )}
-        </nav>
 
         {/* PRODUCCIONES */}
         <section
