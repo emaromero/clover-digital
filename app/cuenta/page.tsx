@@ -8,6 +8,7 @@ import {
   Clock3,
   FolderOpen,
   GraduationCap,
+  CreditCard,
   ShieldCheck,
   UserRound,
 } from "lucide-react"
@@ -437,7 +438,7 @@ if (
           {isOwner && amount !== null && Number(amount) > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
               <span className="font-semibold text-gray-800 dark:text-gray-100">
-                Valor: {formatArs(Number(amount))}
+                <CreditCard className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" /> Valor: {formatArs(Number(amount))}
               </span>
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                 ownerPaymentTotals && remaining <= 0
@@ -615,6 +616,20 @@ if (
 
         </section>
 
+        <nav aria-label="Secciones de mi cuenta" className="mt-5 flex flex-wrap gap-2 sm:mt-6">
+          <a href="#producciones" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0A9396]/25 bg-[#0A9396]/10 px-4 py-2.5 text-sm font-semibold text-[#0A9396] hover:bg-[#0A9396]/15">
+            <FolderOpen className="h-4 w-4" /> Mis producciones
+          </a>
+          <Link href="/cuenta/perfil" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
+            <UserRound className="h-4 w-4" /> Mi perfil
+          </Link>
+          {activeEnrollments.length > 0 && (
+            <a href="#academy" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-[#06222c] dark:text-gray-200">
+              <GraduationCap className="h-4 w-4" /> Mis cursos
+            </a>
+          )}
+        </nav>
+
         {/* PRODUCCIONES */}
         <section
           id="producciones"
@@ -632,7 +647,7 @@ if (
             </h2>
 
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Consultá tus trabajos, entregas e historial.
+              Consultá tus trabajos, estados de pago y entregas desde un solo lugar.
             </p>
 
           </div>
@@ -896,7 +911,7 @@ if (
         </section>
 
         {/* ACADEMY */}
-        <section className="mt-6 sm:mt-8">
+        <section id="academy" className="mt-6 sm:mt-8">
 
           <div className="rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:p-6 md:p-8">
 
