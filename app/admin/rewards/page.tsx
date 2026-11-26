@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { ArrowLeft, Coins, Gift, ShieldCheck, Trophy, TicketPercent, Users } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import RewardContractsAdmin from "@/components/reward-contracts-admin"
+import RewardMissionsAdmin from "@/components/reward-missions-admin"
 
 export const metadata = {
   title: "Administración de Clover Rewards",
@@ -83,6 +84,7 @@ export default async function AdminRewardsPage() {
             Indicadores y auditoría de solo lectura. Desde esta pantalla no se acreditan ni se canjean recompensas.
           </p>
           <RewardContractsAdmin />
+          <RewardMissionsAdmin />
           {overview ? (
             <>
               <div className="mt-6 rounded-xl bg-gray-50 p-4 text-sm dark:bg-white/[0.03]">
