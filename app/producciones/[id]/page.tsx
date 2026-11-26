@@ -372,7 +372,7 @@ export default async function ProductionDetailPage({
             <div className="mt-2.5 flex flex-wrap gap-2 sm:mt-3">
 
               {production.services?.length ? (
-                production.services.map((service) => (
+                production.services.map((service: string) => (
                   <span
                     key={service}
                     className="rounded-full bg-[#0A9396]/10 px-2.5 py-1 text-xs font-medium text-[#0A9396] sm:px-3 sm:py-1.5 sm:text-sm"
