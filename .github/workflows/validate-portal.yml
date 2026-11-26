@@ -3,7 +3,7 @@ name: Validate portal changes
 on:
   push:
     branches:
-      - feat/client-payment-summary-share-privacy
+      - main
   pull_request:
     branches:
       - main
