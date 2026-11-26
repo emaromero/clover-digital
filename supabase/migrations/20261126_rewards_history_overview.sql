@@ -1,3 +1,0 @@
--- Clover Rewards: historial personal y control administrativo.
--- Ejecutar manualmente en Supabase SQL Editor antes de activar Rewards.
--- Archivo fuente descargable: consulta de etapa 4.
