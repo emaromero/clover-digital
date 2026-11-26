@@ -64,7 +64,7 @@ export default async function CuentaPerfilPage() {
     ""
 
   return (
-    <main className="min-h-screen bg-[#f5fafa] px-4 py-10 dark:bg-[#001219] md:py-16">
+    <main className="min-h-screen bg-[#f5fafa] px-4 py-6 dark:bg-[#001219] sm:py-10 md:py-16">
 
       <div className="mx-auto max-w-3xl">
 
@@ -77,9 +77,9 @@ export default async function CuentaPerfilPage() {
           Volver a mi cuenta
         </Link>
 
-        <section className="mt-8 rounded-3xl border border-gray-200/70 bg-white p-6 dark:border-white/10 dark:bg-[#06222c] md:p-8">
+        <section className="mt-6 rounded-3xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
 
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
 
             {profileAvatar ? (
               <img
@@ -89,10 +89,10 @@ export default async function CuentaPerfilPage() {
                 alt={
                   profileName
                 }
-                className="h-16 w-16 rounded-full object-cover"
+                className="h-14 w-14 shrink-0 rounded-full object-cover sm:h-16 sm:w-16"
               />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396]">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0A9396]/10 text-[#0A9396] sm:h-16 sm:w-16">
 
                 <UserRound className="h-7 w-7" />
 
@@ -105,7 +105,7 @@ export default async function CuentaPerfilPage() {
                 Mi perfil
               </p>
 
-              <h1 className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
                 Datos personales
               </h1>
 
@@ -117,7 +117,7 @@ export default async function CuentaPerfilPage() {
 
           </div>
 
-          <div className="mt-8 border-t border-gray-100 pt-8 dark:border-white/10">
+          <div className="mt-6 border-t border-gray-100 pt-6 dark:border-white/10 sm:mt-8 sm:pt-8">
 
             <ProfileForm
               userId={
