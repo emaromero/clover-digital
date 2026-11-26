@@ -1,9 +1,8 @@
--- IMPORTANTE: revisar la firma y las columnas de
--- public.list_production_share_links antes de ejecutar en Supabase.
--- Ejecutar ANTES de desplegar el frontend actualizado.
---
--- La función original contenía identidades, conteos y fechas de acceso,
--- datos que solo deben permanecer disponibles en el panel administrativo.
+-- ETAPA 1: ejecutar ANTES de desplegar el frontend nuevo.
+-- Crea un RPC público limitado a datos de los enlaces, SIN actividad de colegas.
+-- No revoca todavía la función vieja: la web actualmente publicada la utiliza.
+-- Firma verificada: public.list_production_share_links(p_production_id uuid)
+-- share_token uuid; fechas timestamptz.
 
 create or replace function public.list_production_share_links_safe(
   p_production_id uuid
@@ -20,9 +19,9 @@ set search_path = ''
 as $$
   select distinct
     link.share_token::text,
-    link.created_at::timestamptz,
-    link.expires_at::timestamptz,
-    link.revoked_at::timestamptz
+    link.created_at,
+    link.expires_at,
+    link.revoked_at
   from public.list_production_share_links(p_production_id) as link
   where auth.uid() is not null
     and exists (
@@ -37,9 +36,3 @@ revoke all on function public.list_production_share_links_safe(uuid)
   from public, anon;
 grant execute on function public.list_production_share_links_safe(uuid)
   to authenticated;
-
--- El RPC original exponía actividad individual de terceros.
--- Bloquear su invocación directa desde usuarios del portal.
--- Los administradores conservan sus métricas con admin_production_activity.
-revoke execute on function public.list_production_share_links(uuid)
-  from public, anon, authenticated;
