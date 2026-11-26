@@ -121,6 +121,40 @@ export default async function RewardsPage() {
                 })}
               </div>
 
+              <section className="mt-6 rounded-2xl border border-gray-200 p-5 dark:border-white/10">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                    Tu progreso en Clover Club
+                  </h2>
+                  <span className="text-sm font-semibold text-[#0A9396]">
+                    {levels[summary.club_tier] ?? "Plus"}
+                  </span>
+                </div>
+                {(() => {
+                  const points = Math.max(0, Number(summary.points_rolling_12m) || 0)
+                  const target = points >= 20 ? 20 : points >= 8 ? 20 : 8
+                  const progress = Math.min(100, (points / target) * 100)
+                  return (
+                    <>
+                      <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
+                        role="progressbar" aria-label="Progreso de puntos Clover Club"
+                        aria-valuemin={0} aria-valuemax={target} aria-valuenow={Math.min(points, target)}>
+                        <div className="h-full rounded-full bg-[#0A9396]" style={{ width: `${progress}%` }} />
+                      </div>
+                      <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                        {points >= 20
+                          ? "Alcanzaste el umbral de Elite con 20 puntos en los últimos 12 meses."
+                          : `Tenés ${number(points)} de ${target} puntos para alcanzar ${points >= 8 ? "Elite" : "Pro"}.`}
+                      </p>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Plus: 0 a 7 puntos · Pro: 8 a 19 · Elite: 20 o más.
+                        El nivel mostrado también puede incluir protección temporal de categoría.
+                      </p>
+                    </>
+                  )
+                })()}
+              </section>
+
               <p className="mt-5 text-sm text-gray-500 dark:text-gray-400">
                 Cupones activos: {summary.active_coupons}. Los beneficios se acreditan
                 únicamente en las condiciones del programa.
