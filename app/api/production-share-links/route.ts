@@ -9,8 +9,8 @@ const UUID =
  * Visitor identities, timestamps and tracking counters never enter
  * the owner-facing client response.
  *
- * Database permissions for list_production_share_links must also be
- * restricted to administrators before this feature is released.
+ * Database migration restricts the original activity RPC to backend use.
+ * Run it before deploying this route.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await supabase.rpc(
-    "list_production_share_links",
+    "list_production_share_links_safe",
     { p_production_id: productionId }
   )
 
