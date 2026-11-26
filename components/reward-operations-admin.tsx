@@ -59,6 +59,7 @@ export default function RewardOperationsAdmin({enabled}:{enabled:boolean}) {
   const [previewed,setPreviewed]=useState(false)
   const [confirmation,setConfirmation]=useState("")
   const [completed,setCompleted]=useState(false)
+  const [discountVerified,setDiscountVerified]=useState(false)
   const current=operations.find(o=>o.id===kind)!
   const validFirst=kind==="reversal"?/^(production|contract):[0-9a-f-]{36}$/i.test(first.trim()):isUUID(first.trim())
   const valid=validFirst&&(kind!=="coupon"||isUUID(second.trim()))
@@ -71,7 +72,7 @@ export default function RewardOperationsAdmin({enabled}:{enabled:boolean}) {
   }
   const reset=(k:Operation)=>{
     setKind(k);setFirst("");setSecond("");setResult(null);setError("")
-    setPreviewed(false);setConfirmation("");setCompleted(false)
+    setPreviewed(false);setConfirmation("");setCompleted(false);setDiscountVerified(false)
   }
   const simulate=async()=>{
     if(!valid)return
@@ -87,10 +88,11 @@ export default function RewardOperationsAdmin({enabled}:{enabled:boolean}) {
     finally{setLoading(false)}
   }
   const perform=async()=>{
-    if(!enabled||!previewed||!valid||!rpcAward[kind]||confirmation!=="CONFIRMAR"||completed)return
+    if(!enabled||!previewed||!valid||!rpcAward[kind]||confirmation!=="CONFIRMAR"||completed||!safeToExecute||(kind==="referral"&&!discountVerified))return
     setLoading(true);setError("")
     try{
-      const {data,error:rpcError}=await createClient().rpc(rpcAward[kind]!,params())
+      const actionParams = kind==="referral" ? {...params(),p_confirm_discount_recorded:discountVerified} : params()
+      const {data,error:rpcError}=await createClient().rpc(rpcAward[kind]!,actionParams)
       if(rpcError)throw new Error(rpcError.message)
       setResult(data as Record<string,unknown>)
       setCompleted(true)
@@ -99,6 +101,12 @@ export default function RewardOperationsAdmin({enabled}:{enabled:boolean}) {
     }catch(err){setError(err instanceof Error?err.message:"No se pudo completar la operación.")}
     finally{setLoading(false)}
   }
+  const safeToExecute=Boolean(result)&&(
+    kind==="referral" ? result?.reason==="eligible_for_admin_review" :
+    kind==="coupon" ? result?.reason==="eligible" && result?.eligible===true :
+    kind==="production"||kind==="contract" ? result?.reason==="eligible" && result?.eligible===true :
+    false
+  )
   return <section className="mt-8 rounded-2xl border border-gray-200 p-5 dark:border-white/10 sm:p-6">
     <div className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-[#0A9396]"/>
       <h2 className="text-lg font-bold text-gray-900 dark:text-white">Centro de operaciones Rewards</h2>
@@ -143,7 +151,7 @@ export default function RewardOperationsAdmin({enabled}:{enabled:boolean}) {
       </p>}
       <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-gray-50 p-3 font-mono text-xs text-gray-700 dark:bg-[#001219] dark:text-gray-200">{formatted(result)}</pre>
     </div>}
-    {previewed&&enabled&&rpcAward[kind]&&<div className="mt-4 rounded-xl border border-amber-200 p-4 dark:border-amber-500/30">
+    {previewed&&enabled&&rpcAward[kind]&&safeToExecute&&<div className="mt-4 rounded-xl border border-amber-200 p-4 dark:border-amber-500/30">
       <p className="flex items-start gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200">
         <AlertTriangle className="h-4 w-4 shrink-0"/>La siguiente acción puede generar un movimiento económico.
       </p>
@@ -153,7 +161,12 @@ export default function RewardOperationsAdmin({enabled}:{enabled:boolean}) {
         <input value={confirmation} onChange={e=>setConfirmation(e.target.value)}
           className="mt-1 min-h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 dark:border-white/10 dark:bg-[#001219] dark:text-white"/>
       </label>
-      <button type="button" onClick={()=>void perform()} disabled={loading||confirmation!=="CONFIRMAR"}
+      {kind==="referral"&&<label className="mt-3 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+        <input type="checkbox" checked={discountVerified} onChange={e=>setDiscountVerified(e.target.checked)}
+          className="mt-1 h-4 w-4"/>
+        Verifiqué que el descuento del nuevo cliente está registrado y conciliado con su contratación.
+      </label>}
+      <button type="button" onClick={()=>void perform()} disabled={loading||confirmation!=="CONFIRMAR"||(kind==="referral"&&!discountVerified)}
         className="mt-3 min-h-11 rounded-xl bg-amber-700 px-4 text-sm font-semibold text-white disabled:opacity-50">
         Ejecutar operación
       </button>
