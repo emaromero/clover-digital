@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
+  CreditCard,
   Clock3,
   Download,
   ExternalLink,
@@ -20,6 +21,7 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/server"
+import { formatArs, getOwnerPaymentTotals } from "@/lib/production-client-finance"
 import { PortalActivity, TrackedMaterialLink } from "@/components/portal-activity"
 import RecoveryRequestButton from "@/components/recovery-request-button"
 import ProductionShareManager from "@/components/production-share-manager"
@@ -105,6 +107,7 @@ export default async function ProductionDetailPage({
       production_date,
       status,
       services,
+      total_amount,
       estimated_delivery_at,
       delivered_at,
       available_until,
@@ -116,6 +119,22 @@ export default async function ProductionDetailPage({
   if (!production) {
     notFound()
   }
+
+  // La información de pagos es privada del agente titular.
+  const isProductionOwner = production.user_id === user.id
+  const paymentTotals = isProductionOwner
+    ? await getOwnerPaymentTotals([production.id])
+    : null
+  const productionAmount = Number(production.total_amount ?? 0)
+  const amountPaid = paymentTotals?.get(production.id) ?? 0
+  const amountPending = Math.max(0, productionAmount - amountPaid)
+  const paymentStatus = !paymentTotals
+    ? "Pago por verificar"
+    : amountPaid <= 0
+      ? "Pendiente de pago"
+      : amountPending > 0
+        ? "Pago parcial"
+        : "Pagado"
 
   const { data: files } = await supabase
     .from("production_files")
@@ -356,6 +375,53 @@ export default async function ProductionDetailPage({
           </div>
 
         </section>
+
+        {/* RESUMEN ECONÓMICO: visible exclusivamente para el titular. */}
+        {isProductionOwner && production.total_amount !== null && productionAmount > 0 && (
+          <section className="mt-5 rounded-3xl border border-gray-200/70 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A9396]/10 text-[#0A9396]">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Estado de pago
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Resumen de tu producción
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Valor total</p>
+                <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
+                  {formatArs(productionAmount)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Estado</p>
+                <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
+                  {paymentStatus}
+                </p>
+              </div>
+              {paymentTotals && (
+                <div className="rounded-2xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {amountPending > 0 ? "Saldo pendiente" : "Total abonado"}
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
+                    {formatArs(amountPending > 0 ? amountPending : amountPaid)}
+                  </p>
+                </div>
+              )}
+            </div>
+            <p className="mt-4 text-xs leading-5 text-gray-400">
+              Este resumen se actualiza con los pagos registrados por Clover Digital.
+              Si encontrás alguna diferencia, contactanos para revisarla.
+            </p>
+          </section>
+        )}
 
         {/* ENTREGA */}
         <section className="mt-5 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:mt-8 sm:p-6 md:p-8">
