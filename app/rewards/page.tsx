@@ -18,6 +18,19 @@ const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value)
 
+type History = {
+  coins: {id:string, production_name:string|null, original_coins:number, available_coins:number, created_at:string, expires_at:string}[]
+  points: {id:string, production_name:string|null, points:number, occurred_at:string}[]
+  coupons: {id:string, discount_ars:number, status:string, expires_at:string}[]
+  credits: {id:string, original_ars:number, available_ars:number, expires_at:string}[]
+}
+
+const formatDay = (value: string) =>
+  new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "medium",
+    timeZone: "America/Argentina/Buenos_Aires",
+  }).format(new Date(value))
+
 type Summary = {
   coins_available: number
   points_rolling_12m: number
@@ -37,6 +50,15 @@ export default async function RewardsPage() {
   const { data, error } = await supabase.rpc("reward_my_summary")
   const summary = (data?.[0] ?? null) as Summary | null
   const enabled = Boolean(summary?.program_enabled)
+  // La consulta es privada y solo se realiza con el programa habilitado.
+  // Si la migración de historial aún no está instalada, la página sigue operativa.
+  const { data: historyData, error: historyError } = enabled
+    ? await supabase.rpc("reward_my_history")
+    : { data: null, error: null }
+  const history = (!historyError && historyData && typeof historyData === "object"
+    ? historyData as History
+    : null)
+
 
   return (
     <main className="min-h-screen bg-[#f5fafa] px-4 py-8 dark:bg-[#001219] sm:py-12">
@@ -103,6 +125,59 @@ export default async function RewardsPage() {
                 Cupones activos: {summary.active_coupons}. Los beneficios se acreditan
                 únicamente en las condiciones del programa.
               </p>
+              <section className="mt-8 border-t border-gray-100 pt-6 dark:border-white/10">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Historial de recompensas
+                </h2>
+                {!history ? (
+                  <p className="mt-3 text-sm text-gray-500 dark:text-gray-300">
+                    El historial estará disponible cuando se complete la configuración.
+                  </p>
+                ) : (
+                  <>
+                    <h3 className="mt-5 text-sm font-semibold text-gray-900 dark:text-white">Movimientos de Coins</h3>
+                    {!history.coins?.length ? (
+                      <p className="mt-2 text-sm text-gray-500">Todavía no tenés Coins acreditados.</p>
+                    ) : (
+                      <div className="mt-2 divide-y divide-gray-100 dark:divide-white/10">
+                        {history.coins.map((lot) => (
+                          <div key={lot.id} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {lot.production_name || "Recompensa de Clover"}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500">
+                                Acreditado: {formatDay(lot.created_at)} · Vence: {formatDay(lot.expires_at)}
+                              </p>
+                            </div>
+                            <span className="font-semibold text-[#0A9396]">
+                              {number(Number(lot.available_coins))} / {number(Number(lot.original_coins))} Coins
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <h3 className="mt-6 text-sm font-semibold text-gray-900 dark:text-white">Puntos Clover Club</h3>
+                    {!history.points?.length ? (
+                      <p className="mt-2 text-sm text-gray-500">Todavía no hay movimientos de puntos.</p>
+                    ) : (
+                      <div className="mt-2 divide-y divide-gray-100 dark:divide-white/10">
+                        {history.points.map((point) => (
+                          <div key={point.id} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                            <span className="text-gray-900 dark:text-white">{point.production_name || "Ajuste de puntos"}</span>
+                            <span className="font-semibold text-[#0A9396]">
+                              {point.points > 0 ? "+" : ""}{point.points} · {formatDay(point.occurred_at)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="mt-5 text-xs text-gray-500 dark:text-gray-400">
+                      Cupones registrados: {history.coupons?.length ?? 0} · Créditos registrados: {history.credits?.length ?? 0}.
+                    </p>
+                  </>
+                )}
+              </section>
             </>
           )}
         </div>
