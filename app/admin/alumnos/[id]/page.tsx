@@ -1070,7 +1070,7 @@ export default async function AdminAlumnoPage({
                                                   Visto hasta{" "}
 
                                                   {formatTime(
-                                                    lessonProgress.last_position_seconds
+                                                    lessonProgress?.last_position_seconds ?? 0
                                                   )}
 
                                                 </span>
