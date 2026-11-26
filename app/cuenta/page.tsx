@@ -194,6 +194,18 @@ if (
   const allProductions =
     productions
 
+  // Accesos de solo lectura a producciones compartidas.
+  // No forman parte de las producciones propias ni de sus estadísticas.
+  const { data: sharedProductionRows, error: sharedProductionError } =
+    await supabase.rpc("list_my_shared_productions")
+
+  const sharedProductions = (sharedProductionRows || []) as {
+    share_token: string
+    property_name: string
+    property_address: string | null
+    expires_at: string
+  }[]
+
   // Solo el agente titular puede consultar importes y cobros.
   const ownedProductionIds = allProductions
     .filter((production) => production.user_id === user.id)
@@ -890,6 +902,51 @@ if (
           )}
 
         </section>
+
+        {/* PRODUCCIONES COMPARTIDAS: solo lectura, sin importes ni pagos */}
+        {sharedProductions.length > 0 && (
+          <section className="mt-6 overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-white/10 dark:bg-[#06222c] sm:mt-8">
+            <div className="border-b border-gray-100 p-4 dark:border-white/10 sm:p-6">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Compartidas conmigo
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Producciones de colegas que consultaste mediante un enlace privado.
+              </p>
+            </div>
+            <div className="divide-y divide-gray-100 dark:divide-white/10">
+              {sharedProductions.map((shared) => (
+                <div key={shared.share_token} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {shared.property_name}
+                    </p>
+                    {shared.property_address && (
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {shared.property_address}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-400">
+                      Acceso de solo lectura · Disponible hasta {formatDate(shared.expires_at)}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/compartida/${shared.share_token}`}
+                    className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[#0A9396] hover:underline"
+                  >
+                    Abrir producción <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {sharedProductionError && (
+          <p className="mt-4 text-xs text-gray-400">
+            No se pudieron consultar las producciones compartidas.
+          </p>
+        )}
 
         {/* ACADEMY */}
         <section id="academy" className="mt-6 sm:mt-8">
