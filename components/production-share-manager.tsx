@@ -129,6 +129,7 @@ export default function ProductionShareManager({
       const refreshed = await loadLinks()
       await copyLink(result.token)
       if (!refreshed) {
+        setMessage("")
         setError("El enlace fue generado y copiado, pero no se pudo actualizar la lista. No generes otro enlace.")
       }
     } catch (err) {
