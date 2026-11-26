@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ArrowLeft, Gift, LockKeyhole, Sparkles, Trophy, TicketPercent } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import RewardInvites from "@/components/reward-invites"
 
 export const metadata = {
   title: "Clover Rewards",
@@ -159,6 +160,7 @@ export default async function RewardsPage() {
                 Cupones activos: {summary.active_coupons}. Los beneficios se acreditan
                 únicamente en las condiciones del programa.
               </p>
+              <RewardInvites />
               <section className="mt-8 border-t border-gray-100 pt-6 dark:border-white/10">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Historial de recompensas
