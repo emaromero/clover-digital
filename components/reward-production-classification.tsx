@@ -16,6 +16,42 @@ type Classification = {
   notes?: string | null
 }
 
+type RewardPreview = {
+  production_id: string
+  owner_id: string | null
+  status: string
+  total_amount: number | null
+  paid_amount: number
+  gross_coins: number
+  coins_to_award: number
+  points_to_award: number
+  already_awarded: boolean
+  program_enabled: boolean
+  accrual_starts_at: string | null
+  eligible: boolean
+  reason: string
+}
+
+const previewReasons: Record<string, string> = {
+  missing_owner: "Falta asignar un titular.",
+  missing_classification: "Primero guardá la clasificación.",
+  unapproved_classification: "La clasificación todavía no está aprobada.",
+  owner_changed: "Cambió el titular; hay que revisar la clasificación.",
+  not_delivered: "La producción todavía no está entregada.",
+  invalid_total: "El importe total no es válido.",
+  not_fully_paid: "La producción todavía no está completamente abonada.",
+  amounts_changed: "El importe no coincide con la clasificación guardada.",
+  not_eligible: "No hay importe elegible para recompensas.",
+  zero_coins: "La recompensa calculada es cero.",
+  unknown_package: "No se reconoce el paquete configurado.",
+  already_awarded: "Esta producción ya tiene una acreditación.",
+  delivery_date_missing: "Falta la fecha de entrega.",
+  launch_date_not_configured: "La fecha de lanzamiento todavía no está configurada.",
+  before_launch: "Esta producción es anterior al lanzamiento de Rewards.",
+  program_disabled: "Rewards sigue desactivado por seguridad.",
+  eligible: "Cumple todos los requisitos para acreditación.",
+}
+
 type Props = {
   productionId: string
   productionAmount: number | null
@@ -36,6 +72,8 @@ export default function RewardProductionClassification({
   const total = Number(productionAmount ?? 0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [simulating, setSimulating] = useState(false)
+  const [preview, setPreview] = useState<RewardPreview | null>(null)
   const [existing, setExisting] = useState(false)
   const [packageCode, setPackageCode] = useState("completo")
   const [size, setSize] = useState("estandar")
@@ -97,6 +135,7 @@ export default function RewardProductionClassification({
     event.preventDefault()
     setError("")
     setSuccess("")
+    setPreview(null)
     if (!hasOwner || !reconciled || !integerExtras || productionAmount == null) {
       setError("Revisá el titular, los importes y las cantidades antes de guardar.")
       return
@@ -125,6 +164,32 @@ export default function RewardProductionClassification({
       setError(caught instanceof Error ? caught.message : "No se pudo guardar la clasificación.")
     } finally {
       setSaving(false)
+    }
+  }
+
+  const simulate = async () => {
+    setError("")
+    setSuccess("")
+    setPreview(null)
+    if (!existing) {
+      setError("Primero guardá la clasificación para simular los beneficios.")
+      return
+    }
+    setSimulating(true)
+    try {
+      const { data, error: previewError } = await createClient().rpc(
+        "reward_admin_preview_production",
+        { p_production_id: productionId }
+      )
+      if (previewError) throw new Error(previewError.message)
+      if (!data || typeof data !== "object") {
+        throw new Error("La simulación no devolvió resultados.")
+      }
+      setPreview(data as RewardPreview)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "No se pudo simular la recompensa.")
+    } finally {
+      setSimulating(false)
     }
   }
 
@@ -210,6 +275,45 @@ export default function RewardProductionClassification({
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {saving ? "Guardando..." : existing ? "Actualizar clasificación" : "Guardar clasificación"}
           </button>
+
+          <div className="border-t border-gray-100 pt-5 dark:border-white/10">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              Simulación de recompensas
+            </h3>
+            <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+              Se calcula usando la clasificación guardada y los pagos actuales, no los cambios sin guardar.
+              No acredita Coins, puntos ni descuentos.
+            </p>
+            <button
+              type="button"
+              onClick={() => void simulate()}
+              disabled={simulating || saving || !existing}
+              className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0A9396]/30 px-4 py-2.5 text-sm font-semibold text-[#0A9396] hover:bg-[#0A9396]/5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {simulating && <Loader2 className="h-4 w-4 animate-spin" />}
+              {simulating ? "Calculando..." : "Simular recompensas"}
+            </button>
+            {preview && (
+              <div role="status" className="mt-4 rounded-xl bg-gray-50 p-4 text-sm dark:bg-white/[0.03]">
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {Number(preview.coins_to_award).toLocaleString("es-AR", {maximumFractionDigits: 2})} Coins estimados
+                  {" · "}
+                  {preview.points_to_award} {preview.points_to_award === 1 ? "punto" : "puntos"} Club habilitados
+                </p>
+                <p className="mt-2 text-gray-600 dark:text-gray-300">
+                  Total cobrado: {money(Number(preview.paid_amount || 0))}
+                </p>
+                <p className="mt-2 text-gray-600 dark:text-gray-300">
+                  Estado: {previewReasons[preview.reason] ?? preview.reason}
+                </p>
+                {!preview.eligible && (
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    La simulación es informativa: no se puede acreditar mientras este requisito esté pendiente.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </form>
       )}
     </section>
