@@ -6,6 +6,7 @@ import { formatPortalActivity } from "@/lib/portal-activity"
 
 import EditProductionForm from "@/components/edit-production-form"
 import ProductionFinancePanel from "@/components/production-finance-panel"
+import RewardProductionClassification from "@/components/reward-production-classification"
 import ProductionParticipantsManager from "@/components/production-participants-manager"
 import ProductionTagsManager from "@/components/production-tags-manager"
 
@@ -302,6 +303,12 @@ export default async function AdminProductionPage({ params }: PageProps) {
             </div>
           )}
         </section>
+
+        <RewardProductionClassification
+          productionId={production.id}
+          productionAmount={production.total_amount}
+          hasOwner={Boolean(production.user_id)}
+        />
 
         <ProductionFinancePanel
           productionId={production.id}
