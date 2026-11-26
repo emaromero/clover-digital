@@ -48,6 +48,8 @@ export default function ProductionShareManager({
 }: Props) {
   const [links, setLinks] = useState<ShareLink[]>([])
   const [loading, setLoading] = useState(true)
+  const [linksLoaded, setLinksLoaded] = useState(false)
+  const [createdToken, setCreatedToken] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [busyToken, setBusyToken] = useState<string | null>(null)
   const [message, setMessage] = useState("")
@@ -61,9 +63,10 @@ export default function ProductionShareManager({
     )
 
     if (!response.ok) {
-      setError("No se pudieron cargar los enlaces compartidos.")
+      setError("No pudimos consultar los enlaces existentes. Para evitar duplicados, no generes otro enlace hasta recuperar la lista.")
+      setLinksLoaded(false)
       setLoading(false)
-      return
+      return false
     }
 
     const data = (await response.json()) as { links: ShareLink[] }
@@ -76,8 +79,11 @@ export default function ProductionShareManager({
       )
     )
 
+    setLinksLoaded(true)
+    setCreatedToken(null)
     setLoading(false)
     setError("")
+    return true
   }, [productionId])
 
   useEffect(() => {
@@ -85,8 +91,13 @@ export default function ProductionShareManager({
   }, [loadLinks])
 
   const activeLinks = links.filter(isActive)
+  const canCreateLink = linksLoaded && activeLinks.length === 0 && !createdToken
 
   const createLink = async () => {
+    if (!linksLoaded || createdToken) {
+      setError("No se pueden verificar los enlaces existentes. Actualizá la página antes de generar otro.")
+      return
+    }
     if (activeLinks.length > 0) {
       setError("Ya existe un enlace activo para esta producción.")
       return
@@ -113,11 +124,14 @@ export default function ProductionShareManager({
         )
       }
 
-      setMessage("Enlace generado correctamente.")
-
-      await loadLinks()
-
+      // Conservar el token recién generado aunque falle refrescar la lista.
+      setCreatedToken(result.token)
+      const refreshed = await loadLinks()
       await copyLink(result.token)
+      if (!refreshed) {
+        setMessage("")
+        setError("El enlace fue generado y copiado, pero no se pudo actualizar la lista. No generes otro enlace.")
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -215,11 +229,11 @@ export default function ProductionShareManager({
             cuenta de Clover Digital y consultar esta producción.
           </p>
 
-          {activeLinks.length === 0 ? (
+          {activeLinks.length === 0 && !createdToken ? (
             <button
               type="button"
               onClick={() => void createLink()}
-              disabled={creating || loading}
+              disabled={creating || loading || !canCreateLink}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e5c6e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#001219] disabled:opacity-50 sm:w-auto"
             >
               {creating ? (
@@ -232,6 +246,12 @@ export default function ProductionShareManager({
             </button>
           ) : (
             <div className="mt-5 space-y-3">
+
+              {createdToken && !activeLinks.some((link) => link.share_token === createdToken) && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Enlace recién generado y copiado. La lista está pendiente de actualizar.
+                </p>
+              )}
 
               {activeLinks.map((link) => (
                 <div

@@ -29,16 +29,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Iniciá sesión." }, { status: 401 })
   }
 
-  const { data: production } = await supabase
-    .from("productions")
-    .select("id, user_id")
-    .eq("id", productionId)
-    .maybeSingle()
-
-  if (!production || production.user_id !== user.id) {
-    return NextResponse.json({ error: "No autorizado." }, { status: 403 })
-  }
-
+  // El RPC aplica la verificación de titularidad con auth.uid().
+  // Evitamos depender además de una lectura RLS de productions,
+  // que podía rechazar al propietario aun con un enlace válido.
   const { data, error } = await supabase.rpc(
     "list_production_share_links_safe",
     { p_production_id: productionId }
