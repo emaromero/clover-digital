@@ -141,6 +141,13 @@ export default async function AdminProductionPage({ params }: PageProps) {
   const { data: activityRows, error: activityError } = await supabase
     .rpc("admin_production_activity", { p_production_id: production.id })
 
+  // Accesos por enlace: se registran en tablas independientes
+  // de la actividad del portal y solo se consultan en administración.
+  const { data: sharedActivity, error: sharedActivityError } =
+    await supabase.rpc("admin_shared_production_activity", {
+      p_production_id: production.id,
+    })
+
   const clientById = new Map(clients.map((client) => [client.id, client]))
   const activityByUser = new Map<string, {
     last_viewed_at: string | null
@@ -233,6 +240,66 @@ export default async function AdminProductionPage({ params }: PageProps) {
                 )
               })}
             </ul>
+          )}
+        </section>
+
+        <section className="mb-6 rounded-3xl border border-gray-200/70 bg-white p-5 dark:border-white/10 dark:bg-[#06222c] sm:p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Accesos por enlaces compartidos
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            Registro privado para administración. Los titulares no pueden consultar estas visitas.
+          </p>
+
+          {sharedActivityError ? (
+            <p className="mt-4 text-sm text-red-600">
+              No se pudo consultar la actividad de enlaces compartidos.
+            </p>
+          ) : !sharedActivity?.length ? (
+            <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+              Todavía no se registraron visitas mediante enlaces compartidos.
+            </p>
+          ) : (
+            <div className="mt-4 divide-y divide-gray-100 dark:divide-white/10">
+              {sharedActivity.map((access: {
+                user_id: string
+                user_name: string | null
+                user_email: string | null
+                first_access_at: string | null
+                last_viewed_at: string | null
+                view_count: number
+                last_clicked_at: string | null
+                click_count: number
+              }) => (
+                <div key={access.user_id} className="grid gap-3 py-4 sm:grid-cols-3">
+                  <div className="min-w-0 text-sm">
+                    <Link
+                      href={`/admin/clientes/${access.user_id}`}
+                      className="font-semibold text-[#0e5c6e] hover:underline"
+                    >
+                      {access.user_name || access.user_email || "Colega"}
+                    </Link>
+                    {access.user_name && access.user_email && (
+                      <p className="mt-1 break-all text-xs text-gray-500">
+                        {access.user_email}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200">
+                    <span className="block font-medium">
+                      Última visita ({access.view_count || 0})
+                    </span>
+                    {formatPortalActivity(access.last_viewed_at)}
+                  </div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200">
+                    <span className="block font-medium">
+                      Último clic ({access.click_count || 0})
+                    </span>
+                    {formatPortalActivity(access.last_clicked_at)}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
