@@ -58,12 +58,17 @@ export default function CloverInvita() {
   if(loading)return <p className="mt-7 text-sm text-gray-500">Consultando Clover Invita...</p>
   return <section className="mt-7 rounded-2xl border border-gray-200 p-5 dark:border-white/10 sm:p-6">
     <div className="flex items-center gap-3"><Gift className="h-6 w-6 text-[#0A9396]"/><h2 className="text-xl font-bold text-gray-900 dark:text-white">Clover Invita</h2></div>
-    <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-      Invitá a un nuevo cliente: recibe 15% de descuento en su primera contratación, hasta $15.000.
-      Si su contratación original alcanza $90.000 y se entrega y cobra completamente, recibís $10.000
-      de crédito para producciones futuras.
+    <p className="mt-2 text-base font-semibold leading-6 text-gray-900 dark:text-white">
+      ¡Recomendá Clover y ganan los dos!
     </p>
-    {!data?.enabled?<p className="mt-4 text-sm font-medium text-gray-500">Clover Invita todavía no está habilitado.</p>:<>
+    <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+      Tu invitado obtiene <strong>15% OFF</strong> en su primera producción y vos ganás
+      <strong> $10.000 de crédito</strong> para la próxima.
+    </p>
+    <p className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+      Descuento máximo de $15.000. Crédito sujeto a una contratación original desde $90.000, entregada y cobrada.
+    </p>
+    {!data?.enabled?<p className="mt-4 text-sm font-medium text-[#0A9396]">¡Muy pronto vas a poder compartir tu código!</p>:<>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-gray-50 p-4 dark:bg-white/5">
           <p className="text-xs text-gray-500">Tu crédito disponible</p>
