@@ -2,7 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ArrowLeft, Gift, LockKeyhole, Sparkles, Trophy, TicketPercent } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
-import RewardInvites from "@/components/reward-invites"
+import CloverInvita from "@/components/clover-invita"
 import RewardCouponStore from "@/components/reward-coupon-store"
 
 export const metadata = {
@@ -86,6 +86,8 @@ export default async function RewardsPage() {
             </div>
           </div>
 
+          <CloverInvita />
+
           {!enabled ? (
             <div className="mt-8 flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" aria-hidden="true" />
@@ -162,7 +164,7 @@ export default async function RewardsPage() {
                 únicamente en las condiciones del programa.
               </p>
               <RewardCouponStore />
-              <RewardInvites />
+
               <section className="mt-8 border-t border-gray-100 pt-6 dark:border-white/10">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Historial de recompensas
