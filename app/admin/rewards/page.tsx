@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import RewardContractsAdmin from "@/components/reward-contracts-admin"
 import RewardMissionsAdmin from "@/components/reward-missions-admin"
 import RewardOperationsAdmin from "@/components/reward-operations-admin"
+import CloverInvitaAdmin from "@/components/clover-invita-admin"
 
 export const metadata = {
   title: "Administración de Clover Rewards",
@@ -84,6 +85,7 @@ export default async function AdminRewardsPage() {
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">
             Indicadores y auditoría de solo lectura. Desde esta pantalla no se acreditan ni se canjean recompensas.
           </p>
+          <CloverInvitaAdmin />
           <RewardOperationsAdmin enabled={Boolean(overview?.program_enabled)} />
           <RewardContractsAdmin />
           <RewardMissionsAdmin />
