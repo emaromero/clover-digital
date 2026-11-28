@@ -83,7 +83,7 @@ export default function CloverInvitaAdmin() {
   </div>}
   <div className="mt-6 border-t border-gray-100 pt-5 dark:border-white/10">
    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Operaciones</h3>
-   <p className="mt-2 text-xs leading-5 text-gray-500">Aplicar descuento: 15% sobre la primera producción confirmada, sin pagos. Emitir crédito: primera entrega cobrada y contratación original desde $90.000. Gastar crédito: máximo 25% de una producción futura. Revertir uso: solo antes del cobro.</p>
+   <p className="mt-2 text-xs leading-5 text-gray-500">Aplicar descuento: 15% sobre la primera producción confirmada, sin pagos. Emitir crédito: primera producción con descuento, entregada y cobrada, sin monto mínimo. Gastar crédito: máximo 25% de una producción futura. Revertir uso: solo antes del cobro.</p>
    <label className="mt-4 block text-sm text-gray-700 dark:text-gray-200">Acción
     <select className={field} value={kind} onChange={e=>{setKind(e.target.value as Action);setConfirm("");setMessage("")}}>
      <option value="discount">Aplicar 15% al recomendado</option>
