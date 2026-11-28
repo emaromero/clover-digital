@@ -66,7 +66,7 @@ export default function CloverInvita() {
       <strong> $10.000 de crédito</strong> para la próxima.
     </p>
     <p className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
-      Descuento máximo de $15.000. Crédito sujeto a una contratación original desde $90.000, entregada y cobrada.
+      Descuento máximo de $15.000. El crédito se acredita cuando la primera producción se entrega y se cobra.
     </p>
     {!data?.enabled?<p className="mt-4 text-sm font-medium text-[#0A9396]">¡Muy pronto vas a poder compartir tu código!</p>:<>
       <div className="mt-5 grid grid-cols-2 gap-3">
